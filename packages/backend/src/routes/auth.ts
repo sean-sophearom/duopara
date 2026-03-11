@@ -20,6 +20,7 @@ const loginSchema = z.object({
 // Register
 authRouter.post('/register', async (req, res) => {
   try {
+    return res.status(503).json({ error: 'Registration is currently disabled for maintenance. Please try again later.' });
     const { email, password, name } = registerSchema.parse(req.body);
     
     // Check if user exists
