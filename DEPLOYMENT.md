@@ -269,6 +269,53 @@ sudo nginx -t          # check config is valid
 sudo systemctl reload nginx
 ```
 
+#### Sub-path deployment (e.g. `yourdomain.com/duopara`)
+
+If you want the app to live under a sub-path instead of at the domain root, set these env vars before building:
+
+**`packages/frontend/.env`** (production):
+```dotenv
+VITE_BASE_PATH="/duopara"
+```
+
+Then rebuild the frontend (`npm run build --workspace=@duopara/frontend`) and use this nginx location block instead:
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+
+    # ── Frontend (served under /duopara) ────────────────────────────────────
+    location /duopara {
+        alias /var/www/duopara/packages/frontend/dist;
+        index index.html;
+        # SPA fallback
+        try_files $uri $uri/ /duopara/index.html;
+    }
+
+    # ── Backend API ──────────────────────────────────────────────────────────
+    # The frontend always calls /api/* (absolute path), so this location
+    # stays at the root regardless of VITE_BASE_PATH.
+    location /api/ {
+        proxy_pass         http://127.0.0.1:3009;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+    }
+
+    location /health {
+        proxy_pass http://127.0.0.1:3009/health;
+    }
+}
+```
+
+> The browser router `basename` is automatically set from `VITE_BASE_PATH` at
+> build time — no runtime configuration is needed.
+
 ### 9. TLS with Certbot (optional but recommended)
 
 ```bash

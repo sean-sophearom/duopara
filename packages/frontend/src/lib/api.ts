@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+//@ts-expect-error
+const VITE_BASE_PATH = import.meta.env.VITE_BASE_PATH || '/';
+// If VITE_BASE_PATH is set and not just "/", we need to adjust the baseURL for API calls
+const apiBaseURL = VITE_BASE_PATH !== '/' ? `${VITE_BASE_PATH}/api` : '/api';
+
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: apiBaseURL,
   headers: {
     'Content-Type': 'application/json',
   },

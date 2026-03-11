@@ -14,10 +14,14 @@ const queryClient = new QueryClient({
   },
 });
 
+// Strip any trailing slash so React Router's basename is always canonical.
+// @ts-expect-error
+const basename = (import.meta.env.VITE_BASE_PATH as string || '/').replace(/\/+$/, '') || '/';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename={basename}>
         <App />
       </BrowserRouter>
     </QueryClientProvider>
