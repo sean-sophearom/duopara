@@ -68,7 +68,7 @@ npm install
 DATABASE_URL="file:./dev.db"
 JWT_SECRET="your-secret-key"
 OPENAI_API_KEY="your-openai-api-key"
-PORT=3001
+PORT=3009
 ```
 
 4. Initialize the database:
@@ -83,7 +83,7 @@ npm run dev
 
 The app will be available at:
 - Frontend: http://localhost:5173
-- Backend: http://localhost:3001
+- Backend: http://localhost:3009
 
 ## Project Structure
 
