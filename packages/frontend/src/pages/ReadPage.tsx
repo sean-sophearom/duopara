@@ -178,6 +178,12 @@ export default function ReadPage() {
   // Translate entire text — single backend call, result is cached server-side
   const translateAll = useCallback(async () => {
     if (!text?.content || !textId) return;
+
+    if (parallelTranslations.length > 0) {
+      setShowParallelTranslation(true);
+      return;
+    }
+
     setIsTranslatingAll(true);
     setShowParallelTranslation(true);
     try {
@@ -378,7 +384,7 @@ export default function ReadPage() {
           return (
             <div
               key={sIdx}
-              className={`grid grid-cols-2 gap-6 py-3 rounded transition-colors ${
+              className={`grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 py-3 rounded transition-colors ${
                 speakingIdx === sIdx ? "bg-primary-50" : ""
               }`}
             >
@@ -401,7 +407,7 @@ export default function ReadPage() {
                 </span>
               </div>
               {/* Translation */}
-              <span className="text-gray-600 px-1">
+              <span className="text-gray-500 text-sm sm:text-base pl-3 sm:pl-1 border-l-2 border-primary-100 sm:border-0">
                 {trans == null ? (
                   <Loader2 className="w-4 h-4 animate-spin text-primary-400 inline" />
                 ) : (
@@ -440,86 +446,92 @@ export default function ReadPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-gray-100 rounded-lg"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">{text.title}</h1>
-          <p className="text-sm text-gray-500">
-            {text.topic} • {text.wordCount} words • {text.difficulty}
-          </p>
+      <div className="flex gap-3 flex-wrap mb-3 justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <div className="flex-1 min-w-0 /whitespace-nowrap">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              {text.title}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {text.topic} • {text.wordCount} words • {text.difficulty}
+            </p>
+          </div>
         </div>
-        {/* Parallel translation toggle */}
-        {parallelTranslations.length > 0 ? (
-          <>
-            {/* Literal / Natural pill — only when panel is open */}
-            {showParallelTranslation && (
-              <div className="flex items-center rounded-lg overflow-hidden border border-gray-200 text-sm font-medium">
-                <button
-                  onClick={() => setUseLiteralTranslation(false)}
-                  className={`px-3 py-1.5 transition-colors ${
-                    !useLiteralTranslation
-                      ? "bg-primary-600 text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  Natural
-                </button>
-                <button
-                  onClick={() => setUseLiteralTranslation(true)}
-                  className={`px-3 py-1.5 transition-colors ${
-                    useLiteralTranslation
-                      ? "bg-primary-600 text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  Literal
-                </button>
-              </div>
-            )}
-            <button
-              onClick={() => setShowParallelTranslation((v) => !v)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                showParallelTranslation
-                  ? "bg-primary-100 text-primary-700 hover:bg-primary-200"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-              title={
-                showParallelTranslation
-                  ? "Hide translation"
-                  : "Show translation"
-              }
-            >
-              {showParallelTranslation ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Parallel translation toggle */}
+          {parallelTranslations.length > 0 ? (
+            <>
+              {/* Literal / Natural pill — only when panel is open */}
+              {showParallelTranslation && (
+                <div className="flex items-center rounded-lg overflow-hidden border border-gray-200 text-sm font-medium">
+                  <button
+                    onClick={() => setUseLiteralTranslation(false)}
+                    className={`px-3 py-1.5 transition-colors ${
+                      !useLiteralTranslation
+                        ? "bg-primary-600 text-white"
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Natural
+                  </button>
+                  <button
+                    onClick={() => setUseLiteralTranslation(true)}
+                    className={`px-3 py-1.5 transition-colors ${
+                      useLiteralTranslation
+                        ? "bg-primary-600 text-white"
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Literal
+                  </button>
+                </div>
               )}
-              Translation
-            </button>
-          </>
-        ) : null}
-        <button
-          onClick={translateAll}
-          disabled={isTranslatingAll}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-60 transition-colors"
-          title="Translate entire text sentence by sentence"
-        >
-          {isTranslatingAll ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Languages className="w-4 h-4" />
-          )}
-          {isTranslatingAll ? "Translating…" : "Translate All"}
-        </button>
+              <button
+                onClick={() => setShowParallelTranslation((v) => !v)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  showParallelTranslation
+                    ? "bg-primary-100 text-primary-700 hover:bg-primary-200"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                title={
+                  showParallelTranslation
+                    ? "Hide translation"
+                    : "Show translation"
+                }
+              >
+                {showParallelTranslation ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+                Translation
+              </button>
+            </>
+          ) : null}
+          <button
+            onClick={translateAll}
+            disabled={isTranslatingAll}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-60 transition-colors"
+            title="Translate entire text sentence by sentence"
+          >
+            {isTranslatingAll ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Languages className="w-4 h-4" />
+            )}
+            {isTranslatingAll ? "Translating…" : "Translate All"}
+          </button>
+        </div>
       </div>
 
       {/* Playback controls bar */}
-      <div className="flex items-center gap-3 mb-4 /ml-10">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         {/* Speed control */}
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg px-1 py-1">
           <button
@@ -577,7 +589,7 @@ export default function ReadPage() {
           {/* Text content */}
           <div
             ref={contentRef}
-            className="card p-8 reading-text"
+            className="card p-4 lg:p-8 reading-text"
             style={{ fontSize: "1.2rem", lineHeight: "2" }}
           >
             {showParallelTranslation
@@ -653,8 +665,8 @@ export default function ReadPage() {
 
         {/* Sidebar */}
         {showSidebar && (selectedWord || selectedSentence) && (
-          <div className="fixed right-4 top-20 lg:top-8 w-80 max-h-[calc(100vh-6rem)] overflow-y-auto">
-            <div className="card p-6 animate-fade-in">
+          <div className="fixed bottom-0 left-0 right-0 max-h-[60vh] sm:bottom-auto sm:left-auto sm:right-4 sm:top-20 lg:top-8 sm:w-80 sm:max-h-[calc(100vh-6rem)] overflow-y-auto z-30">
+            <div className="card p-6 animate-fade-in rounded-t-2xl sm:rounded-2xl">
               <button
                 onClick={() => {
                   setSelectedWord(null);

@@ -52,7 +52,7 @@ export default function HistoryPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">History Vault</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">History Vault</h1>
         <p className="text-gray-600 mt-1">
           Your library of generated texts
         </p>
@@ -148,8 +148,8 @@ export default function HistoryPage() {
                     </div>
                   </Link>
                   
-                  <div className="flex items-center gap-2">
-                    <div className="text-right text-sm text-gray-500">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="hidden sm:block text-right text-sm text-gray-500">
                       <div className="flex items-center justify-end gap-1">
                         <Clock className="w-4 h-4" />
                         {new Date(text.createdAt).toLocaleDateString()}

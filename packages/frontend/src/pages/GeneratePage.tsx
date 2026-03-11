@@ -97,7 +97,7 @@ export default function GeneratePage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Generate Reading Material</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Generate Reading Material</h1>
         <p className="text-gray-600 mt-1">
           Create personalized content based on your vocabulary level
         </p>
@@ -115,8 +115,8 @@ export default function GeneratePage() {
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g., A day at the beach, Cooking traditional food, Space exploration..."
-              className="w-full pl-12 pr-4 py-4 text-lg border border-gray-300 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+              placeholder="e.g. A day at the beach, Cooking traditional food, Space exploration..."
+              className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
               required
             />
           </div>
@@ -259,7 +259,7 @@ export default function GeneratePage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Writing Style
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-2">
               {styleOptions.map((opt) => (
                 <label
                   key={opt.value}

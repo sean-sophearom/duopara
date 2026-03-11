@@ -37,7 +37,7 @@ export default function DashboardPage() {
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           Welcome back{user?.name ? `, ${user.name}` : ''}!
         </h1>
         <p className="text-gray-600 mt-1">
@@ -46,8 +46,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="card p-4 sm:p-6 flex items-center justify-between sm:flex-col sm:items-start">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
               <Flame className="w-5 h-5 text-orange-600" />
@@ -56,11 +56,11 @@ export default function DashboardPage() {
           </div>
           <p className="text-3xl font-bold text-gray-900">
             {stats?.activity?.currentStreak || 0}
-            <span className="text-lg font-normal text-gray-500 ml-1">days</span>
+            <span className="text-lg font-normal text-gray-500 ml-1">&nbsp;days</span>
           </p>
         </div>
 
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6 flex items-center justify-between sm:flex-col sm:items-start">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
               <Target className="w-5 h-5 text-green-600" />
@@ -69,10 +69,11 @@ export default function DashboardPage() {
           </div>
           <p className="text-3xl font-bold text-gray-900">
             {vocabStats?.mastered || 0}
+            <span className="text-lg font-normal text-gray-500 ml-1">&nbsp;words</span>
           </p>
         </div>
 
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6 flex items-center justify-between sm:flex-col sm:items-start">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-primary-600" />
@@ -81,10 +82,11 @@ export default function DashboardPage() {
           </div>
           <p className="text-3xl font-bold text-gray-900">
             {stats?.reading?.completedSessions || 0}
+            <span className="text-lg font-normal text-gray-500 ml-1">&nbsp;texts</span>
           </p>
         </div>
 
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6 flex items-center justify-between sm:flex-col sm:items-start">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
               <BookMarked className="w-5 h-5 text-purple-600" />
@@ -93,6 +95,7 @@ export default function DashboardPage() {
           </div>
           <p className="text-3xl font-bold text-gray-900">
             {vocabStats?.total || 0}
+            <span className="text-lg font-normal text-gray-500 ml-1">&nbsp;days</span>
           </p>
         </div>
       </div>
@@ -134,9 +137,9 @@ export default function DashboardPage() {
                     to={`/read/${text.id}`}
                     className="block p-4 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50/50 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-4 flex-col md:flex-row">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900 truncate">{text.title}</h4>
+                        <h4 className="font-medium text-gray-900">{text.title}</h4>
                         <p className="text-sm text-gray-500 mt-1">
                           {text.topic} • {text.wordCount} words • {text.difficulty}
                         </p>

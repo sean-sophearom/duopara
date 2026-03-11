@@ -121,14 +121,14 @@ export default function VocabularyPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="flex items-start justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Vocabulary</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Vocabulary</h1>
           <p className="text-gray-600 mt-1">
             Manage your known words and import from external sources
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setShowImportModal(true)}
             className="btn btn-secondary"
@@ -155,7 +155,7 @@ export default function VocabularyPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <div className="card p-4 text-center">
             <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
             <p className="text-sm text-gray-500">Total</p>
@@ -248,15 +248,15 @@ export default function VocabularyPage() {
         </div>
       ) : (
         <>
-          <div className="card overflow-hidden">
-            <table className="w-full">
+          <div className="card overflow-hidden overflow-x-auto">
+            <table className="w-full min-w-[560px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Word</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Translation</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Part of Speech</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 hidden md:table-cell">Part of Speech</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Encounters</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 hidden sm:table-cell">Encounters</th>
                   <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Actions</th>
                 </tr>
               </thead>
@@ -274,7 +274,7 @@ export default function VocabularyPage() {
                     <td className="px-4 py-3 text-gray-600">
                       {word.translation || '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">
                       {word.partOfSpeech || '-'}
                     </td>
                     <td className="px-4 py-3">
@@ -288,7 +288,7 @@ export default function VocabularyPage() {
                         <option value="mastered">Mastered</option>
                       </select>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-gray-500 hidden sm:table-cell">
                       {word.timesEncountered}
                     </td>
                     <td className="px-4 py-3 text-right">
