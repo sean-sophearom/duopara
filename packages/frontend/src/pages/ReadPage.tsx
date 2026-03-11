@@ -248,7 +248,7 @@ export default function ReadPage() {
   const speakAll = useCallback(() => {
     if (!text?.content) return;
     speechSynthesis.cancel();
-    const sentences = text.content.split(/(?<=[.!?”"»'])\s+/).filter((s: string)=> s.trim().length > 0);
+    const sentences = text.content.split(/(?<=[.!?”"»'។])\s+/).filter((s: string)=> s.trim().length > 0);
     const lang = getLanguageCode(text.language);
     let idx = 0;
     setIsSpeaking(true);
@@ -381,7 +381,7 @@ export default function ReadPage() {
   // Parse content into clickable words (normal mode)
   const renderContent = () => {
     if (!text?.content) return null;
-    const sentences = text.content.split(/(?<=[.!?”"»'])\s+/).filter((s: string) => s.trim().length > 0);
+    const sentences = text.content.split(/(?<=[.!?”"»'។])\s+/).filter((s: string) => s.trim().length > 0);
     return sentences.map((sentence: string, sIdx: number) => (
       <>
         <span
@@ -417,7 +417,7 @@ export default function ReadPage() {
       );
     }
 
-    const sentences = text.content.split(/(?<=[.!?”"»'])\s+/).filter((s: string) => s.trim().length > 0);
+    const sentences = text.content.split(/(?<=[.!?”"»'។])\s+/).filter((s: string) => s.trim().length > 0);
     return (
       <div className="divide-y divide-gray-100">
         {sentences.map((sentence: string, sIdx: number) => {
@@ -557,8 +557,7 @@ export default function ReadPage() {
                 Translation
               </button>
             </>
-          ) : null}
-          <button
+          ) : <button
             onClick={translateAll}
             disabled={isTranslatingAll}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-60 transition-colors"
@@ -570,7 +569,8 @@ export default function ReadPage() {
               <Languages className="w-4 h-4" />
             )}
             {isTranslatingAll ? "Translating…" : "Translate All"}
-          </button>
+          </button>}
+          
         </div>
       </div>
 
@@ -672,7 +672,7 @@ export default function ReadPage() {
 
         {/* Main content */}
         <div
-          className={`flex-1 ${showSidebar ? (!showParallelTranslation ? "lg:pr-80" : "") : ""}`}
+          className={`flex-1 ${showSidebar ? (!showParallelTranslation ? "/lg:pr-80" : "") : ""}`}
         >
           {/* Reading instructions */}
           <div className="card p-4 mb-4 bg-primary-50 border-primary-200">
@@ -704,7 +704,7 @@ export default function ReadPage() {
                   disabled={
                     simplifyMutation.isPending || text.difficulty === "beginner"
                   }
-                  className="btn btn-secondary text-sm"
+                  className="btn btn-secondary text-sm disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {simplifyMutation.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -720,7 +720,7 @@ export default function ReadPage() {
                   disabled={
                     harderMutation.isPending || text.difficulty === "advanced"
                   }
-                  className="btn btn-secondary text-sm"
+                  className="btn btn-secondary text-sm disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {harderMutation.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

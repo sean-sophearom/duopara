@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '../lib/api';
+import { queryClient } from '../main';
 
 export interface User {
   id: string;
@@ -92,6 +93,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           error: null
         });
+        queryClient.clear();
       },
 
       checkAuth: async () => {

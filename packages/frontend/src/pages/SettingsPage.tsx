@@ -54,17 +54,17 @@ export default function SettingsPage() {
 
   const nativeLangOptions = [
     { code: 'English', name: 'English' },
-    { code: 'Spanish', name: 'Spanish' },
-    { code: 'French', name: 'French' },
-    { code: 'German', name: 'German' },
-    { code: 'Portuguese', name: 'Portuguese' },
-    { code: 'Italian', name: 'Italian' },
-    { code: 'Chinese', name: 'Chinese' },
-    { code: 'Japanese', name: 'Japanese' },
-    { code: 'Korean', name: 'Korean' },
-    { code: 'Russian', name: 'Russian' },
-    { code: 'Arabic', name: 'Arabic' },
-    { code: 'Hindi', name: 'Hindi' },
+    // { code: 'Spanish', name: 'Spanish' },
+    // { code: 'French', name: 'French' },
+    // { code: 'German', name: 'German' },
+    // { code: 'Portuguese', name: 'Portuguese' },
+    // { code: 'Italian', name: 'Italian' },
+    // { code: 'Chinese', name: 'Chinese' },
+    // { code: 'Japanese', name: 'Japanese' },
+    // { code: 'Korean', name: 'Korean' },
+    // { code: 'Russian', name: 'Russian' },
+    // { code: 'Arabic', name: 'Arabic' },
+    // { code: 'Hindi', name: 'Hindi' },
   ];
 
   return (
