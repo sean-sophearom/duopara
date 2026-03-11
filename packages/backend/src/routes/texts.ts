@@ -198,7 +198,7 @@ textsRouter.post('/:id/translate', async (req: AuthRequest, res) => {
     }
 
     // Split into sentences the same way the frontend does
-    const sentences: string[] = text.content.split(/(?<=[.!?])\s+/);
+    const sentences: string[] = text.content.split(/(?<=[.!?”"»'])\s+/).filter(s => s.trim().length > 0);
 
     const numberedList = sentences
       .map((s, i) => `${i + 1}. ${s}`)

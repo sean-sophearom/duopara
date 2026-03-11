@@ -248,7 +248,7 @@ export default function ReadPage() {
   const speakAll = useCallback(() => {
     if (!text?.content) return;
     speechSynthesis.cancel();
-    const sentences = text.content.split(/(?<=[.!?])\s+/);
+    const sentences = text.content.split(/(?<=[.!?”"»'])\s+/).filter((s: string)=> s.trim().length > 0);
     const lang = getLanguageCode(text.language);
     let idx = 0;
     setIsSpeaking(true);
@@ -381,7 +381,7 @@ export default function ReadPage() {
   // Parse content into clickable words (normal mode)
   const renderContent = () => {
     if (!text?.content) return null;
-    const sentences = text.content.split(/(?<=[.!?])\s+/);
+    const sentences = text.content.split(/(?<=[.!?”"»'])\s+/).filter((s: string) => s.trim().length > 0);
     return sentences.map((sentence: string, sIdx: number) => (
       <>
         <span
@@ -417,7 +417,7 @@ export default function ReadPage() {
       );
     }
 
-    const sentences = text.content.split(/(?<=[.!?])\s+/);
+    const sentences = text.content.split(/(?<=[.!?”"»'])\s+/).filter((s: string) => s.trim().length > 0);
     return (
       <div className="divide-y divide-gray-100">
         {sentences.map((sentence: string, sIdx: number) => {
