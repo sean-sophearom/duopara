@@ -67,6 +67,8 @@ export const generateApi = {
     knownWordsRatio?: number;
     wordCount?: number;
     style?: string;
+    includeLearningWords?: boolean;
+    includeLearnedWords?: boolean;
   }) => api.post('/generate', data),
   regenerate: (textId: string, action: 'simplify' | 'harder') =>
     api.post('/generate/regenerate', { textId, action }),

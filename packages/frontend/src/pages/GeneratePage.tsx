@@ -56,6 +56,8 @@ export default function GeneratePage() {
   const [knownWordsRatio, setKnownWordsRatio] = useState(defaultRatio);
   const [wordCount, setWordCount] = useState(200);
   const [style, setStyle] = useState('story');
+  const [includeLearningWords, setIncludeLearningWords] = useState(true);
+  const [includeLearnedWords, setIncludeLearnedWords] = useState(true);
 
   const { data: languages } = useQuery({
     queryKey: ['languages'],
@@ -85,6 +87,8 @@ export default function GeneratePage() {
       knownWordsRatio,
       wordCount,
       style,
+      includeLearningWords,
+      includeLearnedWords
     });
   };
 
@@ -92,7 +96,7 @@ export default function GeneratePage() {
     setTopic(suggestedTopic);
   };
 
-  const knownWords = (vocabStats?.learned || 0) + (vocabStats?.mastered || 0);
+  const knownWords = (includeLearnedWords ? (vocabStats?.learned || 0) + (vocabStats?.mastered || 0) : 0) + (includeLearningWords ? (vocabStats?.learning || 0) : 0);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -234,6 +238,37 @@ export default function GeneratePage() {
               <p className="text-xs text-gray-500 mt-1">
                 {100 - knownWordsRatio}% new words to challenge you
               </p>
+
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Include in "Known":</p>
+                <div className="flex flex-wrap gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={includeLearnedWords}
+                      onChange={(e) => setIncludeLearnedWords(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
+                      Learned ({vocabStats?.learned || 0})
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={includeLearningWords}
+                      onChange={(e) => setIncludeLearningWords(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
+                      Learning ({vocabStats?.learning || 0})
+                    </span>
+                  </label>
+                </div>
+                {(!includeLearnedWords && !includeLearningWords) && (
+                  <p className="text-xs text-red-500 animate-pulse">Select at least one category</p>
+                )}
+              </div>
             </div>
 
             {/* Word count */}
@@ -288,7 +323,7 @@ export default function GeneratePage() {
         {/* Generate button */}
         <button
           type="submit"
-          disabled={generateMutation.isPending || !topic.trim()}
+          disabled={generateMutation.isPending || !topic.trim() || (!includeLearnedWords && !includeLearningWords)}
           className="btn btn-primary w-full py-4 text-lg"
         >
           {generateMutation.isPending ? (

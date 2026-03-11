@@ -13,7 +13,9 @@ const generateSchema = z.object({
   difficulty: z.enum(['beginner', 'intermediate', 'advanced']).default('intermediate'),
   knownWordsRatio: z.number().min(0).max(100).default(80),
   wordCount: z.number().min(50).max(1000).default(200),
-  style: z.enum(['story', 'article', 'dialogue', 'description']).default('story')
+  style: z.enum(['story', 'article', 'dialogue', 'description']).default('story'),
+  includeLearningWords: z.boolean().default(true),
+  includeLearnedWords: z.boolean().default(true)
 });
 
 const regenerateSchema = z.object({
@@ -26,12 +28,26 @@ generateRouter.post('/', async (req: AuthRequest, res) => {
   try {
     const params = generateSchema.parse(req.body);
     
+    // Build status filter based on preferences
+    const statusIn: string[] = [];
+    if (params.includeLearnedWords) {
+      statusIn.push('learned', 'mastered');
+    }
+    if (params.includeLearningWords) {
+      statusIn.push('learning');
+    }
+
+    // Default to learned/mastered if none selected (should not happen with UI validation)
+    if (statusIn.length === 0) {
+      statusIn.push('learned', 'mastered');
+    }
+
     // Get user's known words
     const knownWords = await prisma.vocabularyWord.findMany({
       where: {
         userId: req.userId,
         language: params.language,
-        status: { in: ['learned', 'mastered'] }
+        status: { in: statusIn }
       },
       select: { word: true, baseForm: true }
     });

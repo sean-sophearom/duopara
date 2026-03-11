@@ -53,6 +53,13 @@ export default function ReadPage() {
   const [markedWords, setMarkedWords] = useState<Set<string>>(new Set());
   const [showSidebar, setShowSidebar] = useState(true);
   const [showParallelTranslation, setShowParallelTranslation] = useState(false);
+  const [hoveredWord, setHoveredWord] = useState<{
+    word: string;
+    sentence: string;
+    target: HTMLElement;
+  } | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const [useLiteralTranslation, setUseLiteralTranslation] = useState(
     () => localStorage.getItem("duopara.useLiteralTranslation") === "true",
   );
@@ -284,6 +291,27 @@ export default function ReadPage() {
     return codes[lang] || "es-ES";
   };
 
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (hoveredWord?.target) {
+      const updatePosition = () => {
+        const rect = hoveredWord.target.getBoundingClientRect();
+        setPopupPos({
+          top: rect.top - 44, // Using viewport-relative top for "fixed" positioning
+          left: rect.left + rect.width / 2,
+        });
+      };
+      updatePosition();
+      window.addEventListener("scroll", updatePosition);
+      window.addEventListener("resize", updatePosition);
+      return () => {
+        window.removeEventListener("scroll", updatePosition);
+        window.removeEventListener("resize", updatePosition);
+      };
+    }
+  }, [hoveredWord]);
+
   // Speak a single sentence (used by per-row buttons in parallel mode)
   const speakSentence = useCallback(
     (sentence: string) => {
@@ -319,6 +347,22 @@ export default function ReadPage() {
         <span
           key={`${sIdx}-${wIdx}`}
           onClick={() => handleWordClick(part, sentence)}
+          onMouseEnter={(e) => {
+            if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+            const clean = part.replace(/[^\p{L}'-]/gu, "").toLowerCase();
+            if (clean) {
+              setHoveredWord({
+                word: part,
+                sentence,
+                target: e.currentTarget,
+              });
+            }
+          }}
+          onMouseLeave={() => {
+            hoverTimeoutRef.current = setTimeout(() => {
+              setHoveredWord(null);
+            }, 300);
+          }}
           className={`
             word cursor-pointer rounded px-0.5 transition-all duration-150
             ${isSelected ? "bg-primary-200 ring-2 ring-primary-400" : ""}
@@ -573,6 +617,59 @@ export default function ReadPage() {
       </div>
 
       <div className="flex gap-6">
+        {/* Hover Popup */}
+        {hoveredWord && (
+          <div
+            className="fixed z-50 transform -translate-x-1/2 flex items-center bg-white border border-gray-200 shadow-lg rounded-full px-1.5 py-1 gap-1 animate-in fade-in zoom-in duration-200 pointer-events-auto"
+            style={{
+              top: `${popupPos.top}px`,
+              left: `${popupPos.left}px`,
+            }}
+            onMouseEnter={() => {
+              if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+            }}
+            onMouseLeave={() => {
+              hoverTimeoutRef.current = setTimeout(() => {
+                setHoveredWord(null);
+              }, 300);
+            }}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                speak(hoveredWord.word);
+              }}
+              className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary-600 transition-colors"
+              title="Pronounce"
+            >
+              <Volume2 className="w-4 h-4" />
+            </button>
+            <div className="w-px h-4 bg-gray-200" />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                markLearnedMutation.mutate(
+                  hoveredWord.word.replace(/[^\p{L}'-]/gu, "").toLowerCase(),
+                );
+                setHoveredWord(null);
+              }}
+              disabled={markedWords.has(
+                hoveredWord.word.replace(/[^\p{L}'-]/gu, "").toLowerCase(),
+              )}
+              className={`p-1.5 rounded-full transition-colors ${
+                markedWords.has(
+                  hoveredWord.word.replace(/[^\p{L}'-]/gu, "").toLowerCase(),
+                )
+                  ? "text-green-500 bg-green-50 cursor-default"
+                  : "text-gray-500 hover:text-green-600 hover:bg-green-50"
+              }`}
+              title="Mark as Learned"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Main content */}
         <div
           className={`flex-1 ${showSidebar ? (!showParallelTranslation ? "lg:pr-80" : "") : ""}`}
