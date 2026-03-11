@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  vocabulary    VocabularyWord[]
+  generatedTexts GeneratedText[]
+  readingSessions ReadingSession[]
+  settings      UserSettings?
+}
+
+model UserSettings {
+  id                 String @id @default(uuid())
+  userId             String @unique
+  user               User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetLanguage     String @default("Spanish")
+  nativeLanguage     String @default("English")
+  knownWordsRatio    Int    @default(80)  // Percentage 0-100
+  defaultDifficulty  String @default("intermediate") // beginner, intermediate, advanced
+}
+
+model VocabularyWord {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  word          String
+  language      String
+  translation   String?
+  partOfSpeech  String?  // noun, verb, adjective, etc.
+  baseForm      String?  // infinitive/singular form
+  
+  status        String   @default("learning") // learning, learned, mastered
+  timesEncountered Int   @default(0)
+  timesCorrect  Int      @default(0)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  masteredAt    DateTime?
+
+  @@unique([userId, word, language])
+  @@index([userId, language, status])
+}
+
+model GeneratedText {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  topic           String
+  language        String
+  difficulty      String   // beginner, intermediate, advanced
+  knownWordsRatio Int      // The ratio used to generate
+  
+  title           String
+  content         String   // The generated text
+  wordCount       Int
+  
+  // Words analysis
+  knownWordsUsed    String // JSON array of known words used
+  newWordsIntroduced String // JSON array of new words introduced
+  
+  // Cached parallel translation: JSON { targetLanguage, sentences: [{translation, literalTranslation}] }
+  parallelTranslation String?
+
+  createdAt       DateTime @default(now())
+  
+  readingSessions ReadingSession[]
+
+  @@index([userId, createdAt])
+}
+
+model ReadingSession {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  textId          String
+  text            GeneratedText @relation(fields: [textId], references: [id], onDelete: Cascade)
+  
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  
+  // Tracking
+  wordsLookedUp   String   @default("[]") // JSON array of words translated
+  wordsMarkedLearned String @default("[]") // JSON array of words marked as learned
+  
+  @@index([userId, startedAt])
+}
+
+model TranslationCache {
+  id         String   @id @default(uuid())
+  endpoint   String   // 'sentence' | 'full'
+  cacheKey   String   // SHA-256 hash of all input fields
+  response   String   // JSON-encoded response
+  createdAt  DateTime @default(now())
+
+  @@unique([endpoint, cacheKey])
+  @@index([endpoint, cacheKey])
+}
+
+// For tracking daily activity streaks
+model DailyActivity {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime
+  
+  textsRead Int      @default(0)
+  wordsLearned Int   @default(0)
+  minutesActive Int  @default(0)
+  
+  @@unique([userId, date])
+  @@index([userId, date])
+}
