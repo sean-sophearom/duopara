@@ -72,15 +72,15 @@ All subsequent steps are as the `duopara` user unless noted.
 ### 2. Clone & install
 
 ```bash
-git clone https://github.com/<your-org>/duopara.git /var/www/duopara/app
-cd /var/www/duopara/app
+git clone https://github.com/<your-org>/duopara.git /var/www/duopara
+cd /var/www/duopara
 npm install
 ```
 
 ### 3. Configure the backend
 
 ```bash
-cd /var/www/duopara/app/packages/backend
+cd /var/www/duopara/packages/backend
 cp .env.example .env
 nano .env          # fill in every value — see the sections below
 ```
@@ -149,7 +149,7 @@ DATABASE_URL="mysql://duopara:strongpassword@localhost:3306/duopara"
 Run the schema migration (works for every provider):
 
 ```bash
-cd /var/www/duopara/app
+cd /var/www/duopara
 npm run db:generate
 npm run db:push
 ```
@@ -157,7 +157,7 @@ npm run db:push
 ### 5. Build the backend
 
 ```bash
-cd /var/www/duopara/app
+cd /var/www/duopara
 npm run build --workspace=@duopara/backend
 ```
 
@@ -168,7 +168,7 @@ Output lands in `packages/backend/dist/`.
 The frontend build is static HTML/CSS/JS — nginx will serve it directly.
 
 ```bash
-cd /var/www/duopara/app
+cd /var/www/duopara
 npm run build --workspace=@duopara/frontend
 ```
 
@@ -197,9 +197,9 @@ After=network.target
 [Service]
 Type=simple
 User=duopara
-WorkingDirectory=/var/www/duopara/app/packages/backend
-EnvironmentFile=/var/www/duopara/app/packages/backend/.env
-ExecStart=/usr/bin/node /var/www/duopara/app/packages/backend/dist/index.js
+WorkingDirectory=/var/www/duopara/packages/backend
+EnvironmentFile=/var/www/duopara/packages/backend/.env
+ExecStart=/usr/bin/node /var/www/duopara/packages/backend/dist/index.js
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -229,7 +229,7 @@ server {
     server_name yourdomain.com www.yourdomain.com;
 
     # ── Frontend (static files) ──────────────────────────────────────────────
-    root /var/www/duopara/app/packages/frontend/dist;
+    root /var/www/duopara/packages/frontend/dist;
     index index.html;
 
     # SPA fallback — all unknown paths return index.html
@@ -291,7 +291,7 @@ Run these steps every time you deploy a new version.
 
 ```bash
 # 1. Pull latest code
-cd /var/www/duopara/app
+cd /var/www/duopara
 git pull origin main          # or your production branch
 
 # 2. Install any new dependencies
