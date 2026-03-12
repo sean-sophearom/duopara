@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import type { GameProps } from './types';
 import { GameWrapper, FeedbackOverlay, LoadingGame } from './GameWrapper';
 import { GAME_INFO } from './types';
@@ -12,7 +12,6 @@ export function TrueFalseSwipeGame({
   words,
   sourceLanguage,
   targetLanguage,
-  config,
   onAttempt,
   onComplete
 }: GameProps) {

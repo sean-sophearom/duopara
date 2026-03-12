@@ -8,8 +8,7 @@ import type {
   PracticeSession, 
   PracticeAttempt,
   SessionStats,
-  GameConfig,
-  GameWordData
+  GameConfig
 } from './types';
 
 interface UsePracticeSessionProps {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
-import { practiceApi, settingsApi, vocabularyApi } from '../lib/api';
+import { practiceApi, vocabularyApi } from '../lib/api';
 import {
   GameType,
   VocabularyStatus,
@@ -22,15 +22,12 @@ import {
   TrueFalseSwipeGame
 } from '../games';
 import {
-  Gamepad2,
   BookOpen,
   GraduationCap,
   Trophy,
-  Settings,
   Play,
   ChevronRight,
-  AlertCircle,
-  Loader2
+  AlertCircle
 } from 'lucide-react';
 
 type ViewState = 'select' | 'config' | 'loading' | 'playing' | 'results';

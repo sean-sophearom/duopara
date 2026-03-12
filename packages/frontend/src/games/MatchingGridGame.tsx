@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import type { GameProps, PracticeWord } from './types';
+import type { GameProps } from './types';
 import { GameWrapper, LoadingGame } from './GameWrapper';
 import { shuffleArray } from './usePracticeSession';
 import { GAME_INFO } from './types';

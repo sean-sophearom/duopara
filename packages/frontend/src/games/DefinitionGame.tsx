@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import type { GameProps, PracticeWord } from './types';
+import { useState, useMemo } from 'react';
+import type { GameProps } from './types';
 import { GameWrapper, FeedbackOverlay, LoadingGame } from './GameWrapper';
 import { shuffleArray, pickRandom } from './usePracticeSession';
 import { GAME_INFO } from './types';
@@ -10,8 +10,6 @@ import { GAME_INFO } from './types';
  */
 export function DefinitionGame({
   words,
-  sourceLanguage,
-  targetLanguage,
   config,
   onAttempt,
   onComplete

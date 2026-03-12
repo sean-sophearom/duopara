@@ -10,8 +10,6 @@ import { GAME_INFO } from './types';
  */
 export function FillBlankGame({
   words,
-  sourceLanguage,
-  targetLanguage,
   config,
   onAttempt,
   onComplete

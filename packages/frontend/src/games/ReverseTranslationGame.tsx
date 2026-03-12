@@ -11,7 +11,6 @@ import { GAME_INFO } from './types';
 export function ReverseTranslationGame({
   words,
   sourceLanguage,
-  targetLanguage,
   config,
   onAttempt,
   onComplete

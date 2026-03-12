@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useRef } from "react";
-import { X, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import type { SessionStats } from "./types";
 
 interface GameWrapperProps {

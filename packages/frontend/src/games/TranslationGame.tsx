@@ -10,7 +10,6 @@ import { GAME_INFO } from './types';
  */
 export function TranslationGame({
   words,
-  sourceLanguage,
   targetLanguage,
   config,
   onAttempt,
