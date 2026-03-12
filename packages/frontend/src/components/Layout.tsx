@@ -130,7 +130,7 @@ export default function Layout() {
 
       {/* Main content */}
       <main className="lg:pl-64 pt-16 lg:pt-0 min-h-screen flex">
-        <div className="p-4 lg:p-8 flex-1">
+        <div className="p-4 lg:p-8 flex-1 min-w-0">
           <Outlet />
         </div>
       </main>
