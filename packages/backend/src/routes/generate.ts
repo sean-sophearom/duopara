@@ -71,28 +71,14 @@ generateRouter.post('/', async (req: AuthRequest, res) => {
       modelSettings: {
         temperature: config.temperature ?? 0.8,
         maxOutputTokens: config.maxOutputTokens ?? 2000
+      },
+      structuredOutput: {
+        schema: generatedTextSchema
       }
     });
 
-    const generatedContent = result.text || '';
-    
-    // Parse the response (expecting JSON with title and content)
-    let title = params.topic;
-    let content = generatedContent;
-    
-    try {
-      const parsed = JSON.parse(generatedContent);
-      title = parsed.title || title;
-      content = parsed.content || parsed.text || content;
-    } catch {
-      // If not JSON, use the raw content
-      // Try to extract title from first line
-      const lines = generatedContent.split('\n').filter(l => l.trim());
-      if (lines.length > 1 && lines[0].length < 100) {
-        title = lines[0].replace(/^#\s*/, '').trim();
-        content = lines.slice(1).join('\n').trim();
-      }
-    }
+    const title = result.object?.title || params.topic;
+    const content = result.object?.content || '';
 
     // Analyze words used
     const wordsInText = extractWords(content, params.language);
