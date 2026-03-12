@@ -193,7 +193,8 @@ generateRouter.post('/regenerate', async (req: AuthRequest, res) => {
       action,
       language: original.language,
       knownWords: knownWordsList,
-      newDifficulty
+      newDifficulty,
+      wordCount: original.wordCount
     });
 
     // Use Mastra agent with structured output for guaranteed valid JSON
@@ -272,8 +273,9 @@ function buildGenerationPrompt(params: {
   style: string;
   knownWords: string[];
 }): string {
+  const sliceCount = Math.max(50, params.wordCount - 20);
   const knownWordsHint = params.knownWords.length > 0
-    ? `\n\nThe learner knows these words (use approximately ${params.knownWordsRatio}% of vocabulary from this list): ${params.knownWords.slice(0, 200).join(', ')}${params.knownWords.length > 200 ? '... and more' : ''}`
+    ? `\n\nThe learner knows these words (use approximately ${params.knownWordsRatio}% of vocabulary from this list): ${params.knownWords.slice(0, sliceCount).join(', ')}${params.knownWords.length > sliceCount ? '... and more' : ''}`
     : `\n\nThe learner is a beginner with limited vocabulary. Keep words simple and common.`;
 
   const styleGuide: Record<string, string> = {
@@ -303,7 +305,9 @@ function buildRegenerationPrompt(params: {
   language: string;
   knownWords: string[];
   newDifficulty: string;
+  wordCount: number;
 }): string {
+  const sliceCount = Math.max(50, params.wordCount - 20);
   const actionGuide = params.action === 'simplify'
     ? `SIMPLIFY this text:
 - Use simpler vocabulary
@@ -328,7 +332,7 @@ ${params.originalContent}
 Topic: ${params.topic}
 New difficulty level: ${params.newDifficulty}
 
-The learner knows these words: ${params.knownWords.slice(0, 150).join(', ')}
+The learner knows these words: ${params.knownWords.slice(0, sliceCount).join(', ')}
 
 Generate a ${params.action === 'simplify' ? 'simpler' : 'more challenging'} version while keeping it engaging.`;
 }

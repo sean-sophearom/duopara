@@ -95,7 +95,7 @@ export default function DashboardPage() {
           </div>
           <p className="text-3xl font-bold text-gray-900">
             {vocabStats?.total || 0}
-            <span className="text-lg font-normal text-gray-500 ml-1">&nbsp;days</span>
+            <span className="text-lg font-normal text-gray-500 ml-1">&nbsp;words</span>
           </p>
         </div>
       </div>
