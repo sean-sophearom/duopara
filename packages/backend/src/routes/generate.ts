@@ -52,10 +52,10 @@ generateRouter.post('/', async (req: AuthRequest, res) => {
       select: { word: true, baseForm: true }
     });
 
-    const knownWordsList = [...new Set([
+    const knownWordsList = shuffle([...new Set([
       ...knownWords.map((w: any) => w.word),
       ...knownWords.filter((w: any) => w.baseForm).map((w: any) => w.baseForm!)
-    ])];
+    ])]);
 
     // Build the prompt
     const prompt = buildGenerationPrompt({
@@ -166,10 +166,10 @@ generateRouter.post('/regenerate', async (req: AuthRequest, res) => {
       select: { word: true, baseForm: true }
     });
 
-    const knownWordsList = [...new Set([
+    const knownWordsList = shuffle([...new Set([
       ...knownWords.map((w: any) => w.word),
       ...knownWords.filter((w: any) => w.baseForm).map((w: any) => w.baseForm!)
-    ])];
+    ])]);
 
     // Adjust difficulty
     const difficultyMap: Record<string, string[]> = {
@@ -341,4 +341,13 @@ function extractWords(text: string, _language: string): string[] {
     .replace(/[^\p{L}\p{N}\s'-]/gu, ' ')
     .split(/\s+/)
     .filter(word => word.length > 1 && !/^\d+$/.test(word));
+}
+
+function shuffle<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
