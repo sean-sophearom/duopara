@@ -189,7 +189,7 @@ export function FeedbackOverlay({
 
   // No overlay for correct - just auto-advance
   if (isCorrect) {
-    return <h1>hiii</h1>;
+    return null;
   }
 
   // For incorrect, show a minimal bottom bar
