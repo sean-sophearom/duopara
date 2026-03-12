@@ -3,8 +3,6 @@ generator client {
 }
 
 datasource db {
-  // Supported values: sqlite | mysql | postgresql
-  // Set DATABASE_PROVIDER in .env to switch databases.
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
