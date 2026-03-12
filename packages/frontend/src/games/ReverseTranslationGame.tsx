@@ -44,7 +44,7 @@ export function ReverseTranslationGame({
     return <LoadingGame message="Preparing questions..." />;
   }
   
-  if (!currentWord?.vocabularyWord.translation) {
+  if (!currentWord?.gameData?.translation) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-red-600">This word doesn't have a translation.</p>
@@ -69,7 +69,7 @@ export function ReverseTranslationGame({
     onAttempt({
       vocabularyWordId: currentWord.vocabularyWord.id,
       isCorrect: correct,
-      questionData: { translation: currentWord.vocabularyWord.translation, options },
+      questionData: { translation: currentWord.gameData!.translation, options },
       userAnswer: answer,
       correctAnswer: currentWord.vocabularyWord.word
     });
@@ -109,7 +109,7 @@ export function ReverseTranslationGame({
             What is the {sourceLanguage} word for:
           </p>
           <h2 className="text-4xl font-bold text-gray-900">
-            {currentWord.vocabularyWord.translation}
+            {currentWord.gameData!.translation}
           </h2>
         </div>
         

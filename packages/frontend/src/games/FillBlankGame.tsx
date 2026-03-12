@@ -126,7 +126,7 @@ export function FillBlankGame({
     return (
       <span>
         {parts[0]}
-        <span className="inline-block min-w-[80px] border-b-2 border-blue-500 mx-1 text-center">
+        <span className="inline-block min-w-[80px] border-b-2 border-blue-500 mx-1 text-center text-transparent">
           {selectedAnswer || '____'}
         </span>
         {parts[1]}
@@ -153,9 +153,9 @@ export function FillBlankGame({
           </p>
           
           {/* Show translation hint */}
-          {currentWord.vocabularyWord.translation && (
-            <p className="mt-4 text-sm text-gray-500">
-              Hint: The word means "{currentWord.vocabularyWord.translation}"
+          {currentWord.gameData?.translation && (
+            <p className="mt-4 text-sm text-gray-500 invisible">
+              Hint: The word means "{currentWord.gameData.translation}"
             </p>
           )}
         </div>

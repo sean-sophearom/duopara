@@ -32,7 +32,7 @@ const startSessionSchema = z.object({
   wordIds: z.array(z.string()).min(1),
   config: z.object({
     optionCount: z.number().min(2).max(8).optional(),
-    pairCount: z.number().min(3).max(6).optional()
+    pairCount: z.number().min(3).max(5).optional()
   }).optional()
 });
 
@@ -81,9 +81,9 @@ function calculateNextReview(
   } else if (newStreak === 2) {
     intervalDays = 3;
   } else {
-    // For streak >= 3, use SM-2 formula
+    // For streak >= 3, use SM-2 formula with cap
     const previousInterval = Math.pow(newDifficulty, newStreak - 2) * 3;
-    intervalDays = Math.round(previousInterval * newDifficulty);
+    intervalDays = Math.min(365, Math.round(previousInterval * newDifficulty)); // Cap at 1 year
   }
   
   const nextPracticeAt = new Date();
@@ -199,6 +199,7 @@ practiceRouter.post('/game-data', async (req: AuthRequest, res) => {
         cached: true,
         data: {
           definition: gameData.definition,
+          translation: gameData.translation,
           distractorDefinitions: JSON.parse(gameData.distractorDefinitions),
           distractorTranslations: JSON.parse(gameData.distractorTranslations),
           exampleSentences: JSON.parse(gameData.exampleSentences),
@@ -213,14 +214,15 @@ practiceRouter.post('/game-data', async (req: AuthRequest, res) => {
     const prompt = `Generate practice game data for the following word:
 
 Word: "${word}" (${sourceLanguage})
-Translation: "${translation || 'unknown'}" (${targetLanguage})
+Hint translation: "${translation || 'unknown'}" (${targetLanguage})
 
 Generate:
-1. A clear definition in ${targetLanguage}
-2. 5 plausible but incorrect definitions (distractors)
-3. 5 plausible but incorrect translations (distractors)
-4. 3 example sentences with the word blanked out (in ${sourceLanguage})
-5. One false translation for true/false game
+1. The correct translation in ${targetLanguage}
+2. A clear definition in ${targetLanguage}
+3. 5 plausible but incorrect definitions (distractors)
+4. 5 plausible but incorrect translations (distractors)
+5. 3 example sentences with the word blanked out (in ${sourceLanguage})
+6. One false translation for true/false game
 
 Return as JSON.`;
 
@@ -240,6 +242,7 @@ Return as JSON.`;
         sourceLanguage,
         targetLanguage,
         definition: generatedData.definition,
+        translation: generatedData.translation,
         distractorDefinitions: JSON.stringify(generatedData.distractorDefinitions),
         distractorTranslations: JSON.stringify(generatedData.distractorTranslations),
         exampleSentences: JSON.stringify(generatedData.exampleSentences),
@@ -288,6 +291,7 @@ practiceRouter.post('/game-data/batch', async (req: AuthRequest, res) => {
           cached: true,
           data: {
             definition: cached.definition,
+            translation: cached.translation,
             distractorDefinitions: JSON.parse(cached.distractorDefinitions),
             distractorTranslations: JSON.parse(cached.distractorTranslations),
             exampleSentences: JSON.parse(cached.exampleSentences),
@@ -307,14 +311,15 @@ practiceRouter.post('/game-data/batch', async (req: AuthRequest, res) => {
         const prompt = `Generate practice game data for the following word:
 
 Word: "${item.word}" (${sourceLanguage})
-Translation: "${item.translation || 'unknown'}" (${targetLanguage})
+Hint translation: "${item.translation || 'unknown'}" (${targetLanguage})
 
 Generate:
-1. A clear definition in ${targetLanguage}
+1. The correct translation in ${targetLanguage}
 2. 5 plausible but incorrect definitions (distractors)
-3. 5 plausible but incorrect translations (distractors)
-4. 3 example sentences with the word blanked out (in ${sourceLanguage})
-5. One false translation for true/false game
+3. A very very short definition in ${targetLanguage} (should be similar in length to the distractors)
+4. 5 plausible but incorrect translations (distractors)
+5. 3 example sentences with the word blanked out (in ${sourceLanguage})
+6. One false translation for true/false game
 
 Return as JSON.`;
 
@@ -334,6 +339,7 @@ Return as JSON.`;
             sourceLanguage,
             targetLanguage,
             definition: generatedData.definition,
+            translation: generatedData.translation,
             distractorDefinitions: JSON.stringify(generatedData.distractorDefinitions),
             distractorTranslations: JSON.stringify(generatedData.distractorTranslations),
             exampleSentences: JSON.stringify(generatedData.exampleSentences),

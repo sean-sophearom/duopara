@@ -29,9 +29,9 @@ export function TranslationGame({
   
   // Generate options for current word
   const options = useMemo(() => {
-    if (!currentWord?.vocabularyWord.translation) return [];
+    if (!currentWord?.gameData?.translation) return [];
     
-    const correctTranslation = currentWord.vocabularyWord.translation;
+    const correctTranslation = currentWord.gameData.translation;
     
     // Get distractors from other words first, then from game data
     let distractors = getDistractors(words, currentWord, optionCount - 1, 'translation');
@@ -54,7 +54,7 @@ export function TranslationGame({
     return <LoadingGame message="Preparing questions..." />;
   }
   
-  if (!currentWord?.vocabularyWord.translation) {
+  if (!currentWord?.gameData?.translation) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-red-600">This word doesn't have a translation.</p>
@@ -65,7 +65,7 @@ export function TranslationGame({
   const handleSelect = (answer: string) => {
     if (selectedAnswer) return;
     
-    const correct = answer === currentWord.vocabularyWord.translation;
+    const correct = answer === currentWord.gameData!.translation;
     setSelectedAnswer(answer);
     setIsCorrect(correct);
     setShowFeedback(true);
@@ -81,7 +81,7 @@ export function TranslationGame({
       isCorrect: correct,
       questionData: { word: currentWord.vocabularyWord.word, options },
       userAnswer: answer,
-      correctAnswer: currentWord.vocabularyWord.translation!
+      correctAnswer: currentWord.gameData!.translation
     });
   };
   
@@ -134,7 +134,7 @@ export function TranslationGame({
             let buttonClass = 'w-full p-4 rounded-lg border-2 text-left transition-all ';
             
             if (selectedAnswer) {
-              if (option === currentWord.vocabularyWord.translation) {
+              if (option === currentWord.gameData!.translation) {
                 buttonClass += 'border-green-500 bg-green-50 text-green-800';
               } else if (option === selectedAnswer) {
                 buttonClass += 'border-red-500 bg-red-50 text-red-800';
@@ -167,7 +167,7 @@ export function TranslationGame({
       {showFeedback && (
         <FeedbackOverlay
           isCorrect={isCorrect}
-          correctAnswer={currentWord.vocabularyWord.translation!}
+          correctAnswer={currentWord.gameData!.translation}
           onContinue={handleContinue}
         />
       )}

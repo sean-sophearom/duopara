@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { GameProps, PracticeWord } from './types';
 import { GameWrapper, LoadingGame } from './GameWrapper';
 import { shuffleArray } from './usePracticeSession';
@@ -31,6 +31,7 @@ export function MatchingGridGame({
   const [matchedPairs, setMatchedPairs] = useState<Set<string>>(new Set());
   const [wrongPair, setWrongPair] = useState<[string, string] | null>(null);
   const [isComplete, setIsComplete] = useState(false);
+  const completionFiredRef = useRef(false);
   
   const gameInfo = GAME_INFO.matching;
   
@@ -39,7 +40,7 @@ export function MatchingGridGame({
   
   // Get words for this round (limited by pairCount)
   const gameWords = useMemo(() => {
-    const validWords = words.filter(w => w.vocabularyWord.translation);
+    const validWords = words.filter(w => w.gameData?.translation);
     return validWords.slice(0, pairCount);
   }, [words, pairCount]);
   
@@ -57,7 +58,7 @@ export function MatchingGridGame({
       });
       allTiles.push({
         id: `trans-${word.vocabularyWord.id}`,
-        content: word.vocabularyWord.translation!,
+        content: word.gameData!.translation,
         type: 'translation',
         wordId: word.vocabularyWord.id,
         matched: false
@@ -69,7 +70,9 @@ export function MatchingGridGame({
   
   // Check if all pairs are matched
   useEffect(() => {
+    if (completionFiredRef.current) return;
     if (matchedPairs.size === gameWords.length && gameWords.length > 0) {
+      completionFiredRef.current = true;
       setIsComplete(true);
       // Submit all attempts at once
       gameWords.forEach(word => {
@@ -77,8 +80,8 @@ export function MatchingGridGame({
           vocabularyWordId: word.vocabularyWord.id,
           isCorrect: true,
           questionData: { gameType: 'matching', pairCount },
-          userAnswer: word.vocabularyWord.translation!,
-          correctAnswer: word.vocabularyWord.translation!
+          userAnswer: word.gameData!.translation,
+          correctAnswer: word.gameData!.translation
         });
       });
       
@@ -152,7 +155,7 @@ export function MatchingGridGame({
           isCorrect: false,
           questionData: { gameType: 'matching', selectedPair: [selectedTile.content, tile.content] },
           userAnswer: tile.content,
-          correctAnswer: word.vocabularyWord.translation!
+          correctAnswer: word.gameData!.translation
         });
       }
     }
@@ -184,9 +187,10 @@ export function MatchingGridGame({
     return baseClass;
   };
   
-  // Determine grid columns based on pair count
-  const gridCols = gameWords.length <= 3 ? 'grid-cols-2' : 
-                   gameWords.length <= 4 ? 'grid-cols-4' : 
+  // Determine grid columns based on pair count (pair count equals half the tiles)
+  // 3 pairs = 6 tiles → 3x2, 4 pairs = 8 tiles → 4x2, 5 pairs = 10 tiles → 5x2  
+  const gridCols = gameWords.length === 3 ? 'grid-cols-3' : 
+                   gameWords.length === 4 ? 'grid-cols-4' : 
                    'grid-cols-5';
   
   return (

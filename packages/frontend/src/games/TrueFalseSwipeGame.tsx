@@ -41,11 +41,11 @@ export function TrueFalseSwipeGame({
     if (!currentWord) return '';
     
     if (showCorrect) {
-      return currentWord.vocabularyWord.translation || '';
+      return currentWord.gameData?.translation || '';
     } else {
       // Show false translation from game data or another word
       return currentWord.gameData?.falseTranslation || 
-             words[(currentIndex + 1) % words.length]?.vocabularyWord.translation ||
+             words[(currentIndex + 1) % words.length]?.gameData?.translation ||
              'Unknown';
     }
   }, [currentWord, showCorrect, currentIndex, words]);
@@ -55,7 +55,7 @@ export function TrueFalseSwipeGame({
     return <LoadingGame message="Preparing questions..." />;
   }
   
-  if (!currentWord?.vocabularyWord.translation) {
+  if (!currentWord?.gameData?.translation) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-red-600">This word doesn't have a translation.</p>
@@ -194,7 +194,7 @@ export function TrueFalseSwipeGame({
           onTouchEnd={handleDragEnd}
         >
           <div 
-            className="bg-white rounded-2xl shadow-lg p-8 text-center transition-all duration-300"
+            className="bg-white rounded-2xl shadow-lg p-8 text-center transition-all duration-300 select-none"
             style={getCardStyle()}
           >
             {/* True overlay */}
@@ -258,7 +258,7 @@ export function TrueFalseSwipeGame({
       {showFeedback && (
         <FeedbackOverlay
           isCorrect={isCorrect}
-          correctAnswer={`${currentWord.vocabularyWord.word} = ${currentWord.vocabularyWord.translation}`}
+          correctAnswer={`${currentWord.vocabularyWord.word} = ${currentWord.gameData!.translation}`}
           onContinue={handleContinue}
         />
       )}

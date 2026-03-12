@@ -101,7 +101,8 @@ export type ParallelTextTranslation = z.infer<typeof parallelTextTranslationSche
 // ============================================
 
 export const gameWordDataSchema = z.object({
-  definition: z.string().describe('A clear, concise definition of the word in the target language (1-2 sentences)'),
+  definition: z.string().describe('A very very short definition of the word in the target language'),
+  translation: z.string().describe('The correct translation of the word in the target language'),
   distractorDefinitions: z.array(z.string()).length(5).describe(
     '5 plausible but incorrect definitions that could confuse learners'
   ),

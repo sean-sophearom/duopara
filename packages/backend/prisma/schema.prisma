@@ -145,6 +145,7 @@ model GameWordData {
   
   // LLM-generated data (JSON)
   definition              String   // Definition in target language
+  translation             String   // The correct translation in target language
   distractorDefinitions   String   // JSON array of 5 wrong definitions
   distractorTranslations  String   // JSON array of 5 wrong translations
   exampleSentences        String   // JSON array of sentences with blanks [{sentence, blankWord, fullSentence}]

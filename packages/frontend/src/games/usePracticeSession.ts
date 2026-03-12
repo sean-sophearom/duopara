@@ -254,7 +254,7 @@ export function getDistractors(
     if (distractors.length >= count) break;
     
     const value = type === 'translation' 
-      ? word.vocabularyWord.translation 
+      ? word.gameData?.translation 
       : word.vocabularyWord.word;
     
     if (value && !distractors.includes(value)) {

@@ -24,6 +24,7 @@ export interface VocabularyWord {
 
 export interface GameWordData {
   definition: string;
+  translation: string;
   distractorDefinitions: string[];
   distractorTranslations: string[];
   exampleSentences: Array<{
@@ -139,9 +140,9 @@ export const GAME_INFO: Record<GameType, GameInfo> = {
     description: 'Match words with their translations',
     icon: '🎯',
     minWords: 3,
-    defaultConfig: { pairCount: 5 },
+    defaultConfig: { pairCount: 4 },
     configOptions: {
-      pairCount: { min: 3, max: 6, default: 5, label: 'Number of pairs' }
+      pairCount: { min: 3, max: 5, default: 4, label: 'Grid size' }
     }
   },
   truefalse: {

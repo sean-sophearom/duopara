@@ -41,9 +41,16 @@ export default function PracticePage() {
   
   // State
   const [viewState, setViewState] = useState<ViewState>('select');
-  const [selectedStatuses, setSelectedStatuses] = useState<VocabularyStatus[]>(['learning', 'learned']);
+  // const [selectedStatuses, setSelectedStatuses] = useState<VocabularyStatus[]>(['learning', 'learned']);
+  const [selectedStatuses, setSelectedStatuses] = useState<VocabularyStatus[]>(() => {
+    const saved = localStorage.getItem('duopara.practice_selected_statuses');
+    return saved ? JSON.parse(saved) : ['learning', 'learned'];
+  });
   const [selectedGame, setSelectedGame] = useState<GameType | null>(null);
-  const [wordCount, setWordCount] = useState(10);
+  const [wordCount, setWordCount] = useState(() => {
+    const saved = localStorage.getItem('duopara.practice_word_count');
+    return saved ? parseInt(saved) : 5;
+  });
   const [gameConfig, setGameConfig] = useState<GameConfig>({});
   
   // Game state
@@ -51,6 +58,14 @@ export default function PracticePage() {
   const [practiceWords, setPracticeWords] = useState<PracticeWord[]>([]);
   const [sessionStats, setSessionStats] = useState<SessionStats | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
+
+  useEffect(() => {
+    localStorage.setItem('duopara.practice_word_count', wordCount.toString());
+  }, [wordCount]);
+
+  useEffect(() => {
+    localStorage.setItem('duopara.practice_selected_statuses', JSON.stringify(selectedStatuses));
+  }, [selectedStatuses]);
   
   const sourceLanguage = user?.settings?.targetLanguage || 'Spanish';
   const targetLanguage = user?.settings?.nativeLanguage || 'English';
@@ -91,6 +106,8 @@ export default function PracticePage() {
   const completeSessionMutation = useMutation({
     mutationFn: (sessionId: string) => practiceApi.completeSession(sessionId)
   });
+
+
   
   // Get available word count for selected filters
   const availableWordCount = selectedStatuses.reduce((sum, status) => {
@@ -106,15 +123,19 @@ export default function PracticePage() {
     setLoadingProgress(10);
     
     try {
+      const isMatching = selectedGame === 'matching';
+      // For matching, fetch extra words to ensure enough valid ones after filtering
+      const fetchLimit = isMatching ? (gameConfig.pairCount || 4) + 3 : wordCount;
+
       // 1. Get words
       const wordsResponse = await getWordsMutation.mutateAsync({
         language: sourceLanguage,
         statuses: selectedStatuses,
-        limit: wordCount,
+        limit: fetchLimit,
         prioritizeSpacedRepetition: true
       });
       
-      const words: VocabularyWord[] = wordsResponse.data.words;
+      let words: VocabularyWord[] = wordsResponse.data.words;
       setLoadingProgress(30);
       
       if (words.length === 0) {
@@ -123,19 +144,7 @@ export default function PracticePage() {
         return;
       }
       
-      // 2. Start session
-      const sessionResponse = await startSessionMutation.mutateAsync({
-        gameType: selectedGame,
-        sourceLanguage,
-        targetLanguage,
-        wordIds: words.map(w => w.id),
-        config: gameConfig
-      });
-      
-      setSessionId(sessionResponse.data.session.id);
-      setLoadingProgress(50);
-      
-      // 3. Load game data for words
+      // 2. Load game data for words
       const gameDataResponse = await getGameDataMutation.mutateAsync({
         words: words.map(w => ({ 
           word: w.word, 
@@ -145,10 +154,32 @@ export default function PracticePage() {
         targetLanguage
       });
       
+      setLoadingProgress(70);
+      
+      const results = gameDataResponse.data.results;
+
+      // For matching, trim to the exact pairCount words that will actually be played,
+      // so session.totalWords matches what the game submits and accuracy is correct.
+      if (isMatching) {
+        const pairCount = gameConfig.pairCount || 4;
+        words = words
+          .filter(w => results[w.word]?.data?.translation)
+          .slice(0, pairCount);
+      }
+      
+      // 3. Start session with the correct word set
+      const sessionResponse = await startSessionMutation.mutateAsync({
+        gameType: selectedGame,
+        sourceLanguage,
+        targetLanguage,
+        wordIds: words.map(w => w.id),
+        config: gameConfig
+      });
+      
+      setSessionId(sessionResponse.data.session.id);
       setLoadingProgress(90);
       
       // 4. Combine words with game data
-      const results = gameDataResponse.data.results;
       const practiceWordsData: PracticeWord[] = words.map(w => ({
         vocabularyWord: w,
         gameData: results[w.word]?.data || null,
@@ -234,12 +265,12 @@ export default function PracticePage() {
   const renderSelection = () => (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Practice Vocabulary</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Practice Vocabulary</h1>
         <p className="text-gray-600">Choose a game to practice your words</p>
       </div>
       
       {/* Stats overview */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
         <div className="bg-blue-50 rounded-lg p-4 text-center">
           <BookOpen className="w-6 h-6 mx-auto mb-2 text-blue-600" />
           <div className="text-2xl font-bold text-blue-900">{vocabStats?.learning || 0}</div>
@@ -296,16 +327,16 @@ export default function PracticePage() {
       {/* Word count selector */}
       <div className="bg-white rounded-lg border p-4 mb-6">
         <h3 className="font-medium text-gray-900 mb-3">Number of words:</h3>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 sm:flex gap-2">
           {[5, 10, 15, 20, 30].map(count => (
             <button
               key={count}
               onClick={() => setWordCount(count)}
-              disabled={count > availableWordCount}
+              disabled={count > availableWordCount || count >= 15}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 wordCount === count
                   ? 'bg-blue-600 text-white'
-                  : count > availableWordCount
+                  : count > availableWordCount || count >= 15
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
@@ -350,7 +381,7 @@ export default function PracticePage() {
     const game = GAME_INFO[selectedGame];
     
     return (
-      <div className="max-w-md mx-auto p-6">
+      <div className="max-w-md mx-auto p-6 flex-1 flex flex-col">
         <button
           onClick={() => setViewState('select')}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
@@ -359,7 +390,7 @@ export default function PracticePage() {
           Back
         </button>
         
-        <div className="bg-white rounded-xl border p-6">
+        <div className="bg-white rounded-xl border p-6 my-auto">
           <div className="text-center mb-6">
             <div className="text-5xl mb-3">{game.icon}</div>
             <h2 className="text-2xl font-bold text-gray-900">{game.name}</h2>
@@ -374,7 +405,7 @@ export default function PracticePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {game.configOptions.optionCount.label}
                   </label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:flex">
                     {Array.from(
                       { length: game.configOptions.optionCount.max - game.configOptions.optionCount.min + 1 },
                       (_, i) => game.configOptions!.optionCount!.min + i
