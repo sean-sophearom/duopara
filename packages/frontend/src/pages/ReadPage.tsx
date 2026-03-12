@@ -53,6 +53,11 @@ export default function ReadPage() {
   const [markedWords, setMarkedWords] = useState<Set<string>>(new Set());
   const [showSidebar, setShowSidebar] = useState(true);
   const [showParallelTranslation, setShowParallelTranslation] = useState(false);
+  
+  // Session tracking
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const wordsLookedUpRef = useRef<Set<string>>(new Set());
+  const sessionUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [hoveredWord, setHoveredWord] = useState<{
     word: string;
     sentence: string;
@@ -113,6 +118,56 @@ export default function ReadPage() {
     (text?.newWordsIntroduced || []).map((w: string) => w.toLowerCase()),
   );
 
+  // Initialize or resume session when text loads
+  useEffect(() => {
+    if (!text || !textId) return;
+    
+    // Check for existing incomplete session or the most recent one
+    const existingSessions = text.readingSessions || [];
+    const recentSession = existingSessions[0]; // Already sorted by startedAt desc
+    
+    if (recentSession && !recentSession.completedAt) {
+      // Resume existing incomplete session
+      setSessionId(recentSession.id);
+      // Initialize markedWords from session data
+      const learnedInSession = recentSession.wordsMarkedLearned || [];
+      setMarkedWords(new Set(learnedInSession.map((w: string) => w.toLowerCase())));
+      // Initialize looked up words ref
+      wordsLookedUpRef.current = new Set(recentSession.wordsLookedUp || []);
+    } else {
+      // Start a new session
+      textsApi.startSession(textId).then((response) => {
+        setSessionId(response.data.session.id);
+        setMarkedWords(new Set());
+        wordsLookedUpRef.current = new Set();
+      }).catch(console.error);
+    }
+  }, [text, textId]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (sessionUpdateTimeoutRef.current) {
+        clearTimeout(sessionUpdateTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Function to update session with debouncing
+  const updateSession = useCallback((updates: { wordsLookedUp?: string[]; wordsMarkedLearned?: string[] }) => {
+    if (!sessionId) return;
+    
+    // Clear any pending update
+    if (sessionUpdateTimeoutRef.current) {
+      clearTimeout(sessionUpdateTimeoutRef.current);
+    }
+    
+    // Debounce the update to avoid too many API calls
+    sessionUpdateTimeoutRef.current = setTimeout(() => {
+      textsApi.updateSession(sessionId, updates).catch(console.error);
+    }, 500);
+  }, [sessionId]);
+
   // Regenerate mutations
   const simplifyMutation = useMutation({
     mutationFn: () => generateApi.regenerate(textId!, "simplify"),
@@ -133,7 +188,10 @@ export default function ReadPage() {
     mutationFn: (word: string) =>
       vocabularyApi.markLearned(word, text?.language || "Spanish"),
     onSuccess: (_, word) => {
-      setMarkedWords((prev) => new Set(prev).add(word.toLowerCase()));
+      const normalizedWord = word.toLowerCase();
+      setMarkedWords((prev) => new Set(prev).add(normalizedWord));
+      // Update session with the learned word
+      updateSession({ wordsMarkedLearned: [normalizedWord] });
       queryClient.invalidateQueries({ queryKey: ["vocabulary"] });
     },
   });
@@ -142,6 +200,14 @@ export default function ReadPage() {
   const translateWord = useCallback(
     async (word: string, context: string) => {
       setIsLoadingWord(true);
+      
+      // Track word as looked up (if not already tracked)
+      const normalizedWord = word.toLowerCase();
+      if (!wordsLookedUpRef.current.has(normalizedWord)) {
+        wordsLookedUpRef.current.add(normalizedWord);
+        updateSession({ wordsLookedUp: [normalizedWord] });
+      }
+      
       try {
         const response = await translateApi.full({
           word,
@@ -157,7 +223,7 @@ export default function ReadPage() {
         setIsLoadingWord(false);
       }
     },
-    [text?.language, nativeLanguage],
+    [text?.language, nativeLanguage, updateSession],
   );
 
   // Translate sentence

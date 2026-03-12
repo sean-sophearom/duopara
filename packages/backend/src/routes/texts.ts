@@ -76,11 +76,19 @@ textsRouter.get('/:id', async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Text not found' });
     }
 
+    // Parse JSON fields in reading sessions
+    const parsedSessions = text.readingSessions.map((session: any) => ({
+      ...session,
+      wordsLookedUp: JSON.parse(session.wordsLookedUp),
+      wordsMarkedLearned: JSON.parse(session.wordsMarkedLearned)
+    }));
+
     res.json({
       text: {
         ...text,
         knownWordsUsed: JSON.parse(text.knownWordsUsed),
-        newWordsIntroduced: JSON.parse(text.newWordsIntroduced)
+        newWordsIntroduced: JSON.parse(text.newWordsIntroduced),
+        readingSessions: parsedSessions
       }
     });
   } catch (error) {
