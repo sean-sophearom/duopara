@@ -46,6 +46,8 @@ export const vocabularyApi = {
     api.patch(`/vocabulary/${id}`, data),
   markLearned: (word: string, language: string) =>
     api.post('/vocabulary/mark-learned', { word, language }),
+  markLearning: (word: string, language: string) =>
+    api.post('/vocabulary/mark-learning', { word, language }),
   delete: (id: string) => api.delete(`/vocabulary/${id}`),
   import: (file: File, language: string) => {
     const formData = new FormData();

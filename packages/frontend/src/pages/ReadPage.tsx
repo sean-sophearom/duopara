@@ -51,6 +51,7 @@ export default function ReadPage() {
   const [isLoadingWord, setIsLoadingWord] = useState(false);
   const [isLoadingSentence, setIsLoadingSentence] = useState(false);
   const [markedWords, setMarkedWords] = useState<Set<string>>(new Set());
+  const [markedLearningWords, setMarkedLearningWords] = useState<Set<string>>(new Set());
   const [showSidebar, setShowSidebar] = useState(true);
   const [showParallelTranslation, setShowParallelTranslation] = useState(false);
   
@@ -180,6 +181,17 @@ export default function ReadPage() {
     mutationFn: () => generateApi.regenerate(textId!, "harder"),
     onSuccess: (response) => {
       navigate(`/read/${response.data.text.id}`);
+    },
+  });
+
+  // Mark word as learning
+  const markLearningMutation = useMutation({
+    mutationFn: (word: string) =>
+      vocabularyApi.markLearning(word, text?.language || "Spanish"),
+    onSuccess: (_, word) => {
+      const normalizedWord = word.toLowerCase();
+      setMarkedLearningWords((prev) => new Set(prev).add(normalizedWord));
+      queryClient.invalidateQueries({ queryKey: ["vocabulary"] });
     },
   });
 
@@ -709,6 +721,31 @@ export default function ReadPage() {
               title="Pronounce"
             >
               <Volume2 className="w-4 h-4" />
+            </button>
+            <div className="w-px h-4 bg-gray-200" />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                markLearningMutation.mutate(
+                  hoveredWord.word.replace(/[^\p{L}'-]/gu, "").toLowerCase(),
+                );
+                setHoveredWord(null);
+              }}
+              disabled={markedLearningWords.has(
+                hoveredWord.word.replace(/[^\p{L}'-]/gu, "").toLowerCase(),
+              ) || markedWords.has(
+                hoveredWord.word.replace(/[^\p{L}'-]/gu, "").toLowerCase(),
+              )}
+              className={`p-1.5 rounded-full transition-colors ${
+                markedLearningWords.has(
+                  hoveredWord.word.replace(/[^\p{L}'-]/gu, "").toLowerCase(),
+                )
+                  ? "text-yellow-500 bg-yellow-50 cursor-default"
+                  : "text-gray-500 hover:text-yellow-600 hover:bg-yellow-50"
+              }`}
+              title="Mark as Learning"
+            >
+              <BookOpen className="w-4 h-4" />
             </button>
             <div className="w-px h-4 bg-gray-200" />
             <button

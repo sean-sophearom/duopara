@@ -211,6 +211,36 @@ vocabularyRouter.post('/mark-learned', async (req: AuthRequest, res) => {
   }
 });
 
+vocabularyRouter.post('/mark-learning', async (req: AuthRequest, res) => {
+  try {
+    const { word, language } = req.body;
+
+    const updated = await prisma.vocabularyWord.upsert({
+      where: {
+        userId_word_language: {
+          userId: req.userId!,
+          word: word.toLowerCase(),
+          language
+        }
+      },
+      create: {
+        userId: req.userId!,
+        word: word.toLowerCase(),
+        language,
+        status: 'learning'
+      },
+      update: {
+        status: 'learning'
+      }
+    });
+
+    res.json({ word: updated });
+  } catch (error) {
+    console.error('Mark learning error:', error);
+    res.status(500).json({ error: 'Failed to mark word as learning' });
+  }
+});
+
 // Delete a word
 vocabularyRouter.delete('/:id', async (req: AuthRequest, res) => {
   try {
