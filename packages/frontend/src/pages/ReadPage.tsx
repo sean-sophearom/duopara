@@ -69,6 +69,16 @@ export default function ReadPage() {
   const [useLiteralTranslation, setUseLiteralTranslation] = useState(
     () => localStorage.getItem("duopara.useLiteralTranslation") === "true",
   );
+
+  const [highlightLearned, setHighlightLearned] = useState(
+    () => localStorage.getItem("duopara.highlightLearned") !== "false",
+  );
+  const [highlightLearning, setHighlightLearning] = useState(
+    () => localStorage.getItem("duopara.highlightLearning") !== "false",
+  );
+  const [highlightNew, setHighlightNew] = useState(
+    () => localStorage.getItem("duopara.highlightNew") !== "false",
+  );
   const [parallelTranslations, setParallelTranslations] = useState<
     Array<{ translation: string; literalTranslation?: string } | null>
   >([]);
@@ -102,6 +112,20 @@ export default function ReadPage() {
       String(useLiteralTranslation),
     );
   }, [useLiteralTranslation]);
+
+  // Sync highlight prefs from localStorage when another tab/page changes them
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === "duopara.highlightLearned")
+        setHighlightLearned(e.newValue !== "false");
+      if (e.key === "duopara.highlightLearning")
+        setHighlightLearning(e.newValue !== "false");
+      if (e.key === "duopara.highlightNew")
+        setHighlightNew(e.newValue !== "false");
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }, []);
 
   const nativeLanguage = user?.settings?.nativeLanguage || "English";
 
@@ -466,9 +490,9 @@ export default function ReadPage() {
           className={`
             word cursor-pointer rounded px-0.5 transition-all duration-150
             ${isSelected ? "bg-primary-200 ring-2 ring-primary-400" : ""}
-            ${isMarked ? "bg-green-100 text-green-800" : ""}
-            ${isLearning && !isMarked ? "bg-yellow-100 text-yellow-800" : ""}
-            ${isNew && !isMarked && !isLearning ? "text-primary-700 font-medium" : ""}
+            ${isMarked && highlightLearned ? "bg-green-100 text-green-800" : ""}
+            ${isLearning && !isMarked && highlightLearning ? "bg-yellow-100 text-yellow-800" : ""}
+            ${isNew && !isMarked && !isLearning && highlightNew ? "text-primary-700 font-medium" : ""}
             ${!isNew && !isMarked && !isLearning && isKnown ? "text-gray-800" : ""}
             hover:bg-primary-100
           `}

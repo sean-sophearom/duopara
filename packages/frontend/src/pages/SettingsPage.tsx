@@ -4,6 +4,24 @@ import { settingsApi } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import { Check, Loader2, Save } from 'lucide-react';
 
+function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!enabled)}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+        enabled ? 'bg-primary-600' : 'bg-gray-200'
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+          enabled ? 'translate-x-6' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  );
+}
+
 export default function SettingsPage() {
   const { user, updateUser } = useAuthStore();
   const queryClient = useQueryClient();
@@ -13,6 +31,21 @@ export default function SettingsPage() {
   const [knownWordsRatio, setKnownWordsRatio] = useState(user?.settings?.knownWordsRatio || 80);
   const [defaultDifficulty, setDefaultDifficulty] = useState(user?.settings?.defaultDifficulty || 'intermediate');
   const [saved, setSaved] = useState(false);
+
+  const [highlightLearned, setHighlightLearnedState] = useState(
+    () => localStorage.getItem('duopara.highlightLearned') !== 'false',
+  );
+  const [highlightLearning, setHighlightLearningState] = useState(
+    () => localStorage.getItem('duopara.highlightLearning') !== 'false',
+  );
+  const [highlightNew, setHighlightNewState] = useState(
+    () => localStorage.getItem('duopara.highlightNew') !== 'false',
+  );
+
+  const setHighlight = (key: string, setter: (v: boolean) => void, value: boolean) => {
+    localStorage.setItem(key, String(value));
+    setter(value);
+  };
 
   const { data: languages } = useQuery({
     queryKey: ['languages'],
@@ -177,6 +210,53 @@ export default function SettingsPage() {
                 <span>More comfortable</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Reading highlights */}
+        <div className="border-t border-gray-200 pt-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Reading Highlights</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Choose which word types are highlighted while reading
+          </p>
+          <div className="space-y-4">
+            {[
+              {
+                label: 'Learned words',
+                description: 'Words you have marked as fully learned',
+                color: 'bg-green-100 text-green-800',
+                swatch: 'bg-green-200',
+                value: highlightLearned,
+                onChange: (v: boolean) => setHighlight('duopara.highlightLearned', setHighlightLearnedState, v),
+              },
+              {
+                label: 'Learning words',
+                description: 'Words you have added to your learning list',
+                color: 'bg-yellow-100 text-yellow-800',
+                swatch: 'bg-yellow-200',
+                value: highlightLearning,
+                onChange: (v: boolean) => setHighlight('duopara.highlightLearning', setHighlightLearningState, v),
+              },
+              {
+                label: 'New words',
+                description: 'Words the text introduced that you haven\'t seen before',
+                color: 'bg-primary-100 text-primary-800',
+                swatch: 'bg-primary-200',
+                value: highlightNew,
+                onChange: (v: boolean) => setHighlight('duopara.highlightNew', setHighlightNewState, v),
+              },
+            ].map(({ label, description, swatch, value, onChange }) => (
+              <div key={label} className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className={`inline-block w-3 h-3 rounded-sm shrink-0 ${swatch}`} />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{label}</p>
+                    <p className="text-xs text-gray-500">{description}</p>
+                  </div>
+                </div>
+                <Toggle enabled={value} onChange={onChange} />
+              </div>
+            ))}
           </div>
         </div>
 
