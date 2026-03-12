@@ -52,7 +52,7 @@ export function FillBlankGame({
   
   if (!currentWord?.gameData?.exampleSentences?.length) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-dvh bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-red-600 mb-4">No example sentences available for this word.</p>
           <button 

@@ -107,7 +107,7 @@ export function MatchingGridGame({
   
   if (gameWords.length < 2) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-dvh bg-gray-50 flex items-center justify-center">
         <p className="text-red-600">Not enough words with translations for matching game.</p>
       </div>
     );

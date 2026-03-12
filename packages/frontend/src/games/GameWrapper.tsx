@@ -26,7 +26,7 @@ export function GameWrapper({
   const progress = totalWords > 0 ? (currentIndex / totalWords) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-dvh bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white border-b px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
@@ -98,7 +98,7 @@ export function SessionResults({
   const { grade, color, message } = getGrade(stats.accuracy);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-8 text-center">
         <div className="text-6xl mb-4">{gameIcon}</div>
         <h2 className="text-2xl font-bold mb-2">{gameName} Complete!</h2>
@@ -221,7 +221,7 @@ export function LoadingGame({
   progress,
 }: LoadingGameProps) {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-dvh bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <p className="text-gray-600">{message}</p>

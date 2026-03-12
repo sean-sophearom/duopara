@@ -45,7 +45,7 @@ export function DefinitionGame({
   
   if (!currentWord?.gameData) {
     return (
-      <div className="/min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="/min-h-dvh bg-gray-50 flex items-center justify-center">
         <p className="text-red-600">Failed to load game data for this word.</p>
       </div>
     );

@@ -55,7 +55,7 @@ export function TranslationGame({
   
   if (!currentWord?.gameData?.translation) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-dvh bg-gray-50 flex items-center justify-center">
         <p className="text-red-600">This word doesn't have a translation.</p>
       </div>
     );

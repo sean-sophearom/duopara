@@ -34,7 +34,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-dvh bg-gray-50">
       {/* Mobile header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-30 flex items-center px-4">
         <button
@@ -129,7 +129,7 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="lg:pl-64 pt-16 lg:pt-0 min-h-screen flex">
+      <main className="lg:pl-64 pt-16 lg:pt-0 min-h-dvh flex">
         <div className="p-4 lg:p-8 flex-1 min-w-0">
           <Outlet />
         </div>
