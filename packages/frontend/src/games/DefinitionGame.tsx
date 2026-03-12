@@ -134,7 +134,7 @@ export function DefinitionGame({
             
             return (
               <button
-                key={index}
+                key={`${currentIndex}-${index}`}
                 onClick={() => handleSelect(option)}
                 disabled={!!selectedAnswer}
                 className={buttonClass}
