@@ -109,3 +109,63 @@ export const settingsApi = {
     api.patch('/settings', data),
   getLanguages: () => api.get('/settings/languages'),
 };
+
+export const practiceApi = {
+  // Get words for practice session
+  getWords: (data: {
+    language: string;
+    statuses: ('learning' | 'learned' | 'mastered')[];
+    limit?: number;
+    prioritizeSpacedRepetition?: boolean;
+  }) => api.post('/practice/words', data),
+  
+  // Get game data for a single word
+  getGameData: (data: {
+    word: string;
+    sourceLanguage: string;
+    targetLanguage: string;
+    translation?: string;
+  }) => api.post('/practice/game-data', data),
+  
+  // Batch get game data for multiple words
+  getGameDataBatch: (data: {
+    words: Array<{ word: string; translation: string }>;
+    sourceLanguage: string;
+    targetLanguage: string;
+  }) => api.post('/practice/game-data/batch', data),
+  
+  // Start a new practice session
+  startSession: (data: {
+    gameType: 'definition' | 'translation' | 'reverse' | 'fillblank' | 'matching' | 'truefalse';
+    sourceLanguage: string;
+    targetLanguage: string;
+    wordIds: string[];
+    config?: {
+      optionCount?: number;
+      pairCount?: number;
+    };
+  }) => api.post('/practice/session/start', data),
+  
+  // Submit a practice attempt
+  submitAttempt: (data: {
+    sessionId: string;
+    vocabularyWordId: string;
+    isCorrect: boolean;
+    responseTimeMs?: number;
+    questionData: any;
+    userAnswer: string;
+    correctAnswer: string;
+  }) => api.post('/practice/attempt', data),
+  
+  // Complete a practice session
+  completeSession: (sessionId: string) => 
+    api.post('/practice/session/complete', { sessionId }),
+  
+  // Get practice statistics
+  getStats: (params?: { language?: string; days?: number }) =>
+    api.get('/practice/stats', { params }),
+  
+  // Get count of words due for review
+  getDueCount: (language?: string) =>
+    api.get('/practice/due', { params: { language } }),
+};

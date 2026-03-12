@@ -9,7 +9,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Gamepad2
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -18,6 +19,7 @@ const navItems = [
   { to: '/generate', icon: PenTool, label: 'Generate' },
   { to: '/history', icon: History, label: 'History' },
   { to: '/vocabulary', icon: BookMarked, label: 'Vocabulary' },
+  { to: '/practice', icon: Gamepad2, label: 'Practice' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 

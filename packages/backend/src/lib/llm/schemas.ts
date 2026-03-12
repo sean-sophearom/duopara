@@ -95,3 +95,27 @@ export const parallelTextTranslationSchema = z.object({
 });
 
 export type ParallelTextTranslation = z.infer<typeof parallelTextTranslationSchema>;
+
+// ============================================
+// Practice Game Data Schemas
+// ============================================
+
+export const gameWordDataSchema = z.object({
+  definition: z.string().describe('A clear, concise definition of the word in the target language (1-2 sentences)'),
+  distractorDefinitions: z.array(z.string()).length(5).describe(
+    '5 plausible but incorrect definitions that could confuse learners'
+  ),
+  distractorTranslations: z.array(z.string()).length(5).describe(
+    '5 plausible but incorrect translations of the word'
+  ),
+  exampleSentences: z.array(z.object({
+    sentence: z.string().describe('A sentence with the target word replaced by "___"'),
+    blankWord: z.string().describe('The word that fills the blank'),
+    fullSentence: z.string().describe('The complete sentence with the word')
+  })).min(3).max(3).describe('3 example sentences with the word, shown as fill-in-the-blank'),
+  falseTranslation: z.string().describe(
+    'A plausible but incorrect translation for true/false game (should be semantically close but wrong)'
+  )
+});
+
+export type GameWordData = z.infer<typeof gameWordDataSchema>;

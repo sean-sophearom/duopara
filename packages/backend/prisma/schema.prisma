@@ -47,12 +47,19 @@ model VocabularyWord {
   timesEncountered Int   @default(0)
   timesCorrect  Int      @default(0)
   
+  // Spaced repetition fields
+  lastPracticedAt  DateTime?
+  practiceStreak   Int      @default(0)  // Consecutive correct answers
+  nextPracticeAt   DateTime?             // Scheduled next practice (spaced repetition)
+  difficultyScore  Float    @default(2.5) // SM-2 easiness factor (1.3-5.0)
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   masteredAt    DateTime?
 
   @@unique([userId, word, language])
   @@index([userId, language, status])
+  @@index([userId, nextPracticeAt])
 }
 
 model GeneratedText {
@@ -123,4 +130,75 @@ model DailyActivity {
   
   @@unique([userId, date])
   @@index([userId, date])
+}
+
+// ============================================
+// Practice / Vocabulary Games
+// ============================================
+
+// Cached LLM-generated game data for words (shared across users by language pair)
+model GameWordData {
+  id              String   @id @default(uuid())
+  word            String   // The source word
+  sourceLanguage  String   // Language of the word
+  targetLanguage  String   // Language for translations
+  
+  // LLM-generated data (JSON)
+  definition              String   // Definition in target language
+  distractorDefinitions   String   // JSON array of 5 wrong definitions
+  distractorTranslations  String   // JSON array of 5 wrong translations
+  exampleSentences        String   // JSON array of sentences with blanks [{sentence, blankWord, fullSentence}]
+  falseTranslation        String   // A plausible but wrong translation for true/false game
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([word, sourceLanguage, targetLanguage])
+  @@index([word, sourceLanguage, targetLanguage])
+}
+
+// A practice session (one game playthrough)
+model PracticeSession {
+  id              String   @id @default(uuid())
+  userId          String
+  
+  gameType        String   // definition, translation, reverse, fillblank, matching, truefalse
+  sourceLanguage  String
+  targetLanguage  String
+  
+  totalWords      Int
+  correctCount    Int      @default(0)
+  incorrectCount  Int      @default(0)
+  
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  
+  // Session configuration (JSON)
+  config          String   @default("{}") // {optionCount, wordCount, statusFilter, etc.}
+  
+  attempts        PracticeAttempt[]
+  
+  @@index([userId, startedAt])
+  @@index([userId, gameType])
+}
+
+// Individual word attempt within a session
+model PracticeAttempt {
+  id              String   @id @default(uuid())
+  sessionId       String
+  session         PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  vocabularyWordId String  // Reference to the vocabulary word
+  
+  isCorrect       Boolean
+  responseTimeMs  Int?     // How long the user took to answer
+  
+  // What was shown and selected (for analytics)
+  questionData    String   // JSON - what was displayed
+  userAnswer      String   // What the user selected/typed
+  correctAnswer   String   // The correct answer
+  
+  attemptedAt     DateTime @default(now())
+  
+  @@index([sessionId])
+  @@index([vocabularyWordId])
 }

@@ -8,6 +8,7 @@ import { textsRouter } from './routes/texts.js';
 import { translateRouter } from './routes/translate.js';
 import { statsRouter } from './routes/stats.js';
 import { settingsRouter } from './routes/settings.js';
+import { practiceRouter } from './routes/practice.js';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/texts', textsRouter);
 app.use('/api/translate', translateRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/practice', practiceRouter);
 
 // Error handling middleware
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

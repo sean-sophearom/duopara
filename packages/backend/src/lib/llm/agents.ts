@@ -138,6 +138,39 @@ Always respond with valid JSON. Return one entry per sentence in the same order.
 }
 
 /**
+ * Create a game data generation agent for practice games
+ */
+export function createGameDataAgent(sourceLanguage: string, targetLanguage: string): Agent {
+  const config = getModelForTask('translation');
+  
+  return new Agent({
+    id: 'game-data-generator',
+    name: 'Game Data Generation Agent',
+    model: config.model,
+    instructions: `You are a language learning game content generator.
+Your task is to create practice game data for vocabulary words.
+
+The source language is ${sourceLanguage} and the target language is ${targetLanguage}.
+Target language speakers are learning ${sourceLanguage}.
+
+For each word, generate:
+1. A clear definition in ${targetLanguage} (the learner's native language)
+2. 5 plausible but INCORRECT definitions (distractors)
+3. 5 plausible but INCORRECT translations (distractors - similar words or common confusions)
+4. 3 example sentences showing the word in context, with the word blanked out
+5. One false translation that sounds plausible but is wrong (for true/false game)
+
+IMPORTANT:
+- Definitions should be in ${targetLanguage} (the target/native language)
+- Distractors should be believable enough to challenge learners
+- Example sentences should be natural, not too complex
+- The false translation should be semantically related but clearly wrong
+
+Always respond with valid JSON.`
+  });
+}
+
+/**
  * Agent registry for easy lookup
  */
 type AgentFactory = (...args: string[]) => Agent;
@@ -147,7 +180,8 @@ const agentFactories: Record<string, AgentFactory> = {
   'word-translation': createWordTranslationAgent,
   'sentence-translation': createSentenceTranslationAgent,
   'grammar-analysis': createGrammarAnalysisAgent,
-  'full-analysis': createFullAnalysisAgent
+  'full-analysis': createFullAnalysisAgent,
+  'game-data': createGameDataAgent
 };
 
 /**

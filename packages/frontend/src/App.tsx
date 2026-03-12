@@ -8,6 +8,7 @@ import GeneratePage from './pages/GeneratePage';
 import ReadPage from './pages/ReadPage';
 import HistoryPage from './pages/HistoryPage';
 import VocabularyPage from './pages/VocabularyPage';
+import PracticePage from './pages/PracticePage';
 import SettingsPage from './pages/SettingsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="read/:textId" element={<ReadPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="vocabulary" element={<VocabularyPage />} />
+        <Route path="practice" element={<PracticePage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       
