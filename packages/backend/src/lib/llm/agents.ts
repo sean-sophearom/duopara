@@ -154,8 +154,8 @@ The source language is ${sourceLanguage} and the target language is ${targetLang
 Target language speakers are learning ${sourceLanguage}.
 
 For each word, generate:
-1. A clear definition in ${targetLanguage} (the learner's native language)
-2. 5 plausible but INCORRECT definitions (distractors)
+1. 5 plausible but INCORRECT definitions (distractors)
+2. A very very short definition in ${targetLanguage} (should be similar in length to the distractors)
 3. 5 plausible but INCORRECT translations (distractors - similar words or common confusions)
 4. 3 example sentences showing the word in context, with the word blanked out
 5. One false translation that sounds plausible but is wrong (for true/false game)

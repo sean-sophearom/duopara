@@ -218,8 +218,8 @@ Hint translation: "${translation || 'unknown'}" (${targetLanguage})
 
 Generate:
 1. The correct translation in ${targetLanguage}
-2. A clear definition in ${targetLanguage}
-3. 5 plausible but incorrect definitions (distractors)
+2. 5 plausible but incorrect definitions (distractors)
+3. A very very short definition in ${targetLanguage} (should be similar in length to the distractors)
 4. 5 plausible but incorrect translations (distractors)
 5. 3 example sentences with the word blanked out (in ${sourceLanguage})
 6. One false translation for true/false game
@@ -227,7 +227,6 @@ Generate:
 Return as JSON.`;
 
     const result = await agent.generate(prompt, {
-      // output: gameWordDataSchema
       structuredOutput: {
         schema: gameWordDataSchema,
       }
@@ -324,7 +323,6 @@ Generate:
 Return as JSON.`;
 
         const result = await agent.generate(prompt, {
-          // output: gameWordDataSchema
           structuredOutput: {
             schema: gameWordDataSchema,
           }
