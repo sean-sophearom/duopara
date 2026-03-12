@@ -119,6 +119,27 @@ export default function ReadPage() {
     (text?.newWordsIntroduced || []).map((w: string) => w.toLowerCase()),
   );
 
+  const { data: learningVocabData } = useQuery({
+    queryKey: ["vocabulary", "learning", text?.language],
+    queryFn: () =>
+      vocabularyApi
+        .getAll({ language: text?.language, status: "learning", limit: 1000 })
+        .then((r) => r.data),
+    enabled: !!text?.language,
+  });
+
+  useEffect(() => {
+    if (learningVocabData?.words) {
+      setMarkedLearningWords(
+        new Set(
+          learningVocabData.words.map((w: { word: string }) =>
+            w.word.toLowerCase(),
+          ),
+        ),
+      );
+    }
+  }, [learningVocabData]);
+
   // Initialize or resume session when text loads
   useEffect(() => {
     if (!text || !textId) return;
@@ -420,6 +441,7 @@ export default function ReadPage() {
       const isKnown = knownWordsSet.has(cleanWord);
       const isNew = newWordsSet.has(cleanWord);
       const isMarked = markedWords.has(cleanWord);
+      const isLearning = markedLearningWords.has(cleanWord);
       const isSelected = selectedWord === cleanWord;
       return (
         <span
@@ -445,8 +467,9 @@ export default function ReadPage() {
             word cursor-pointer rounded px-0.5 transition-all duration-150
             ${isSelected ? "bg-primary-200 ring-2 ring-primary-400" : ""}
             ${isMarked ? "bg-green-100 text-green-800" : ""}
-            ${isNew && !isMarked ? "text-primary-700 font-medium" : ""}
-            ${!isNew && !isMarked && isKnown ? "text-gray-800" : ""}
+            ${isLearning && !isMarked ? "bg-yellow-100 text-yellow-800" : ""}
+            ${isNew && !isMarked && !isLearning ? "text-primary-700 font-medium" : ""}
+            ${!isNew && !isMarked && !isLearning && isKnown ? "text-gray-800" : ""}
             hover:bg-primary-100
           `}
         >
