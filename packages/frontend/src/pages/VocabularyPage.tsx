@@ -155,7 +155,7 @@ export default function VocabularyPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
           <div className="card p-4 text-center">
             <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
             <p className="text-sm text-gray-500">Total</p>
