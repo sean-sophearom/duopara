@@ -7,6 +7,7 @@ const apiBaseURL = VITE_BASE_PATH !== '/' ? `${VITE_BASE_PATH}/api` : '/api';
 
 export const api = axios.create({
   baseURL: apiBaseURL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

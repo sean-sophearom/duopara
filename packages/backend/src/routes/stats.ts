@@ -1,22 +1,21 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { asyncHandler } from '../lib/routeUtils.js';
 
 export const statsRouter = Router();
 statsRouter.use(authenticate);
 
 // Get comprehensive user stats
-statsRouter.get('/', async (req: AuthRequest, res) => {
-  try {
-    const { language } = req.query;
-    
-    const vocabWhere: any = { userId: req.userId };
-    const textWhere: any = { userId: req.userId };
-    
-    if (language) {
-      vocabWhere.language = language;
-      textWhere.language = language;
-    }
+statsRouter.get('/', asyncHandler(async (req: AuthRequest, res) => {
+  const { language } = req.query;
+  
+  const vocabWhere: any = { userId: req.userId };
+  const textWhere: any = { userId: req.userId };
+  if (language) {
+    vocabWhere.language = language;
+    textWhere.language = language;
+  }
 
     // Vocabulary statistics
     const [totalWords, learnedWords, masteredWords, learningWords] = await Promise.all([
@@ -98,35 +97,30 @@ statsRouter.get('/', async (req: AuthRequest, res) => {
         recentWordsMastered
       }
     });
-  } catch (error) {
-    console.error('Get stats error:', error);
-    res.status(500).json({ error: 'Failed to get stats' });
-  }
-});
+}, 'Failed to get stats'));
 
 // Get activity heatmap data (last 365 days)
-statsRouter.get('/heatmap', async (req: AuthRequest, res) => {
-  try {
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+statsRouter.get('/heatmap', asyncHandler(async (req: AuthRequest, res) => {
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-    // Get all reading sessions grouped by date
-    const sessions = await prisma.readingSession.findMany({
-      where: {
-        userId: req.userId,
-        startedAt: { gte: oneYearAgo }
-      },
-      select: { startedAt: true }
-    });
-
-    // Get texts generated grouped by date
-    const texts = await prisma.generatedText.findMany({
-      where: {
-        userId: req.userId,
-        createdAt: { gte: oneYearAgo }
-      },
-      select: { createdAt: true }
-    });
+    // Get all reading sessions and texts in parallel
+    const [sessions, texts] = await Promise.all([
+      prisma.readingSession.findMany({
+        where: {
+          userId: req.userId,
+          startedAt: { gte: oneYearAgo }
+        },
+        select: { startedAt: true }
+      }),
+      prisma.generatedText.findMany({
+        where: {
+          userId: req.userId,
+          createdAt: { gte: oneYearAgo }
+        },
+        select: { createdAt: true }
+      })
+    ]);
 
     // Aggregate by date
     const activityByDate: Record<string, number> = {};
@@ -142,17 +136,13 @@ statsRouter.get('/heatmap', async (req: AuthRequest, res) => {
     }
 
     res.json({ activityByDate });
-  } catch (error) {
-    console.error('Get heatmap error:', error);
-    res.status(500).json({ error: 'Failed to get heatmap' });
-  }
-});
+}, 'Failed to get heatmap'));
 
 // Get words learned over time
-statsRouter.get('/progress', async (req: AuthRequest, res) => {
-  try {
-    const { days = '30' } = req.query;
-    const daysNum = parseInt(days as string);
+statsRouter.get('/progress', asyncHandler(async (req: AuthRequest, res) => {
+  const { days = '30' } = req.query;
+    const parsed = parseInt(days as string);
+    const daysNum = Number.isNaN(parsed) ? 30 : Math.min(Math.max(parsed, 1), 365);
     
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - daysNum);
@@ -206,26 +196,23 @@ statsRouter.get('/progress', async (req: AuthRequest, res) => {
     }
 
     res.json({ progress: result });
-  } catch (error) {
-    console.error('Get progress error:', error);
-    res.status(500).json({ error: 'Failed to get progress' });
-  }
-});
+}, 'Failed to get progress'));
 
 // Helper function to calculate streak
 async function calculateStreak(userId: string): Promise<{ current: number; longest: number }> {
-  // Get all dates with activity
-  const sessions = await prisma.readingSession.findMany({
-    where: { userId },
-    select: { startedAt: true },
-    orderBy: { startedAt: 'desc' }
-  });
-
-  const texts = await prisma.generatedText.findMany({
-    where: { userId },
-    select: { createdAt: true },
-    orderBy: { createdAt: 'desc' }
-  });
+  // Get all dates with activity in parallel
+  const [sessions, texts] = await Promise.all([
+    prisma.readingSession.findMany({
+      where: { userId },
+      select: { startedAt: true },
+      orderBy: { startedAt: 'desc' }
+    }),
+    prisma.generatedText.findMany({
+      where: { userId },
+      select: { createdAt: true },
+      orderBy: { createdAt: 'desc' }
+    })
+  ]);
 
   // Get unique dates
   const activeDates = new Set<string>();

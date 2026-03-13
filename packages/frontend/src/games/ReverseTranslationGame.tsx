@@ -1,159 +1,63 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { GameProps } from './types';
 import { GameWrapper, FeedbackOverlay, LoadingGame } from './GameWrapper';
 import { shuffleArray, getDistractors } from './usePracticeSession';
 import { GAME_INFO } from './types';
+import { useQuizGame } from './useQuizGame';
+import { QuizOptions } from './QuizOptions';
 
-/**
- * Reverse Translation Game
- * Shows translation, user picks correct source word
- */
-export function ReverseTranslationGame({
-  words,
-  sourceLanguage,
-  config,
-  onAttempt,
-  onComplete
-}: GameProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
-  const [incorrectCount, setIncorrectCount] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  
+export function ReverseTranslationGame({ words, sourceLanguage, config, onAttempt, onComplete }: GameProps) {
+  const quiz = useQuizGame({ words, onAttempt, onComplete });
   const optionCount = config.optionCount || 4;
-  const currentWord = words[currentIndex];
   const gameInfo = GAME_INFO.reverse;
   
-  // Generate options for current word
   const options = useMemo(() => {
-    if (!currentWord?.vocabularyWord.word) return [];
-    
-    const correctWord = currentWord.vocabularyWord.word;
-    
-    // Get distractors from other words in the session
-    const distractors = getDistractors(words, currentWord, optionCount - 1, 'word');
-    
+    if (!quiz.currentWord?.vocabularyWord.word) return [];
+    const correctWord = quiz.currentWord.vocabularyWord.word;
+    const distractors = getDistractors(words, quiz.currentWord, optionCount - 1, 'word');
     return shuffleArray([correctWord, ...distractors]);
-  }, [currentWord, optionCount, words]);
+  }, [quiz.currentWord, optionCount, words]);
   
-  // Check if game data is still loading
-  if (currentWord?.loading) {
-    return <LoadingGame message="Preparing questions..." />;
-  }
-  
-  if (!currentWord?.gameData?.translation) {
+  if (quiz.currentWord?.loading) return <LoadingGame message="Preparing questions..." />;
+  if (!quiz.currentWord?.gameData?.translation) {
     return (
       <div className="min-h-dvh bg-gray-50 flex items-center justify-center">
         <p className="text-red-600">This word doesn't have a translation.</p>
       </div>
     );
   }
-  
-  const handleSelect = (answer: string) => {
-    if (selectedAnswer) return;
-    
-    const correct = answer === currentWord.vocabularyWord.word;
-    setSelectedAnswer(answer);
-    setIsCorrect(correct);
-    setShowFeedback(true);
-    
-    if (correct) {
-      setCorrectCount(c => c + 1);
-    } else {
-      setIncorrectCount(c => c + 1);
-    }
-    
-    onAttempt({
-      vocabularyWordId: currentWord.vocabularyWord.id,
-      isCorrect: correct,
-      questionData: { translation: currentWord.gameData!.translation, options },
-      userAnswer: answer,
-      correctAnswer: currentWord.vocabularyWord.word
-    });
-  };
-  
-  const handleContinue = () => {
-    setShowFeedback(false);
-    setSelectedAnswer(null);
-    
-    if (currentIndex < words.length - 1) {
-      setCurrentIndex(i => i + 1);
-    } else {
-      onComplete();
-    }
-  };
-  
-  const handleExit = () => {
-    if (confirm('Are you sure you want to exit? Your progress will be saved.')) {
-      onComplete();
-    }
-  };
+
+  const correctAnswer = quiz.currentWord.vocabularyWord.word;
   
   return (
     <GameWrapper
       gameName={gameInfo.name}
       gameIcon={gameInfo.icon}
-      currentIndex={currentIndex}
+      currentIndex={quiz.currentIndex}
       totalWords={words.length}
-      correctCount={correctCount}
-      incorrectCount={incorrectCount}
-      onExit={handleExit}
+      correctCount={quiz.correctCount}
+      incorrectCount={quiz.incorrectCount}
+      onExit={quiz.handleExit}
     >
       <div className="flex-1 flex flex-col items-center justify-center p-4">
-        {/* Translation display */}
         <div className="mb-8 text-center">
-          <p className="text-sm text-gray-500 mb-2">
-            What is the {sourceLanguage} word for:
-          </p>
-          <h2 className="text-4xl font-bold text-gray-900">
-            {currentWord.gameData!.translation}
-          </h2>
+          <p className="text-sm text-gray-500 mb-2">What is the {sourceLanguage} word for:</p>
+          <h2 className="text-4xl font-bold text-gray-900">{quiz.currentWord.gameData!.translation}</h2>
         </div>
         
-        {/* Options */}
-        <div className="w-full max-w-xl space-y-3">
-          {options.map((option, index) => {
-            let buttonClass = 'w-full p-4 rounded-lg border-2 text-left transition-all ';
-            
-            if (selectedAnswer) {
-              if (option === currentWord.vocabularyWord.word) {
-                buttonClass += 'border-green-500 bg-green-50 text-green-800';
-              } else if (option === selectedAnswer) {
-                buttonClass += 'border-red-500 bg-red-50 text-red-800';
-              } else {
-                buttonClass += 'border-gray-200 bg-gray-50 text-gray-400';
-              }
-            } else {
-              buttonClass += 'border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer';
-            }
-            
-            return (
-              <button
-                key={`${currentIndex}-${index}`}
-                onClick={() => handleSelect(option)}
-                disabled={!!selectedAnswer}
-                className={buttonClass}
-              >
-                <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
-                {option}
-              </button>
-            );
-          })}
-        </div>
+        <QuizOptions
+          options={options}
+          selectedAnswer={quiz.selectedAnswer}
+          correctAnswer={correctAnswer}
+          currentIndex={quiz.currentIndex}
+          onSelect={(answer) => quiz.handleSelect(answer, correctAnswer, { translation: quiz.currentWord.gameData!.translation, options })}
+        />
         
-        <p className="mt-8 text-sm text-gray-500">
-          {currentIndex + 1} of {words.length}
-        </p>
+        <p className="mt-8 text-sm text-gray-500">{quiz.currentIndex + 1} of {words.length}</p>
       </div>
       
-      {showFeedback && (
-        <FeedbackOverlay
-          isCorrect={isCorrect}
-          correctAnswer={currentWord.vocabularyWord.word}
-          onContinue={handleContinue}
-        />
+      {quiz.showFeedback && (
+        <FeedbackOverlay isCorrect={quiz.isCorrect} correctAnswer={correctAnswer} onContinue={quiz.handleContinue} />
       )}
     </GameWrapper>
   );

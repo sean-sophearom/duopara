@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { asyncHandler } from '../lib/routeUtils.js';
 import { 
   createWordTranslationAgent, 
   createSentenceTranslationAgent, 
@@ -14,6 +15,20 @@ import {
   grammarAnalysisSchema,
   fullAnalysisSchema
 } from '../lib/llm/index.js';
+import {
+  wordTranslationPrompt,
+  sentenceTranslationPrompt,
+  grammarAnalysisPrompt,
+  fullAnalysisPrompt,
+} from '../lib/llm/prompts.js';
+import { ALLOWED_LANGUAGES, MAX_WORD_LENGTH, MAX_SENTENCE_LENGTH, MAX_CONTEXT_LENGTH } from '../lib/constants.js';
+
+function validLanguage() {
+  return z.string().min(1).max(50).refine(
+    (val) => ALLOWED_LANGUAGES.has(val.toLowerCase()),
+    { message: 'Unsupported language' }
+  );
+}
 
 const makeCacheKey = (fields: Record<string, unknown>): string =>
   createHash('sha256').update(JSON.stringify(fields)).digest('hex');
@@ -22,36 +37,30 @@ export const translateRouter = Router();
 translateRouter.use(authenticate);
 
 const translateWordSchema = z.object({
-  word: z.string().min(1),
-  sourceLanguage: z.string().min(1),
-  targetLanguage: z.string().min(1),
-  context: z.string().optional() // The sentence containing the word
+  word: z.string().min(1).max(MAX_WORD_LENGTH),
+  sourceLanguage: validLanguage(),
+  targetLanguage: validLanguage(),
+  context: z.string().max(MAX_CONTEXT_LENGTH).optional()
 });
 
 const translateSentenceSchema = z.object({
-  sentence: z.string().min(1),
-  sourceLanguage: z.string().min(1),
-  targetLanguage: z.string().min(1),
+  sentence: z.string().min(1).max(MAX_SENTENCE_LENGTH),
+  sourceLanguage: validLanguage(),
+  targetLanguage: validLanguage(),
   includeGrammarHints: z.boolean().default(true)
 });
 
 const analyzeWordSchema = z.object({
-  word: z.string().min(1),
-  language: z.string().min(1),
-  context: z.string().optional()
+  word: z.string().min(1).max(MAX_WORD_LENGTH),
+  language: validLanguage(),
+  context: z.string().max(MAX_CONTEXT_LENGTH).optional()
 });
 
 // Translate a single word with context
-translateRouter.post('/word', async (req: AuthRequest, res) => {
-  try {
-    const { word, sourceLanguage, targetLanguage, context } = translateWordSchema.parse(req.body);
+translateRouter.post('/word', asyncHandler(async (req: AuthRequest, res) => {
+  const { word, sourceLanguage, targetLanguage, context } = translateWordSchema.parse(req.body);
     
-    const prompt = context
-      ? `Translate the word "${word}" from ${sourceLanguage} to ${targetLanguage}.
-The word appears in this context: "${context}"
-Provide the translation, alternative translations, and explain why this translation fits the context.`
-      : `Translate the word "${word}" from ${sourceLanguage} to ${targetLanguage}.
-Provide the primary translation and alternative meanings.`;
+    const prompt = wordTranslationPrompt(word, sourceLanguage, targetLanguage, context);
 
     // Use Mastra agent with structured output for guaranteed valid JSON
     const agent = createWordTranslationAgent(sourceLanguage, targetLanguage);
@@ -83,19 +92,11 @@ Provide the primary translation and alternative meanings.`;
     });
 
     res.json(result);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Translate word error:', error);
-    res.status(500).json({ error: 'Translation failed' });
-  }
-});
+}, 'Translation failed'));
 
 // Translate a sentence with grammar hints
-translateRouter.post('/sentence', async (req: AuthRequest, res) => {
-  try {
-    const { sentence, sourceLanguage, targetLanguage, includeGrammarHints } = translateSentenceSchema.parse(req.body);
+translateRouter.post('/sentence', asyncHandler(async (req: AuthRequest, res) => {
+  const { sentence, sourceLanguage, targetLanguage, includeGrammarHints } = translateSentenceSchema.parse(req.body);
 
     // Cache lookup
     const cacheKey = makeCacheKey({ sentence, sourceLanguage, targetLanguage, includeGrammarHints });
@@ -103,16 +104,11 @@ translateRouter.post('/sentence', async (req: AuthRequest, res) => {
       where: { endpoint_cacheKey: { endpoint: 'sentence', cacheKey } }
     });
     if (cached) {
-      return res.json(JSON.parse(cached.response));
+      const parsed = sentenceTranslationSchema.parse(JSON.parse(cached.response));
+      return res.json(parsed);
     }
 
-    const prompt = includeGrammarHints
-      ? `Translate this ${sourceLanguage} sentence to ${targetLanguage}:
-"${sentence}"
-
-Provide the translation, grammar notes explaining key grammar points (conjugations, tenses, structures), and a literal word-by-word translation.`
-      : `Translate this ${sourceLanguage} sentence to ${targetLanguage}:
-"${sentence}"`;
+    const prompt = sentenceTranslationPrompt(sentence, sourceLanguage, targetLanguage, includeGrammarHints);
 
     // Use Mastra agent with structured output for guaranteed valid JSON
     const agent = createSentenceTranslationAgent(sourceLanguage, targetLanguage);
@@ -136,24 +132,13 @@ Provide the translation, grammar notes explaining key grammar points (conjugatio
     });
 
     res.json(result);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Translate sentence error:', error);
-    res.status(500).json({ error: 'Translation failed' });
-  }
-});
+}, 'Translation failed'));
 
 // Analyze a word (part of speech, base form, etc.)
-translateRouter.post('/analyze', async (req: AuthRequest, res) => {
-  try {
-    const { word, language, context } = analyzeWordSchema.parse(req.body);
+translateRouter.post('/analyze', asyncHandler(async (req: AuthRequest, res) => {
+  const { word, language, context } = analyzeWordSchema.parse(req.body);
     
-    const prompt = `Analyze this ${language} word: "${word}"
-${context ? `Context: "${context}"` : ''}
-
-Provide grammatical analysis: part of speech, base form (infinitive for verbs, singular for nouns), gender if applicable, conjugation details for verbs, number (singular/plural), and any additional grammatical info.`;
+    const prompt = grammarAnalysisPrompt(word, language, context);
 
     // Use Mastra agent with structured output for guaranteed valid JSON
     const agent = createGrammarAnalysisAgent(language);
@@ -187,23 +172,15 @@ Provide grammatical analysis: part of speech, base form (infinitive for verbs, s
     }
 
     res.json(result);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Analyze word error:', error);
-    res.status(500).json({ error: 'Analysis failed' });
-  }
-});
+}, 'Analysis failed'));
 
 // Combined translate + analyze for efficiency
-translateRouter.post('/full', async (req: AuthRequest, res) => {
-  try {
-    const schema = z.object({
-      word: z.string().min(1),
-      sourceLanguage: z.string().min(1),
-      targetLanguage: z.string().min(1),
-      context: z.string().optional()
+translateRouter.post('/full', asyncHandler(async (req: AuthRequest, res) => {
+  const schema = z.object({
+      word: z.string().min(1).max(MAX_WORD_LENGTH),
+      sourceLanguage: validLanguage(),
+      targetLanguage: validLanguage(),
+      context: z.string().max(MAX_CONTEXT_LENGTH).optional()
     });
     
     const { word, sourceLanguage, targetLanguage, context } = schema.parse(req.body);
@@ -214,12 +191,11 @@ translateRouter.post('/full', async (req: AuthRequest, res) => {
       where: { endpoint_cacheKey: { endpoint: 'full', cacheKey } }
     });
     if (cached) {
-      return res.json(JSON.parse(cached.response));
+      const parsed = fullAnalysisSchema.parse(JSON.parse(cached.response));
+      return res.json(parsed);
     }
     
-    const prompt = `For the ${sourceLanguage} word "${word}"${context ? ` in context: "${context}"` : ''}:
-
-Provide ${targetLanguage} translation, alternative meanings, grammatical analysis (part of speech, base form, gender, conjugation for verbs), and a note on contextual usage.`;
+    const prompt = fullAnalysisPrompt(word, sourceLanguage, targetLanguage, context);
 
     // Use Mastra agent with structured output for guaranteed valid JSON
     const agent = createFullAnalysisAgent(sourceLanguage, targetLanguage);
@@ -237,43 +213,36 @@ Provide ${targetLanguage} translation, alternative meanings, grammatical analysi
 
     const result = completion.object ?? { translation: '', alternativeTranslations: [], partOfSpeech: 'unknown', baseForm: null, gender: null, conjugation: null };
 
-    // Store in cache
-    await prisma.translationCache.create({
-      data: { endpoint: 'full', cacheKey, response: JSON.stringify(result) }
-    });
-
-    // Update vocabulary with all gathered information
-    await prisma.vocabularyWord.upsert({
-      where: {
-        userId_word_language: {
+    // Cache + vocabulary update in parallel
+    await Promise.all([
+      prisma.translationCache.create({
+        data: { endpoint: 'full', cacheKey, response: JSON.stringify(result) }
+      }),
+      prisma.vocabularyWord.upsert({
+        where: {
+          userId_word_language: {
+            userId: req.userId!,
+            word: word.toLowerCase(),
+            language: sourceLanguage
+          }
+        },
+        create: {
           userId: req.userId!,
           word: word.toLowerCase(),
-          language: sourceLanguage
+          language: sourceLanguage,
+          translation: result.translation,
+          partOfSpeech: result.partOfSpeech,
+          baseForm: result.baseForm,
+          status: 'learning'
+        },
+        update: {
+          translation: result.translation,
+          partOfSpeech: result.partOfSpeech || undefined,
+          baseForm: result.baseForm || undefined,
+          timesEncountered: { increment: 1 }
         }
-      },
-      create: {
-        userId: req.userId!,
-        word: word.toLowerCase(),
-        language: sourceLanguage,
-        translation: result.translation,
-        partOfSpeech: result.partOfSpeech,
-        baseForm: result.baseForm,
-        status: 'learning'
-      },
-      update: {
-        translation: result.translation,
-        partOfSpeech: result.partOfSpeech || undefined,
-        baseForm: result.baseForm || undefined,
-        timesEncountered: { increment: 1 }
-      }
-    });
+      })
+    ]);
 
     res.json(result);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Full translate error:', error);
-    res.status(500).json({ error: 'Translation failed' });
-  }
-});
+}, 'Translation failed'));

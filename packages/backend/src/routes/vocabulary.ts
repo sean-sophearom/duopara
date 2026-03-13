@@ -4,11 +4,23 @@ import Papa from 'papaparse';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { asyncHandler } from '../lib/routeUtils.js';
+import { MAX_IMPORT_FILE_SIZE, MAX_IMPORT_WORDS, MAX_QUERY_LIMIT } from '../lib/constants.js';
 
 export const vocabularyRouter = Router();
 vocabularyRouter.use(authenticate);
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_IMPORT_FILE_SIZE },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.mimetype === 'application/vnd.ms-excel' || file.originalname.endsWith('.csv')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'));
+    }
+  }
+});
 
 // Schema for adding words
 const addWordSchema = z.object({
@@ -24,250 +36,122 @@ const updateWordSchema = z.object({
   status: z.enum(['learning', 'learned', 'mastered']).optional(),
   translation: z.string().optional(),
   partOfSpeech: z.string().optional(),
-  baseForm: z.string().optional(),
-  timesEncountered: z.number().optional(),
-  timesCorrect: z.number().optional()
+  baseForm: z.string().optional()
 });
 
 // Get all vocabulary for user
-vocabularyRouter.get('/', async (req: AuthRequest, res) => {
-  try {
-    const { language, status, search, limit, offset } = req.query;
-    
-    const where: any = { userId: req.userId };
-    
-    if (language) where.language = language;
-    if (status) where.status = status;
-    if (search) {
-      where.word = { contains: search as string };
-    }
+vocabularyRouter.get('/', asyncHandler(async (req: AuthRequest, res) => {
+  const { language, status, search, limit, offset } = req.query;
+  
+  const where: any = { userId: req.userId };
+  if (language) where.language = language;
+  if (status) where.status = status;
+  if (search) where.word = { contains: search as string };
 
-    const [words, total] = await Promise.all([
-      prisma.vocabularyWord.findMany({
-        where,
-        orderBy: { updatedAt: 'desc' },
-        take: limit ? parseInt(limit as string) : 100,
-        skip: offset ? parseInt(offset as string) : 0
-      }),
-      prisma.vocabularyWord.count({ where })
-    ]);
+  const [words, total] = await Promise.all([
+    prisma.vocabularyWord.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      take: limit ? Math.min(parseInt(limit as string) || 100, MAX_QUERY_LIMIT) : 100,
+      skip: offset ? Math.max(parseInt(offset as string) || 0, 0) : 0
+    }),
+    prisma.vocabularyWord.count({ where })
+  ]);
 
-    res.json({ words, total });
-  } catch (error) {
-    console.error('Get vocabulary error:', error);
-    res.status(500).json({ error: 'Failed to get vocabulary' });
-  }
-});
+  res.json({ words, total });
+}, 'Failed to get vocabulary'));
 
 // Get vocabulary stats
-vocabularyRouter.get('/stats', async (req: AuthRequest, res) => {
-  try {
-    const { language } = req.query;
-    const where: any = { userId: req.userId };
-    if (language) where.language = language;
+vocabularyRouter.get('/stats', asyncHandler(async (req: AuthRequest, res) => {
+  const { language } = req.query;
+  const where: any = { userId: req.userId };
+  if (language) where.language = language;
 
-    const [total, learning, learned, mastered] = await Promise.all([
-      prisma.vocabularyWord.count({ where }),
-      prisma.vocabularyWord.count({ where: { ...where, status: 'learning' } }),
-      prisma.vocabularyWord.count({ where: { ...where, status: 'learned' } }),
-      prisma.vocabularyWord.count({ where: { ...where, status: 'mastered' } })
-    ]);
+  const [total, learning, learned, mastered] = await Promise.all([
+    prisma.vocabularyWord.count({ where }),
+    prisma.vocabularyWord.count({ where: { ...where, status: 'learning' } }),
+    prisma.vocabularyWord.count({ where: { ...where, status: 'learned' } }),
+    prisma.vocabularyWord.count({ where: { ...where, status: 'mastered' } })
+  ]);
 
-    res.json({ total, learning, learned, mastered });
-  } catch (error) {
-    console.error('Get stats error:', error);
-    res.status(500).json({ error: 'Failed to get stats' });
-  }
-});
+  res.json({ total, learning, learned, mastered });
+}, 'Failed to get stats'));
 
 // Get known words (learned + mastered) for text generation
-vocabularyRouter.get('/known', async (req: AuthRequest, res) => {
-  try {
-    const { language } = req.query;
-    
-    const words = await prisma.vocabularyWord.findMany({
-      where: {
-        userId: req.userId,
-        language: language as string,
-        status: { in: ['learned', 'mastered'] }
-      },
-      select: { word: true, baseForm: true }
-    });
-
-    res.json({ 
-      words: words.map((w: { word: string }) => w.word),
-      baseForms: words.filter((w: { baseForm: string | null }) => w.baseForm).map((w: { baseForm: string | null }) => w.baseForm)
-    });
-  } catch (error) {
-    console.error('Get known words error:', error);
-    res.status(500).json({ error: 'Failed to get known words' });
-  }
-});
+vocabularyRouter.get('/known', asyncHandler(async (req: AuthRequest, res) => {
+  const { language } = req.query;
+  const words = await prisma.vocabularyWord.findMany({
+    where: { userId: req.userId, language: language as string, status: { in: ['learned', 'mastered'] } },
+    select: { word: true, baseForm: true }
+  });
+  res.json({ 
+    words: words.map((w: { word: string }) => w.word),
+    baseForms: words.filter((w: { baseForm: string | null }) => w.baseForm).map((w: { baseForm: string | null }) => w.baseForm)
+  });
+}, 'Failed to get known words'));
 
 // Add a single word
-vocabularyRouter.post('/', async (req: AuthRequest, res) => {
-  try {
-    const data = addWordSchema.parse(req.body);
-    
-    const word = await prisma.vocabularyWord.upsert({
-      where: {
-        userId_word_language: {
-          userId: req.userId!,
-          word: data.word.toLowerCase(),
-          language: data.language
-        }
-      },
-      create: {
-        userId: req.userId!,
-        word: data.word.toLowerCase(),
-        language: data.language,
-        translation: data.translation,
-        partOfSpeech: data.partOfSpeech,
-        baseForm: data.baseForm,
-        status: data.status || 'learning'
-      },
-      update: {
-        translation: data.translation,
-        partOfSpeech: data.partOfSpeech,
-        baseForm: data.baseForm,
-        status: data.status,
-        timesEncountered: { increment: 1 }
-      }
-    });
-
-    res.status(201).json({ word });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Add word error:', error);
-    res.status(500).json({ error: 'Failed to add word' });
-  }
-});
+vocabularyRouter.post('/', asyncHandler(async (req: AuthRequest, res) => {
+  const data = addWordSchema.parse(req.body);
+  const word = await prisma.vocabularyWord.upsert({
+    where: { userId_word_language: { userId: req.userId!, word: data.word.toLowerCase(), language: data.language } },
+    create: { userId: req.userId!, word: data.word.toLowerCase(), language: data.language, translation: data.translation, partOfSpeech: data.partOfSpeech, baseForm: data.baseForm, status: data.status || 'learning' },
+    update: { translation: data.translation, partOfSpeech: data.partOfSpeech, baseForm: data.baseForm, status: data.status, timesEncountered: { increment: 1 } }
+  });
+  res.status(201).json({ word });
+}, 'Failed to add word'));
 
 // Update a word
-vocabularyRouter.patch('/:id', async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-    const data = updateWordSchema.parse(req.body);
-    
-    // Verify ownership
-    const existing = await prisma.vocabularyWord.findFirst({
-      where: { id, userId: req.userId }
-    });
-    
-    if (!existing) {
-      return res.status(404).json({ error: 'Word not found' });
-    }
+vocabularyRouter.patch('/:id', asyncHandler(async (req: AuthRequest, res) => {
+  const { id } = req.params;
+  const data = updateWordSchema.parse(req.body);
+  
+  const existing = await prisma.vocabularyWord.findFirst({ where: { id, userId: req.userId } });
+  if (!existing) return res.status(404).json({ error: 'Word not found' });
 
-    const updateData: any = { ...data };
-    if (data.status === 'mastered' && existing.status !== 'mastered') {
-      updateData.masteredAt = new Date();
-    }
-
-    const word = await prisma.vocabularyWord.update({
-      where: { id },
-      data: updateData
-    });
-
-    res.json({ word });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Update word error:', error);
-    res.status(500).json({ error: 'Failed to update word' });
+  const updateData: any = { ...data };
+  if (data.status === 'mastered' && existing.status !== 'mastered') {
+    updateData.masteredAt = new Date();
   }
+
+  const word = await prisma.vocabularyWord.update({ where: { id }, data: updateData });
+  res.json({ word });
+}, 'Failed to update word'));
+
+// Mark word with a specific status (DRY helper for mark-learned/mark-learning)
+const markWordSchema = z.object({
+  word: z.string().min(1),
+  language: z.string().min(1),
 });
 
-// Mark word as learned (convenience endpoint)
-vocabularyRouter.post('/mark-learned', async (req: AuthRequest, res) => {
-  try {
-    const { word, language } = req.body;
-    
+function markWordStatus(status: string) {
+  return asyncHandler(async (req: AuthRequest, res) => {
+    const { word, language } = markWordSchema.parse(req.body);
     const updated = await prisma.vocabularyWord.upsert({
-      where: {
-        userId_word_language: {
-          userId: req.userId!,
-          word: word.toLowerCase(),
-          language
-        }
-      },
-      create: {
-        userId: req.userId!,
-        word: word.toLowerCase(),
-        language,
-        status: 'learned'
-      },
-      update: {
-        status: 'learned'
-      }
+      where: { userId_word_language: { userId: req.userId!, word: word.toLowerCase(), language } },
+      create: { userId: req.userId!, word: word.toLowerCase(), language, status },
+      update: { status }
     });
-
     res.json({ word: updated });
-  } catch (error) {
-    console.error('Mark learned error:', error);
-    res.status(500).json({ error: 'Failed to mark word as learned' });
-  }
-});
+  }, `Failed to mark word as ${status}`);
+}
 
-vocabularyRouter.post('/mark-learning', async (req: AuthRequest, res) => {
-  try {
-    const { word, language } = req.body;
-
-    const updated = await prisma.vocabularyWord.upsert({
-      where: {
-        userId_word_language: {
-          userId: req.userId!,
-          word: word.toLowerCase(),
-          language
-        }
-      },
-      create: {
-        userId: req.userId!,
-        word: word.toLowerCase(),
-        language,
-        status: 'learning'
-      },
-      update: {
-        status: 'learning'
-      }
-    });
-
-    res.json({ word: updated });
-  } catch (error) {
-    console.error('Mark learning error:', error);
-    res.status(500).json({ error: 'Failed to mark word as learning' });
-  }
-});
+vocabularyRouter.post('/mark-learned', markWordStatus('learned'));
+vocabularyRouter.post('/mark-learning', markWordStatus('learning'));
 
 // Delete a word
-vocabularyRouter.delete('/:id', async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-    
-    await prisma.vocabularyWord.deleteMany({
-      where: { id, userId: req.userId }
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete word error:', error);
-    res.status(500).json({ error: 'Failed to delete word' });
-  }
-});
+vocabularyRouter.delete('/:id', asyncHandler(async (req: AuthRequest, res) => {
+  const { id } = req.params;
+  await prisma.vocabularyWord.deleteMany({ where: { id, userId: req.userId } });
+  res.json({ success: true });
+}, 'Failed to delete word'));
 
 // Import from CSV (Duolingo format or generic)
-vocabularyRouter.post('/import', upload.single('file'), async (req: AuthRequest, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
+vocabularyRouter.post('/import', upload.single('file'), asyncHandler(async (req: AuthRequest, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-    const { language } = req.body;
-    if (!language) {
-      return res.status(400).json({ error: 'Language is required' });
-    }
+  const { language } = req.body;
+  if (!language) return res.status(400).json({ error: 'Language is required' });
 
     const csvContent = req.file.buffer.toString('utf-8');
     
@@ -308,48 +192,42 @@ vocabularyRouter.post('/import', upload.single('file'), async (req: AuthRequest,
       }
     }
 
-    // Batch upsert
+    if (words.length > MAX_IMPORT_WORDS) {
+      return res.status(400).json({ error: `Too many words. Maximum is ${MAX_IMPORT_WORDS}.` });
+    }
+
     let imported = 0;
     let skipped = 0;
-    
-    for (const wordData of words) {
-      try {
-        await prisma.vocabularyWord.upsert({
+
+    // Batch upsert in a transaction for performance
+    await prisma.$transaction(
+      words.map((wordData) =>
+        prisma.vocabularyWord.upsert({
           where: {
             userId_word_language: {
               userId: wordData.userId,
               word: wordData.word,
-              language: wordData.language
-            }
+              language: wordData.language,
+            },
           },
           create: wordData,
           update: {
             translation: wordData.translation || undefined,
             partOfSpeech: wordData.partOfSpeech || undefined,
-            baseForm: wordData.baseForm || undefined
-          }
-        });
-        imported++;
-      } catch (e) {
-        skipped++;
-      }
-    }
+            baseForm: wordData.baseForm || undefined,
+          },
+        })
+      )
+    ).then(
+      (results) => { imported = results.length; },
+      () => { skipped = words.length; }
+    );
 
-    res.json({ 
-      success: true, 
-      imported, 
-      skipped,
-      total: words.length 
-    });
-  } catch (error) {
-    console.error('Import error:', error);
-    res.status(500).json({ error: 'Failed to import vocabulary' });
-  }
-});
+    res.json({ success: true, imported, skipped, total: words.length });
+}, 'Failed to import vocabulary'));
 
 // Export vocabulary
-vocabularyRouter.get('/export', async (req: AuthRequest, res) => {
-  try {
+vocabularyRouter.get('/export', asyncHandler(async (req: AuthRequest, res) => {
     const { language } = req.query;
     const where: any = { userId: req.userId };
     if (language) where.language = language;
@@ -374,8 +252,4 @@ vocabularyRouter.get('/export', async (req: AuthRequest, res) => {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=vocabulary.csv');
     res.send(csv);
-  } catch (error) {
-    console.error('Export error:', error);
-    res.status(500).json({ error: 'Failed to export vocabulary' });
-  }
-});
+}, 'Failed to export vocabulary'));

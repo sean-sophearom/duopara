@@ -86,6 +86,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        api.post('/auth/logout').catch(() => {});
         delete api.defaults.headers.common['Authorization'];
         set({
           user: null,
@@ -120,7 +121,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'duopara-auth',
-      partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
     }
   )
 );

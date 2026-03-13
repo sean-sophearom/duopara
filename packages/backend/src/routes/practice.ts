@@ -1,18 +1,30 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
-import { createGameDataAgent, gameWordDataSchema } from '../lib/llm/index.js';
+import { asyncHandler } from '../lib/routeUtils.js';
+import { getOrGenerateGameData } from '../lib/gameData.js';
+import { calculateNextReview } from '../lib/spacedRepetition.js';
+import { GAME_TYPES, VOCAB_STATUSES, STREAK_TO_LEARNED, STREAK_TO_MASTERED, ALLOWED_LANGUAGES, MAX_WORD_LENGTH } from '../lib/constants.js';
+
+function validLanguage() {
+  return z.string().min(1).max(50).refine(
+    (val) => ALLOWED_LANGUAGES.has(val.toLowerCase()),
+    { message: 'Unsupported language' }
+  );
+}
+
+const gameDataLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many game data requests, please slow down' }
+});
 
 export const practiceRouter = Router();
 practiceRouter.use(authenticate);
-
-// ============================================
-// Types
-// ============================================
-
-const GameTypes = ['definition', 'translation', 'reverse', 'fillblank', 'matching', 'truefalse'] as const;
-type GameType = typeof GameTypes[number];
 
 // ============================================
 // Schemas
@@ -20,20 +32,36 @@ type GameType = typeof GameTypes[number];
 
 const getWordsSchema = z.object({
   language: z.string().min(1),
-  statuses: z.array(z.enum(['learning', 'learned', 'mastered'])).min(1),
+  statuses: z.array(z.enum(VOCAB_STATUSES)).min(1),
   limit: z.number().min(1).max(50).default(10),
   prioritizeSpacedRepetition: z.boolean().default(true)
 });
 
 const startSessionSchema = z.object({
-  gameType: z.enum(GameTypes),
-  sourceLanguage: z.string().min(1),
-  targetLanguage: z.string().min(1),
+  gameType: z.enum(GAME_TYPES),
+  sourceLanguage: validLanguage(),
+  targetLanguage: validLanguage(),
   wordIds: z.array(z.string()).min(1),
   config: z.object({
     optionCount: z.number().min(2).max(8).optional(),
     pairCount: z.number().min(3).max(5).optional()
   }).optional()
+});
+
+const gameDataSchema = z.object({
+  word: z.string().min(1).max(MAX_WORD_LENGTH),
+  sourceLanguage: validLanguage(),
+  targetLanguage: validLanguage(),
+  translation: z.string().max(MAX_WORD_LENGTH).optional().default(''),
+});
+
+const batchGameDataSchema = z.object({
+  words: z.array(z.object({
+    word: z.string().min(1).max(MAX_WORD_LENGTH),
+    translation: z.string().max(MAX_WORD_LENGTH).optional().default(''),
+  })).min(1).max(50),
+  sourceLanguage: validLanguage(),
+  targetLanguage: validLanguage(),
 });
 
 const submitAttemptSchema = z.object({
@@ -51,52 +79,6 @@ const completeSessionSchema = z.object({
 });
 
 // ============================================
-// Spaced Repetition (SM-2 Algorithm)
-// ============================================
-
-function calculateNextReview(
-  currentDifficulty: number,
-  streak: number,
-  isCorrect: boolean
-): { nextPracticeAt: Date; difficultyScore: number; streak: number } {
-  let newDifficulty = currentDifficulty;
-  let newStreak = streak;
-  
-  if (isCorrect) {
-    newStreak += 1;
-    // Increase easiness for correct answers
-    newDifficulty = Math.min(5.0, currentDifficulty + 0.1);
-  } else {
-    newStreak = 0;
-    // Decrease easiness for wrong answers
-    newDifficulty = Math.max(1.3, currentDifficulty - 0.3);
-  }
-  
-  // Calculate interval based on streak and difficulty
-  let intervalDays: number;
-  if (newStreak === 0) {
-    intervalDays = 0; // Review immediately/today
-  } else if (newStreak === 1) {
-    intervalDays = 1;
-  } else if (newStreak === 2) {
-    intervalDays = 3;
-  } else {
-    // For streak >= 3, use SM-2 formula with cap
-    const previousInterval = Math.pow(newDifficulty, newStreak - 2) * 3;
-    intervalDays = Math.min(365, Math.round(previousInterval * newDifficulty)); // Cap at 1 year
-  }
-  
-  const nextPracticeAt = new Date();
-  nextPracticeAt.setDate(nextPracticeAt.getDate() + intervalDays);
-  
-  return {
-    nextPracticeAt,
-    difficultyScore: newDifficulty,
-    streak: newStreak
-  };
-}
-
-// ============================================
 // Routes
 // ============================================
 
@@ -104,303 +86,126 @@ function calculateNextReview(
  * Get vocabulary words for practice
  * Prioritizes words due for spaced repetition review
  */
-practiceRouter.post('/words', async (req: AuthRequest, res) => {
-  try {
-    const data = getWordsSchema.parse(req.body);
+practiceRouter.post('/words', asyncHandler(async (req, res) => {
+  const data = getWordsSchema.parse(req.body);
+  
+  const baseWhere = {
+    userId: req.userId!,
+    language: data.language,
+    status: { in: data.statuses },
+    translation: { not: null } // Only words with translations
+  };
+  
+  let words;
+  
+  if (data.prioritizeSpacedRepetition) {
+    const dueWords = await prisma.vocabularyWord.findMany({
+      where: {
+        ...baseWhere,
+        OR: [
+          { nextPracticeAt: { lte: new Date() } },
+          { nextPracticeAt: null }
+        ]
+      },
+      orderBy: [
+        { nextPracticeAt: 'asc' },
+        { difficultyScore: 'asc' }
+      ],
+      take: data.limit
+    });
     
-    const baseWhere = {
-      userId: req.userId!,
-      language: data.language,
-      status: { in: data.statuses },
-      translation: { not: null } // Only words with translations
-    };
-    
-    let words;
-    
-    if (data.prioritizeSpacedRepetition) {
-      // First get words due for review (nextPracticeAt <= now or null)
-      const dueWords = await prisma.vocabularyWord.findMany({
-        where: {
-          ...baseWhere,
-          OR: [
-            { nextPracticeAt: { lte: new Date() } },
-            { nextPracticeAt: null }
-          ]
-        },
-        orderBy: [
-          { nextPracticeAt: 'asc' },
-          { difficultyScore: 'asc' } // Harder words first
-        ],
-        take: data.limit
-      });
-      
-      // If not enough due words, fill with random words
-      if (dueWords.length < data.limit) {
-        const remainingCount = data.limit - dueWords.length;
-        const dueWordIds = dueWords.map(w => w.id);
-        
-        const additionalWords = await prisma.vocabularyWord.findMany({
-          where: {
-            ...baseWhere,
-            id: { notIn: dueWordIds }
-          },
-          orderBy: { updatedAt: 'desc' },
-          take: remainingCount
-        });
-        
-        words = [...dueWords, ...additionalWords];
-      } else {
-        words = dueWords;
-      }
-    } else {
-      // Random selection
-      words = await prisma.vocabularyWord.findMany({
-        where: baseWhere,
+    if (dueWords.length < data.limit) {
+      const dueWordIds = dueWords.map(w => w.id);
+      const additionalWords = await prisma.vocabularyWord.findMany({
+        where: { ...baseWhere, id: { notIn: dueWordIds } },
         orderBy: { updatedAt: 'desc' },
-        take: data.limit
+        take: data.limit - dueWords.length
       });
+      words = [...dueWords, ...additionalWords];
+    } else {
+      words = dueWords;
     }
-    
-    res.json({ words });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Get practice words error:', error);
-    res.status(500).json({ error: 'Failed to get practice words' });
+  } else {
+    words = await prisma.vocabularyWord.findMany({
+      where: baseWhere,
+      orderBy: { updatedAt: 'desc' },
+      take: data.limit
+    });
   }
-});
+  
+  res.json({ words });
+}, 'Failed to get practice words'));
 
 /**
  * Get game data for a word (cached or generate new)
  */
-practiceRouter.post('/game-data', async (req: AuthRequest, res) => {
-  try {
-    const { word, sourceLanguage, targetLanguage, translation } = req.body;
-    
-    if (!word || !sourceLanguage || !targetLanguage) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-    
-    // Check cache first
-    let gameData = await prisma.gameWordData.findUnique({
-      where: {
-        word_sourceLanguage_targetLanguage: {
-          word: word.toLowerCase(),
-          sourceLanguage,
-          targetLanguage
-        }
-      }
-    });
-    
-    if (gameData) {
-      // Return cached data
-      return res.json({
-        cached: true,
-        data: {
-          definition: gameData.definition,
-          translation: gameData.translation,
-          distractorDefinitions: JSON.parse(gameData.distractorDefinitions),
-          distractorTranslations: JSON.parse(gameData.distractorTranslations),
-          exampleSentences: JSON.parse(gameData.exampleSentences),
-          falseTranslation: gameData.falseTranslation
-        }
-      });
-    }
-    
-    // Generate new game data using LLM
-    const agent = createGameDataAgent(sourceLanguage, targetLanguage);
-    
-    const prompt = `Generate practice game data for the following word:
-
-Word: "${word}" (${sourceLanguage})
-Hint translation: "${translation || 'unknown'}" (${targetLanguage})
-
-Generate:
-1. The correct translation in ${targetLanguage}
-2. 5 plausible but incorrect definitions (distractors)
-3. A very very short definition in ${targetLanguage} (should be similar in length to the distractors)
-4. 5 plausible but incorrect translations (distractors)
-5. 3 example sentences with the word blanked out (in ${sourceLanguage})
-6. One false translation for true/false game
-
-Return as JSON.`;
-
-    const result = await agent.generate(prompt, {
-      structuredOutput: {
-        schema: gameWordDataSchema,
-      }
-    });
-    
-    const generatedData = result.object;
-    
-    // Cache the result
-    gameData = await prisma.gameWordData.create({
-      data: {
-        word: word.toLowerCase(),
-        sourceLanguage,
-        targetLanguage,
-        definition: generatedData.definition,
-        translation: generatedData.translation,
-        distractorDefinitions: JSON.stringify(generatedData.distractorDefinitions),
-        distractorTranslations: JSON.stringify(generatedData.distractorTranslations),
-        exampleSentences: JSON.stringify(generatedData.exampleSentences),
-        falseTranslation: generatedData.falseTranslation
-      }
-    });
-    
-    res.json({
-      cached: false,
-      data: generatedData
-    });
-  } catch (error) {
-    console.error('Get game data error:', error);
-    res.status(500).json({ error: 'Failed to get game data' });
-  }
-});
+practiceRouter.post('/game-data', asyncHandler(async (req, res) => {
+  const data = gameDataSchema.parse(req.body);
+  const result = await getOrGenerateGameData(data.word, data.sourceLanguage, data.targetLanguage, data.translation);
+  res.json(result);
+}, 'Failed to get game data'));
 
 /**
  * Batch get game data for multiple words
  */
-practiceRouter.post('/game-data/batch', async (req: AuthRequest, res) => {
-  try {
-    const { words, sourceLanguage, targetLanguage } = req.body;
-    
-    if (!words || !Array.isArray(words) || !sourceLanguage || !targetLanguage) {
-      return res.status(400).json({ error: 'Missing required fields' });
+practiceRouter.post('/game-data/batch', gameDataLimiter, asyncHandler(async (req, res) => {
+  const data = batchGameDataSchema.parse(req.body);
+
+  const entries = await Promise.allSettled(
+    data.words.map(item =>
+      getOrGenerateGameData(item.word, data.sourceLanguage, data.targetLanguage, item.translation)
+        .then(result => ({ word: item.word, result }))
+    )
+  );
+
+  const results: Record<string, any> = {};
+  for (const entry of entries) {
+    if (entry.status === 'fulfilled') {
+      results[entry.value.word] = entry.value.result;
+    } else {
+      console.error('Failed to generate game data:', entry.reason);
     }
-    
-    const results: Record<string, any> = {};
-    const toGenerate: Array<{ word: string; translation: string }> = [];
-    
-    // Check cache for all words
-    for (const item of words) {
-      const cached = await prisma.gameWordData.findUnique({
-        where: {
-          word_sourceLanguage_targetLanguage: {
-            word: item.word.toLowerCase(),
-            sourceLanguage,
-            targetLanguage
-          }
-        }
-      });
-      
-      if (cached) {
-        results[item.word] = {
-          cached: true,
-          data: {
-            definition: cached.definition,
-            translation: cached.translation,
-            distractorDefinitions: JSON.parse(cached.distractorDefinitions),
-            distractorTranslations: JSON.parse(cached.distractorTranslations),
-            exampleSentences: JSON.parse(cached.exampleSentences),
-            falseTranslation: cached.falseTranslation
-          }
-        };
-      } else {
-        toGenerate.push(item);
-      }
-    }
-    
-    // Generate missing data (one at a time to avoid rate limits)
-    for (const item of toGenerate) {
-      try {
-        const agent = createGameDataAgent(sourceLanguage, targetLanguage);
-        
-        const prompt = `Generate practice game data for the following word:
-
-Word: "${item.word}" (${sourceLanguage})
-Hint translation: "${item.translation || 'unknown'}" (${targetLanguage})
-
-Generate:
-1. The correct translation in ${targetLanguage}
-2. 5 plausible but incorrect definitions (distractors)
-3. A very very short definition in ${targetLanguage} (should be similar in length to the distractors)
-4. 5 plausible but incorrect translations (distractors)
-5. 3 example sentences with the word blanked out (in ${sourceLanguage})
-6. One false translation for true/false game
-
-Return as JSON.`;
-
-        const result = await agent.generate(prompt, {
-          structuredOutput: {
-            schema: gameWordDataSchema,
-          }
-        });
-        
-        const generatedData = result.object;
-        
-        // Cache it
-        await prisma.gameWordData.create({
-          data: {
-            word: item.word.toLowerCase(),
-            sourceLanguage,
-            targetLanguage,
-            definition: generatedData.definition,
-            translation: generatedData.translation,
-            distractorDefinitions: JSON.stringify(generatedData.distractorDefinitions),
-            distractorTranslations: JSON.stringify(generatedData.distractorTranslations),
-            exampleSentences: JSON.stringify(generatedData.exampleSentences),
-            falseTranslation: generatedData.falseTranslation
-          }
-        });
-        
-        results[item.word] = {
-          cached: false,
-          data: generatedData
-        };
-      } catch (genError) {
-        console.error(`Failed to generate game data for ${item.word}:`, genError);
-        results[item.word] = {
-          error: 'Failed to generate'
-        };
-      }
-    }
-    
-    res.json({ results });
-  } catch (error) {
-    console.error('Batch get game data error:', error);
-    res.status(500).json({ error: 'Failed to get game data' });
   }
-});
+
+  res.json({ results });
+}, 'Failed to get game data'));
 
 /**
  * Start a new practice session
  */
-practiceRouter.post('/session/start', async (req: AuthRequest, res) => {
-  try {
-    const data = startSessionSchema.parse(req.body);
-    
-    const session = await prisma.practiceSession.create({
-      data: {
-        userId: req.userId!,
-        gameType: data.gameType,
-        sourceLanguage: data.sourceLanguage,
-        targetLanguage: data.targetLanguage,
-        totalWords: data.wordIds.length,
-        config: JSON.stringify(data.config || {})
-      }
-    });
-    
-    res.json({ session });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
+practiceRouter.post('/session/start', asyncHandler(async (req, res) => {
+  const data = startSessionSchema.parse(req.body);
+  
+  const session = await prisma.practiceSession.create({
+    data: {
+      userId: req.userId!,
+      gameType: data.gameType,
+      sourceLanguage: data.sourceLanguage,
+      targetLanguage: data.targetLanguage,
+      totalWords: data.wordIds.length,
+      config: JSON.stringify(data.config || {})
     }
-    console.error('Start session error:', error);
-    res.status(500).json({ error: 'Failed to start session' });
-  }
-});
+  });
+  
+  res.json({ session });
+}, 'Failed to start session'));
 
 /**
  * Submit a practice attempt
  */
-practiceRouter.post('/attempt', async (req: AuthRequest, res) => {
-  try {
-    const data = submitAttemptSchema.parse(req.body);
-    
-    // Create the attempt
-    const attempt = await prisma.practiceAttempt.create({
+practiceRouter.post('/attempt', asyncHandler(async (req, res) => {
+  const data = submitAttemptSchema.parse(req.body);
+  
+  // Verify session and vocabulary word belong to the authenticated user
+  const [session, vocabWord] = await Promise.all([
+    prisma.practiceSession.findFirst({ where: { id: data.sessionId, userId: req.userId! } }),
+    prisma.vocabularyWord.findFirst({ where: { id: data.vocabularyWordId, userId: req.userId! } })
+  ]);
+  if (!session) return res.status(404).json({ error: 'Session not found' });
+  if (!vocabWord) return res.status(404).json({ error: 'Vocabulary word not found' });
+
+  const [attempt] = await Promise.all([
+    prisma.practiceAttempt.create({
       data: {
         sessionId: data.sessionId,
         vocabularyWordId: data.vocabularyWordId,
@@ -410,210 +215,141 @@ practiceRouter.post('/attempt', async (req: AuthRequest, res) => {
         userAnswer: data.userAnswer,
         correctAnswer: data.correctAnswer
       }
-    });
-    
-    // Update session counts
-    await prisma.practiceSession.update({
+    }),
+    prisma.practiceSession.update({
       where: { id: data.sessionId },
       data: data.isCorrect 
         ? { correctCount: { increment: 1 } }
         : { incorrectCount: { increment: 1 } }
+    })
+  ]);
+  
+  if (vocabWord) {
+    const { nextPracticeAt, difficultyScore, streak } = calculateNextReview(
+      vocabWord.difficultyScore,
+      vocabWord.practiceStreak,
+      data.isCorrect
+    );
+    
+    await prisma.vocabularyWord.update({
+      where: { id: data.vocabularyWordId },
+      data: {
+        timesEncountered: { increment: 1 },
+        timesCorrect: data.isCorrect ? { increment: 1 } : undefined,
+        lastPracticedAt: new Date(),
+        practiceStreak: streak,
+        nextPracticeAt,
+        difficultyScore,
+        status: streak >= STREAK_TO_LEARNED && vocabWord.status === 'learning' 
+          ? 'learned' 
+          : streak >= STREAK_TO_MASTERED && vocabWord.status === 'learned'
+            ? 'mastered'
+            : undefined
+      }
     });
-    
-    // Update vocabulary word stats and spaced repetition
-    const vocabWord = await prisma.vocabularyWord.findUnique({
-      where: { id: data.vocabularyWordId }
-    });
-    
-    if (vocabWord) {
-      const { nextPracticeAt, difficultyScore, streak } = calculateNextReview(
-        vocabWord.difficultyScore,
-        vocabWord.practiceStreak,
-        data.isCorrect
-      );
-      
-      await prisma.vocabularyWord.update({
-        where: { id: data.vocabularyWordId },
-        data: {
-          timesEncountered: { increment: 1 },
-          timesCorrect: data.isCorrect ? { increment: 1 } : undefined,
-          lastPracticedAt: new Date(),
-          practiceStreak: streak,
-          nextPracticeAt,
-          difficultyScore,
-          // Auto-promote if doing well
-          status: streak >= 5 && vocabWord.status === 'learning' 
-            ? 'learned' 
-            : streak >= 10 && vocabWord.status === 'learned'
-              ? 'mastered'
-              : undefined
-        }
-      });
-    }
-    
-    res.json({ attempt });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Submit attempt error:', error);
-    res.status(500).json({ error: 'Failed to submit attempt' });
   }
-});
+  
+  res.json({ attempt });
+}, 'Failed to submit attempt'));
 
 /**
  * Complete a practice session
  */
-practiceRouter.post('/session/complete', async (req: AuthRequest, res) => {
-  try {
-    const { sessionId } = completeSessionSchema.parse(req.body);
-    
-    const session = await prisma.practiceSession.update({
-      where: { id: sessionId },
-      data: { completedAt: new Date() },
-      include: {
-        attempts: true
-      }
-    });
-    
-    // Calculate stats
-    const accuracy = session.totalWords > 0 
-      ? Math.round((session.correctCount / session.totalWords) * 100) 
-      : 0;
-    
-    const totalTimeMs = session.attempts.reduce(
-      (sum, a) => sum + (a.responseTimeMs || 0), 
-      0
-    );
-    
-    const avgTimeMs = session.attempts.length > 0
-      ? Math.round(totalTimeMs / session.attempts.length)
-      : 0;
-    
-    // Update daily activity
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    await prisma.dailyActivity.upsert({
-      where: {
-        userId_date: {
-          userId: req.userId!,
-          date: today
-        }
-      },
-      create: {
-        userId: req.userId!,
-        date: today,
-        wordsLearned: session.correctCount
-      },
-      update: {
-        wordsLearned: { increment: session.correctCount }
-      }
-    });
-    
-    res.json({
-      session,
-      stats: {
-        accuracy,
-        totalTimeMs,
-        avgTimeMs,
-        correctCount: session.correctCount,
-        incorrectCount: session.incorrectCount
-      }
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Complete session error:', error);
-    res.status(500).json({ error: 'Failed to complete session' });
-  }
-});
+practiceRouter.post('/session/complete', asyncHandler(async (req, res) => {
+  const { sessionId } = completeSessionSchema.parse(req.body);
+  
+  // Verify session belongs to the authenticated user
+  const existing = await prisma.practiceSession.findFirst({ where: { id: sessionId, userId: req.userId! } });
+  if (!existing) return res.status(404).json({ error: 'Session not found' });
+
+  const session = await prisma.practiceSession.update({
+    where: { id: sessionId },
+    data: { completedAt: new Date() },
+    include: { attempts: true }
+  });
+  
+  const accuracy = session.totalWords > 0 
+    ? Math.round((session.correctCount / session.totalWords) * 100) 
+    : 0;
+  
+  const totalTimeMs = session.attempts.reduce(
+    (sum, a) => sum + (a.responseTimeMs || 0), 0
+  );
+  const avgTimeMs = session.attempts.length > 0
+    ? Math.round(totalTimeMs / session.attempts.length) : 0;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  await prisma.dailyActivity.upsert({
+    where: { userId_date: { userId: req.userId!, date: today } },
+    create: { userId: req.userId!, date: today, wordsLearned: session.correctCount },
+    update: { wordsLearned: { increment: session.correctCount } }
+  });
+  
+  res.json({
+    session,
+    stats: { accuracy, totalTimeMs, avgTimeMs, correctCount: session.correctCount, incorrectCount: session.incorrectCount }
+  });
+}, 'Failed to complete session'));
 
 /**
  * Get practice history/stats
  */
-practiceRouter.get('/stats', async (req: AuthRequest, res) => {
-  try {
-    const { language, days } = req.query;
-    const daysNum = days ? parseInt(days as string) : 30;
-    
-    const since = new Date();
-    since.setDate(since.getDate() - daysNum);
-    
-    const where: any = {
-      userId: req.userId!,
-      completedAt: { not: null, gte: since }
-    };
-    
-    if (language) {
-      where.sourceLanguage = language;
+practiceRouter.get('/stats', asyncHandler(async (req, res) => {
+  const { language, days } = req.query;
+  const parsed = days ? parseInt(days as string) : 30;
+  const daysNum = Number.isNaN(parsed) ? 30 : Math.min(Math.max(parsed, 1), 365);
+  
+  const since = new Date();
+  since.setDate(since.getDate() - daysNum);
+  
+  const where: any = {
+    userId: req.userId!,
+    completedAt: { not: null, gte: since }
+  };
+  if (language) where.sourceLanguage = language;
+  
+  const sessions = await prisma.practiceSession.findMany({
+    where, orderBy: { completedAt: 'desc' }, take: 50
+  });
+  
+  const totalSessions = sessions.length;
+  const totalCorrect = sessions.reduce((sum, s) => sum + s.correctCount, 0);
+  const totalIncorrect = sessions.reduce((sum, s) => sum + s.incorrectCount, 0);
+  const totalWords = totalCorrect + totalIncorrect;
+  const overallAccuracy = totalWords > 0 
+    ? Math.round((totalCorrect / totalWords) * 100) : 0;
+  
+  const byGameType: Record<string, { sessions: number; correct: number; total: number }> = {};
+  for (const session of sessions) {
+    if (!byGameType[session.gameType]) {
+      byGameType[session.gameType] = { sessions: 0, correct: 0, total: 0 };
     }
-    
-    const sessions = await prisma.practiceSession.findMany({
-      where,
-      orderBy: { completedAt: 'desc' },
-      take: 50
-    });
-    
-    // Aggregate stats
-    const totalSessions = sessions.length;
-    const totalCorrect = sessions.reduce((sum, s) => sum + s.correctCount, 0);
-    const totalIncorrect = sessions.reduce((sum, s) => sum + s.incorrectCount, 0);
-    const totalWords = totalCorrect + totalIncorrect;
-    const overallAccuracy = totalWords > 0 
-      ? Math.round((totalCorrect / totalWords) * 100) 
-      : 0;
-    
-    // Stats by game type
-    const byGameType: Record<string, { sessions: number; correct: number; total: number }> = {};
-    for (const session of sessions) {
-      if (!byGameType[session.gameType]) {
-        byGameType[session.gameType] = { sessions: 0, correct: 0, total: 0 };
-      }
-      byGameType[session.gameType].sessions += 1;
-      byGameType[session.gameType].correct += session.correctCount;
-      byGameType[session.gameType].total += session.correctCount + session.incorrectCount;
-    }
-    
-    res.json({
-      totalSessions,
-      totalWords,
-      overallAccuracy,
-      byGameType,
-      recentSessions: sessions.slice(0, 10)
-    });
-  } catch (error) {
-    console.error('Get practice stats error:', error);
-    res.status(500).json({ error: 'Failed to get practice stats' });
+    byGameType[session.gameType].sessions += 1;
+    byGameType[session.gameType].correct += session.correctCount;
+    byGameType[session.gameType].total += session.correctCount + session.incorrectCount;
   }
-});
+  
+  res.json({ totalSessions, totalWords, overallAccuracy, byGameType, recentSessions: sessions.slice(0, 10) });
+}, 'Failed to get practice stats'));
 
 /**
  * Get words needing review (due for spaced repetition)
  */
-practiceRouter.get('/due', async (req: AuthRequest, res) => {
-  try {
-    const { language } = req.query;
-    
-    const where: any = {
-      userId: req.userId!,
-      translation: { not: null },
-      OR: [
-        { nextPracticeAt: { lte: new Date() } },
-        { nextPracticeAt: null, lastPracticedAt: { not: null } }
-      ]
-    };
-    
-    if (language) {
-      where.language = language;
-    }
-    
-    const dueCount = await prisma.vocabularyWord.count({ where });
-    
-    res.json({ dueCount });
-  } catch (error) {
-    console.error('Get due words error:', error);
-    res.status(500).json({ error: 'Failed to get due words count' });
-  }
-});
+practiceRouter.get('/due', asyncHandler(async (req, res) => {
+  const { language } = req.query;
+  
+  const where: any = {
+    userId: req.userId!,
+    translation: { not: null },
+    OR: [
+      { nextPracticeAt: { lte: new Date() } },
+      { nextPracticeAt: null, lastPracticedAt: { not: null } }
+    ]
+  };
+  if (language) where.language = language;
+  
+  const dueCount = await prisma.vocabularyWord.count({ where });
+  res.json({ dueCount });
+}, 'Failed to get due words count'));

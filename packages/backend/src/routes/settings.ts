@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { asyncHandler } from '../lib/routeUtils.js';
 
 export const settingsRouter = Router();
 settingsRouter.use(authenticate);
@@ -14,49 +15,24 @@ const updateSettingsSchema = z.object({
 });
 
 // Get settings
-settingsRouter.get('/', async (req: AuthRequest, res) => {
-  try {
-    let settings = await prisma.userSettings.findUnique({
-      where: { userId: req.userId }
-    });
-
-    // Create default settings if they don't exist
-    if (!settings) {
-      settings = await prisma.userSettings.create({
-        data: { userId: req.userId! }
-      });
-    }
-
-    res.json({ settings });
-  } catch (error) {
-    console.error('Get settings error:', error);
-    res.status(500).json({ error: 'Failed to get settings' });
+settingsRouter.get('/', asyncHandler(async (req: AuthRequest, res) => {
+  let settings = await prisma.userSettings.findUnique({ where: { userId: req.userId } });
+  if (!settings) {
+    settings = await prisma.userSettings.create({ data: { userId: req.userId! } });
   }
-});
+  res.json({ settings });
+}, 'Failed to get settings'));
 
 // Update settings
-settingsRouter.patch('/', async (req: AuthRequest, res) => {
-  try {
-    const data = updateSettingsSchema.parse(req.body);
-    
-    const settings = await prisma.userSettings.upsert({
-      where: { userId: req.userId },
-      create: {
-        userId: req.userId!,
-        ...data
-      },
-      update: data
-    });
-
-    res.json({ settings });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Update settings error:', error);
-    res.status(500).json({ error: 'Failed to update settings' });
-  }
-});
+settingsRouter.patch('/', asyncHandler(async (req: AuthRequest, res) => {
+  const data = updateSettingsSchema.parse(req.body);
+  const settings = await prisma.userSettings.upsert({
+    where: { userId: req.userId },
+    create: { userId: req.userId!, ...data },
+    update: data
+  });
+  res.json({ settings });
+}, 'Failed to update settings'));
 
 // Get available languages
 settingsRouter.get('/languages', async (_req: AuthRequest, res) => {

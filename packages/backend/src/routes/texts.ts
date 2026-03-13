@@ -2,36 +2,37 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { asyncHandler } from '../lib/routeUtils.js';
 import {
   createParallelTranslationAgent,
   getModelForTask,
   parallelTextTranslationSchema
 } from '../lib/llm/index.js';
+import { parallelTranslationPrompt } from '../lib/llm/prompts.js';
+import { MAX_QUERY_LIMIT } from '../lib/constants.js';
 
 export const textsRouter = Router();
 textsRouter.use(authenticate);
 
 // Get all texts (History Vault)
-textsRouter.get('/', async (req: AuthRequest, res) => {
-  try {
-    const { language, limit, offset, search } = req.query;
-    
-    const where: any = { userId: req.userId };
-    
-    if (language) where.language = language;
-    if (search) {
-      where.OR = [
-        { title: { contains: search as string } },
-        { topic: { contains: search as string } }
-      ];
-    }
+textsRouter.get('/', asyncHandler(async (req: AuthRequest, res) => {
+  const { language, limit, offset, search } = req.query;
+  
+  const where: any = { userId: req.userId };
+  if (language) where.language = language;
+  if (search) {
+    where.OR = [
+      { title: { contains: search as string } },
+      { topic: { contains: search as string } }
+    ];
+  }
 
     const [texts, total] = await Promise.all([
       prisma.generatedText.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        take: limit ? parseInt(limit as string) : 20,
-        skip: offset ? parseInt(offset as string) : 0,
+        take: limit ? Math.min(parseInt(limit as string) || 20, MAX_QUERY_LIMIT) : 20,
+        skip: offset ? Math.max(parseInt(offset as string) || 0, 0) : 0,
         include: {
           readingSessions: {
             orderBy: { startedAt: 'desc' },
@@ -52,16 +53,11 @@ textsRouter.get('/', async (req: AuthRequest, res) => {
     }));
 
     res.json({ texts: formattedTexts, total });
-  } catch (error) {
-    console.error('Get texts error:', error);
-    res.status(500).json({ error: 'Failed to get texts' });
-  }
-});
+}, 'Failed to get texts'));
 
 // Get single text
-textsRouter.get('/:id', async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
+textsRouter.get('/:id', asyncHandler(async (req: AuthRequest, res) => {
+  const { id } = req.params;
     
     const text = await prisma.generatedText.findFirst({
       where: { id, userId: req.userId },
@@ -91,53 +87,34 @@ textsRouter.get('/:id', async (req: AuthRequest, res) => {
         readingSessions: parsedSessions
       }
     });
-  } catch (error) {
-    console.error('Get text error:', error);
-    res.status(500).json({ error: 'Failed to get text' });
-  }
-});
+}, 'Failed to get text'));
 
 // Start a new reading session for existing text
-textsRouter.post('/:id/start-session', async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Verify ownership
-    const text = await prisma.generatedText.findFirst({
-      where: { id, userId: req.userId }
-    });
+textsRouter.post('/:id/start-session', asyncHandler(async (req: AuthRequest, res) => {
+  const { id } = req.params;
+  
+  const text = await prisma.generatedText.findFirst({ where: { id, userId: req.userId } });
+  if (!text) return res.status(404).json({ error: 'Text not found' });
 
-    if (!text) {
-      return res.status(404).json({ error: 'Text not found' });
-    }
+  const session = await prisma.readingSession.create({
+    data: { userId: req.userId!, textId: id }
+  });
+  res.json({ session });
+}, 'Failed to start session'));
 
-    const session = await prisma.readingSession.create({
-      data: {
-        userId: req.userId!,
-        textId: id
-      }
-    });
-
-    res.json({ session });
-  } catch (error) {
-    console.error('Start session error:', error);
-    res.status(500).json({ error: 'Failed to start session' });
-  }
+// Update reading session
+const sessionUpdateSchema = z.object({
+  wordsLookedUp: z.array(z.string().max(100)).max(500).optional(),
+  wordsMarkedLearned: z.array(z.string().max(100)).max(500).optional(),
+  completed: z.boolean().optional()
 });
 
-// Update reading session (track words looked up, marked learned)
-textsRouter.patch('/session/:sessionId', async (req: AuthRequest, res) => {
-  try {
-    const { sessionId } = req.params;
-    const { wordsLookedUp, wordsMarkedLearned, completed } = req.body;
-    
-    const session = await prisma.readingSession.findFirst({
-      where: { id: sessionId, userId: req.userId }
-    });
-
-    if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
+textsRouter.patch('/session/:sessionId', asyncHandler(async (req: AuthRequest, res) => {
+  const { sessionId } = req.params;
+  const { wordsLookedUp, wordsMarkedLearned, completed } = sessionUpdateSchema.parse(req.body);
+  
+  const session = await prisma.readingSession.findFirst({ where: { id: sessionId, userId: req.userId } });
+  if (!session) return res.status(404).json({ error: 'Session not found' });
 
     const updateData: any = {};
     
@@ -159,35 +136,20 @@ textsRouter.patch('/session/:sessionId', async (req: AuthRequest, res) => {
       where: { id: sessionId },
       data: updateData
     });
-
     res.json({ session: updated });
-  } catch (error) {
-    console.error('Update session error:', error);
-    res.status(500).json({ error: 'Failed to update session' });
-  }
-});
+}, 'Failed to update session'));
 
 // Delete a text
-textsRouter.delete('/:id', async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-    
-    await prisma.generatedText.deleteMany({
-      where: { id, userId: req.userId }
-    });
+textsRouter.delete('/:id', asyncHandler(async (req: AuthRequest, res) => {
+  const { id } = req.params;
+  await prisma.generatedText.deleteMany({ where: { id, userId: req.userId } });
+  res.json({ success: true });
+}, 'Failed to delete text'));
 
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete text error:', error);
-    res.status(500).json({ error: 'Failed to delete text' });
-  }
-});
-
-// Translate entire text (parallel / side-by-side) — cached per text+language
-textsRouter.post('/:id/translate', async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-    const { targetLanguage } = z.object({ targetLanguage: z.string().min(1) }).parse(req.body);
+// Translate entire text — cached per text+language
+textsRouter.post('/:id/translate', asyncHandler(async (req: AuthRequest, res) => {
+  const { id } = req.params;
+  const { targetLanguage } = z.object({ targetLanguage: z.string().min(1) }).parse(req.body);
 
     const text = await prisma.generatedText.findFirst({
       where: { id, userId: req.userId }
@@ -212,11 +174,7 @@ textsRouter.post('/:id/translate', async (req: AuthRequest, res) => {
       .map((s, i) => `${i + 1}. ${s}`)
       .join('\n');
 
-    const prompt = `Translate each of the following ${text.language} sentences into ${targetLanguage}.
-Return an array of objects — one per sentence, in the same order.
-
-Sentences:
-${numberedList}`;
+    const prompt = parallelTranslationPrompt(text.language, targetLanguage, numberedList);
 
     const agent = createParallelTranslationAgent(text.language, targetLanguage);
     const config = getModelForTask('translation');
@@ -240,11 +198,4 @@ ${numberedList}`;
     });
 
     res.json({ sentences: result.sentences, cached: false });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid input', details: error.errors });
-    }
-    console.error('Parallel translate error:', error);
-    res.status(500).json({ error: 'Translation failed' });
-  }
-});
+}, 'Translation failed'));
