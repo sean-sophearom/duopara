@@ -10,7 +10,7 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm run dev --workspace=@duopara/backend",
     "dev:frontend": "npm run dev --workspace=@duopara/frontend",
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace=@duopara/shared && npm run build --workspace=@duopara/backend && npm run build --workspace=@duopara/frontend",
     "db:push": "npm run db:push --workspace=@duopara/backend",
     "db:generate": "npm run db:generate --workspace=@duopara/backend",
     "db:studio": "npm run db:studio --workspace=@duopara/backend"

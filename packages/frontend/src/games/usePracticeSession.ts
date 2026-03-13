@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { practiceApi } from '../lib/api';
+import { shuffleArray } from '@duopara/shared';
 import type { 
   GameType, 
   VocabularyWord, 
@@ -10,6 +11,7 @@ import type {
   SessionStats,
   GameConfig
 } from './types';
+export { shuffleArray } from '@duopara/shared';
 
 interface UsePracticeSessionProps {
   gameType: GameType;
@@ -216,16 +218,6 @@ export function usePracticeSession({
     nextWord,
     loadGameData
   };
-}
-
-// Utility to shuffle array
-export function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
 }
 
 // Utility to pick random items from array

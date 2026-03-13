@@ -10,6 +10,7 @@ import {
 } from '../lib/llm/index.js';
 import { parallelTranslationPrompt } from '../lib/llm/prompts.js';
 import { MAX_QUERY_LIMIT } from '../lib/constants.js';
+import { splitSentences } from '../lib/textUtils.js';
 
 export const textsRouter = Router();
 textsRouter.use(authenticate);
@@ -168,7 +169,7 @@ textsRouter.post('/:id/translate', asyncHandler(async (req: AuthRequest, res) =>
     }
 
     // Split into sentences the same way the frontend does
-    const sentences: string[] = text.content.split(/(?<=[.!?”"»'។])\s+/).filter(s => s.trim().length > 0);
+    const sentences: string[] = splitSentences(text.content);
 
     const numberedList = sentences
       .map((s, i) => `${i + 1}. ${s}`)
