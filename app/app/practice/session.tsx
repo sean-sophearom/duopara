@@ -28,6 +28,7 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useThemeColors } from "../../src/lib/theme";
 
 type ViewState = "loading" | "playing" | "results";
 
@@ -42,6 +43,7 @@ export default function PracticeSessionScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const colors = useThemeColors();
 
   const gameType = params.gameType as GameType;
   const statuses: VocabularyStatus[] = JSON.parse(params.statuses || "[]");
@@ -306,8 +308,8 @@ export default function PracticeSessionScreen() {
       <Stack.Screen
         options={{
           title: `${currentIndex + 1} / ${practiceWords.length}`,
-          headerStyle: { backgroundColor: '#0f0f0f' },
-          headerTitleStyle: { fontWeight: 'bold', color: '#e8e8e8' },
+          headerStyle: { backgroundColor: colors.owl50 },
+          headerTitleStyle: { fontWeight: 'bold', color: colors.owl800 },
         }}
       />
 

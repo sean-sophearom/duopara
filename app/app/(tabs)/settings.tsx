@@ -12,17 +12,25 @@ import { useAuthStore } from "../../src/store/authStore";
 import { settingsApi } from "../../src/lib/api";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useThemeStore, ThemeMode } from "../../src/store/themeStore";
 
 const difficultyOptions = [
-  { value: "beginner", label: "Beginner", bg: "bg-primary-500" },
-  { value: "intermediate", label: "Intermediate", bg: "bg-warning-500" },
-  { value: "advanced", label: "Advanced", bg: "bg-danger-500" },
+  { value: "beginner", label: "🌱 Beginner", bg: "bg-primary-500" },
+  { value: "intermediate", label: "🌿 Intermediate", bg: "bg-warning-500" },
+  { value: "advanced", label: "🌳 Advanced", bg: "bg-danger-500" },
+];
+
+const themeOptions: { value: ThemeMode; label: string; icon: string }[] = [
+  { value: "light", label: "Light", icon: "☀️" },
+  { value: "dark", label: "Dark", icon: "🌙" },
+  { value: "system", label: "Auto", icon: "📱" },
 ];
 
 export default function SettingsScreen() {
   const { user, logout, updateUser } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
 
   const [targetLanguage, setTargetLanguage] = useState(
     user?.settings?.targetLanguage || "Spanish"
@@ -92,20 +100,20 @@ export default function SettingsScreen() {
       >
         {/* Header */}
         <View className="px-6 pt-6 pb-5">
-          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-lg">Your</Text>
-          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-3xl mt-1">Settings</Text>
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xl">Your</Text>
+          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-4xl mt-1">Profile ⚙️</Text>
 
           {/* Profile Card */}
           <View className="bg-owl-100 rounded-2xl p-5 mt-5 flex-row items-center">
-            <View className="w-14 h-14 rounded-xl bg-secondary-200 items-center justify-center">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-secondary-500">
+            <View className="w-16 h-16 rounded-2xl bg-secondary-200 items-center justify-center">
+              <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-2xl text-secondary-500">
                 {user?.name?.[0]?.toUpperCase() ||
                   user?.email?.[0]?.toUpperCase() ||
                   "U"}
               </Text>
             </View>
             <View className="ml-4 flex-1">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg">
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-xl">
                 {user?.name || "User"}
               </Text>
               <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm">{user?.email}</Text>
@@ -114,10 +122,38 @@ export default function SettingsScreen() {
         </View>
 
         <View className="px-6">
+          {/* Theme */}
+          <View className="bg-owl-100 rounded-2xl p-5 mb-5">
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-1">Appearance</Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-base text-owl-500 mb-4">Choose your vibe</Text>
+            <View className="flex-row gap-2">
+              {themeOptions.map((opt) => {
+                const isSelected = themeMode === opt.value;
+                return (
+                  <TouchableOpacity
+                    key={opt.value}
+                    onPress={() => setThemeMode(opt.value)}
+                    activeOpacity={0.7}
+                    className={`flex-1 py-3.5 rounded-xl items-center ${
+                      isSelected ? "bg-secondary-500" : "bg-owl-200"
+                    }`}
+                  >
+                    <Text className="text-lg mb-0.5">{opt.icon}</Text>
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-base ${
+                      isSelected ? "text-white" : "text-owl-700"
+                    }`}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
           {/* Target Language */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
-            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-1">Target Language</Text>
-            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 mb-4">The language you're learning</Text>
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-1">🌍 Target Language</Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-base text-owl-500 mb-4">The language you're learning</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-2">
                 {(languages || []).map((lang: any) => {
@@ -145,8 +181,8 @@ export default function SettingsScreen() {
 
           {/* Native Language */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
-            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-1">Native Language</Text>
-            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 mb-4">Your native language for translations</Text>
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-1">💬 Native Language</Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-base text-owl-500 mb-4">Your native language for translations</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-2">
                 {(languages || []).map((lang: any) => {
@@ -174,7 +210,7 @@ export default function SettingsScreen() {
 
           {/* Default Difficulty */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
-            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-4">Default Difficulty</Text>
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-4">🎯 Difficulty Level</Text>
             <View className="flex-row gap-2">
               {difficultyOptions.map((opt) => {
                 const isSelected = defaultDifficulty === opt.value;
@@ -183,11 +219,11 @@ export default function SettingsScreen() {
                     key={opt.value}
                     onPress={() => setDefaultDifficulty(opt.value)}
                     activeOpacity={0.7}
-                    className={`flex-1 py-3 rounded-xl items-center ${
+                    className={`flex-1 py-3.5 rounded-xl items-center ${
                       isSelected ? opt.bg : "bg-owl-200"
                     }`}
                   >
-                    <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-sm ${
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-base ${
                       isSelected ? "text-white" : "text-owl-700"
                     }`}>
                       {opt.label}
@@ -202,11 +238,11 @@ export default function SettingsScreen() {
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
             <View className="flex-row items-center justify-between mb-4">
               <View>
-                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base">Known Words Ratio</Text>
-                <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 mt-0.5">Target % of known words in texts</Text>
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg">📊 Known Words Ratio</Text>
+                <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-base text-owl-500 mt-0.5">Target % of known words in texts</Text>
               </View>
-              <View className="bg-secondary-200 px-3 py-1 rounded-full">
-                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-secondary-500">{knownWordsRatio}%</Text>
+              <View className="bg-secondary-200 px-3 py-1.5 rounded-full">
+                <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-secondary-500 text-lg">{knownWordsRatio}%</Text>
               </View>
             </View>
             <View className="flex-row gap-2">

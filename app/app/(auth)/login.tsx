@@ -14,12 +14,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientButton } from "../../src/components/ui";
 
+import { useThemeColors } from "../../src/lib/theme";
+
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error, clearError } = useAuthStore();
   const router = useRouter();
+  const colors = useThemeColors();
 
   const handleLogin = async () => {
     try {
@@ -32,7 +35,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-owl-50">
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={colors.statusBar} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
@@ -43,8 +46,8 @@ export default function LoginScreen() {
             <View className="w-20 h-20 rounded-2xl bg-primary-500 items-center justify-center mb-4">
               <Text className="text-4xl">🦉</Text>
             </View>
-            <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-3xl text-owl-900">Duopara</Text>
-            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-1">Learn through reading</Text>
+            <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-4xl text-owl-900">Duopara</Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-1 text-lg">Learn through reading</Text>
           </View>
 
           {/* Error */}
@@ -70,7 +73,7 @@ export default function LoginScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 className="flex-1 text-base text-owl-800"
-                placeholderTextColor="#555555"
+                placeholderTextColor={colors.owl400}
                 style={{ fontFamily: "Nunito_400Regular" }}
               />
             </View>
@@ -86,14 +89,14 @@ export default function LoginScreen() {
                 placeholder="••••••••"
                 secureTextEntry={!showPassword}
                 className="flex-1 text-base text-owl-800"
-                placeholderTextColor="#555555"
+                placeholderTextColor={colors.owl400}
                 style={{ fontFamily: "Nunito_400Regular" }}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
                   name={showPassword ? "eye-off-outline" : "eye-outline"}
                   size={22}
-                  color="#888888"
+                  color={colors.owl500}
                 />
               </TouchableOpacity>
             </View>

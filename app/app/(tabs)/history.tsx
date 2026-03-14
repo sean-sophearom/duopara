@@ -81,10 +81,10 @@ export default function HistoryScreen() {
           <View className="bg-owl-100 rounded-2xl p-5 mb-3">
             <View className="flex-row items-start justify-between">
               <View className="flex-1 mr-3">
-                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base" numberOfLines={2}>
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg" numberOfLines={2}>
                   {item.title || item.topic}
                 </Text>
-                <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-2 leading-5" numberOfLines={2}>
+                <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-base mt-2 leading-5" numberOfLines={2}>
                   {item.content?.substring(0, 100)}...
                 </Text>
               </View>
@@ -101,10 +101,10 @@ export default function HistoryScreen() {
 
             <View className="flex-row items-center mt-4 gap-2 flex-wrap">
               <View className="bg-owl-200 px-3 py-1.5 rounded-full">
-                <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-xs text-owl-600">{item.language}</Text>
+                <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600">{item.language}</Text>
               </View>
               <View className={`${difficulty.bg} px-3 py-1.5 rounded-full`}>
-                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xs text-white capitalize">
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-sm text-white capitalize">
                   {item.difficulty}
                 </Text>
               </View>
@@ -125,9 +125,9 @@ export default function HistoryScreen() {
     <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
       {/* Header */}
       <View className="px-6 pt-6 pb-5">
-        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-lg">Your</Text>
-        <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-3xl mt-1">
-          Reading Library
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xl">Your</Text>
+        <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-4xl mt-1">
+          📚 Library
         </Text>
         
         <View className="bg-owl-100 rounded-2xl p-4 flex-row items-center mt-5">
@@ -202,14 +202,14 @@ export default function HistoryScreen() {
       ) : texts.length === 0 ? (
         <View className="flex-1 items-center justify-center p-8">
           <Ionicons name="book" size={48} color="#ffc800" />
-          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-xl mt-4">No texts found</Text>
-          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-center mt-2 text-base">
-            Generate your first reading material to get started
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-2xl mt-4">📖 No stories yet!</Text>
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-center mt-2 text-lg">
+            Create your first reading adventure to get started
           </Text>
           <Link href="/(tabs)/generate" asChild>
             <TouchableOpacity activeOpacity={0.7} className="mt-6">
               <View className="bg-primary-500 rounded-2xl py-4 px-8">
-                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-lg">Generate Text</Text>
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-lg">Create a Story ✨</Text>
               </View>
             </TouchableOpacity>
           </Link>

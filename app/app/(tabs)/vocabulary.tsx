@@ -163,13 +163,13 @@ export default function VocabularyScreen() {
         <View className="flex-row items-center mt-4 gap-3 pt-3 border-t border-owl-200">
           <View className="flex-row items-center bg-owl-200 px-2.5 py-1 rounded-lg">
             <Ionicons name="eye" size={12} color="#888888" />
-            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-600 text-xs ml-1">
+              <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-600 text-sm ml-1">
               {item.timesEncountered} seen
             </Text>
           </View>
           <View className="flex-row items-center bg-primary-100 px-2.5 py-1 rounded-lg">
             <Ionicons name="checkmark-circle" size={12} color="#58cc02" />
-            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-primary-600 text-xs ml-1">
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-primary-600 text-sm ml-1">
               {item.timesCorrect} correct
             </Text>
           </View>
@@ -189,27 +189,27 @@ export default function VocabularyScreen() {
     <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
       {/* Header */}
       <View className="px-6 pt-6 pb-5">
-        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-lg">Your</Text>
-        <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-3xl mt-1">Vocabulary</Text>
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xl">Your</Text>
+        <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-4xl mt-1">📖 Word Collection</Text>
         
         {/* Stats Row */}
         {stats && (
           <View className="flex-row gap-2 mt-5">
             <View className="flex-1 bg-owl-100 rounded-2xl p-4 items-center">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-xl">{stats.total || 0}</Text>
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xs mt-1">Total</Text>
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-2xl">{stats.total || 0}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">Total</Text>
             </View>
             <View className="flex-1 bg-owl-100 rounded-2xl p-4 items-center">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-warning-500 text-xl">{stats.learning || 0}</Text>
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xs mt-1">Learning</Text>
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-warning-500 text-2xl">{stats.learning || 0}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">Learning</Text>
             </View>
             <View className="flex-1 bg-owl-100 rounded-2xl p-4 items-center">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-secondary-500 text-xl">{stats.learned || 0}</Text>
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xs mt-1">Learned</Text>
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-secondary-500 text-2xl">{stats.learned || 0}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">Learned</Text>
             </View>
             <View className="flex-1 bg-owl-100 rounded-2xl p-4 items-center">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-primary-500 text-xl">{stats.mastered || 0}</Text>
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xs mt-1">Mastered</Text>
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-primary-500 text-2xl">{stats.mastered || 0}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">Mastered</Text>
             </View>
           </View>
         )}
@@ -273,9 +273,9 @@ export default function VocabularyScreen() {
       ) : words.length === 0 ? (
         <View className="flex-1 items-center justify-center p-8">
           <Ionicons name="book" size={48} color="#1cb0f6" />
-          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-xl mt-4">No words found</Text>
-          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-center mt-2 max-w-xs text-base">
-            Start reading to build your vocabulary, or add words manually!
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-2xl mt-4">🔤 No words yet!</Text>
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-center mt-2 max-w-xs text-lg">
+            Start reading stories to discover new words!
           </Text>
         </View>
       ) : (

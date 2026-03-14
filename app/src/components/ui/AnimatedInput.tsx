@@ -8,6 +8,7 @@ import Animated, {
   interpolateColor,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "../../lib/theme";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
@@ -28,10 +29,17 @@ export function AnimatedInput({
   value,
   ...props
 }: AnimatedInputProps) {
+  const colors = useThemeColors();
   const [isFocused, setIsFocused] = useState(false);
   const focusProgress = useSharedValue(0);
   const labelPosition = useSharedValue(value ? 1 : 0);
   const borderWidth = useSharedValue(1);
+
+  const borderIdle = colors.owl300;
+  const bgIdle = colors.owl200;
+  const bgFocused = colors.colorScheme === 'dark' ? '#1a2e1a' : '#e8f5e9';
+  const labelIdle = colors.owl500;
+  const iconIdle = colors.owl400;
 
   const handleFocus = (e: any) => {
     setIsFocused(true);
@@ -58,12 +66,12 @@ export function AnimatedInput({
       : interpolateColor(
           focusProgress.value,
           [0, 1],
-          ["#333333", "#58cc02"]
+          [borderIdle, "#58cc02"]
         ),
     backgroundColor: interpolateColor(
       focusProgress.value,
       [0, 1],
-      ["#252525", "#1a2e1a"]
+      [bgIdle, bgFocused]
     ),
   }));
 
@@ -77,16 +85,8 @@ export function AnimatedInput({
       : interpolateColor(
           focusProgress.value,
           [0, 1],
-          ["#888888", "#58cc02"]
+          [labelIdle, "#58cc02"]
         ),
-  }));
-
-  const iconStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(
-      focusProgress.value,
-      [0, 1],
-      ["#555555", "#58cc02"]
-    ),
   }));
 
   return (
@@ -96,9 +96,9 @@ export function AnimatedInput({
         className="rounded-2xl px-4 pt-5 pb-3 flex-row items-center"
       >
         {icon && (
-          <Animated.View style={iconStyle} className="mr-3">
-            <Ionicons name={icon} size={22} color={isFocused ? "#58cc02" : "#555555"} />
-          </Animated.View>
+          <View className="mr-3">
+            <Ionicons name={icon} size={22} color={isFocused ? "#58cc02" : iconIdle} />
+          </View>
         )}
         <View className="flex-1 relative">
           <Animated.Text
@@ -112,7 +112,7 @@ export function AnimatedInput({
             onFocus={handleFocus}
             onBlur={handleBlur}
             className="text-base text-owl-800 py-0"
-            placeholderTextColor="#555555"
+            placeholderTextColor={colors.owl400}
             style={{ fontFamily: "Nunito_400Regular" }}
             {...props}
           />

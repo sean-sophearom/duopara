@@ -15,6 +15,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientButton } from "../../src/components/ui";
 
+import { useThemeColors } from "../../src/lib/theme";
+
 export default function RegisterScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,6 +26,7 @@ export default function RegisterScreen() {
   const [localError, setLocalError] = useState<string | null>(null);
   const { register, isLoading, error, clearError } = useAuthStore();
   const router = useRouter();
+  const colors = useThemeColors();
 
   const handleRegister = async () => {
     setLocalError(null);
@@ -50,7 +53,7 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-owl-50">
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={colors.statusBar} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
@@ -66,8 +69,8 @@ export default function RegisterScreen() {
               <View className="w-20 h-20 rounded-2xl bg-secondary-500 items-center justify-center mb-4">
                 <Text className="text-4xl">🚀</Text>
               </View>
-              <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-3xl text-owl-900">Join Duopara</Text>
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-1">Start learning today</Text>
+              <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-4xl text-owl-900">Join Duopara</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-1 text-lg">Start learning today</Text>
             </View>
 
             {/* Error */}
@@ -91,7 +94,7 @@ export default function RegisterScreen() {
                   placeholder="Your name"
                   autoCapitalize="words"
                   className="flex-1 text-base text-owl-800"
-                  placeholderTextColor="#555555"
+                  placeholderTextColor={colors.owl400}
                   style={{ fontFamily: "Nunito_400Regular" }}
                 />
               </View>
@@ -109,7 +112,7 @@ export default function RegisterScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   className="flex-1 text-base text-owl-800"
-                  placeholderTextColor="#555555"
+                  placeholderTextColor={colors.owl400}
                   style={{ fontFamily: "Nunito_400Regular" }}
                 />
               </View>
@@ -125,14 +128,14 @@ export default function RegisterScreen() {
                   placeholder="••••••••"
                   secureTextEntry={!showPassword}
                   className="flex-1 text-base text-owl-800"
-                  placeholderTextColor="#555555"
+                  placeholderTextColor={colors.owl400}
                   style={{ fontFamily: "Nunito_400Regular" }}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                   <Ionicons
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
                     size={22}
-                    color="#888888"
+                    color={colors.owl500}
                   />
                 </TouchableOpacity>
               </View>
@@ -148,7 +151,7 @@ export default function RegisterScreen() {
                   placeholder="••••••••"
                   secureTextEntry={!showPassword}
                   className="flex-1 text-base text-owl-800"
-                  placeholderTextColor="#555555"
+                  placeholderTextColor={colors.owl400}
                   style={{ fontFamily: "Nunito_400Regular" }}
                 />
               </View>

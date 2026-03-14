@@ -18,6 +18,7 @@ import * as Speech from "expo-speech";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { GradientButton } from "../../src/components/ui";
+import { useThemeColors } from "../../src/lib/theme";
 
 // Utility
 export function splitSentences(text: string): string[] {
@@ -68,6 +69,7 @@ export default function ReadScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const themeColors = useThemeColors();
 
   // State
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -624,7 +626,7 @@ export default function ReadScreen() {
                     <Ionicons
                       name={showParallelView ? "eye-off" : "eye"}
                       size={14}
-                      color={showParallelView ? "white" : "#cccccc"}
+                      color={showParallelView ? "white" : themeColors.owl700}
                     />
                     <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-sm ${
                       showParallelView ? "text-white" : "text-owl-700"
@@ -814,14 +816,14 @@ export default function ReadScreen() {
                       onPress={() => selectedWord && speak(selectedWord)}
                       className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center"
                     >
-                      <Ionicons name="volume-medium" size={20} color="#cccccc" />
+                      <Ionicons name="volume-medium" size={20} color={themeColors.owl700} />
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity 
                     onPress={() => setShowWordModal(false)}
                     className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
                   >
-                    <Ionicons name="close" size={20} color="#888888" />
+                    <Ionicons name="close" size={20} color={themeColors.owl500} />
                   </TouchableOpacity>
                 </View>
 
@@ -965,14 +967,14 @@ export default function ReadScreen() {
                       onPress={() => selectedSentence && speak(selectedSentence)}
                       className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center"
                     >
-                      <Ionicons name="volume-medium" size={20} color="#cccccc" />
+                      <Ionicons name="volume-medium" size={20} color={themeColors.owl700} />
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity 
                     onPress={() => setShowSentenceModal(false)}
                     className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
                   >
-                    <Ionicons name="close" size={20} color="#888888" />
+                    <Ionicons name="close" size={20} color={themeColors.owl500} />
                   </TouchableOpacity>
                 </View>
 

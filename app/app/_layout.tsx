@@ -14,6 +14,8 @@ import {
   Nunito_800ExtraBold,
 } from "@expo-google-fonts/nunito";
 import * as SplashScreen from "expo-splash-screen";
+import { useThemeStore } from "../src/store/themeStore";
+import { useThemeColors } from "../src/lib/theme";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,9 +30,11 @@ const queryClient = new QueryClient({
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isInitialized, initialize } = useAuthStore();
+  const { initialize: initTheme } = useThemeStore();
 
   useEffect(() => {
     initialize();
+    initTheme();
   }, []);
 
   if (!isInitialized) {
@@ -51,6 +55,7 @@ export default function RootLayout() {
     Nunito_700Bold,
     Nunito_800ExtraBold,
   });
+  const colors = useThemeColors();
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
@@ -69,15 +74,15 @@ export default function RootLayout() {
           <Stack
             screenOptions={{
               headerStyle: {
-                backgroundColor: "#0f0f0f",
+                backgroundColor: colors.owl50,
               },
-              headerTintColor: "#e8e8e8",
+              headerTintColor: colors.owl800,
               headerTitleStyle: {
                 fontWeight: "600",
                 fontFamily: "Nunito_700Bold",
               },
               contentStyle: {
-                backgroundColor: "#0f0f0f",
+                backgroundColor: colors.owl50,
               },
             }}
           >
@@ -99,7 +104,7 @@ export default function RootLayout() {
               }}
             />
           </Stack>
-          <StatusBar style="light" />
+          <StatusBar style={colors.statusBar === 'light-content' ? 'light' : 'dark'} />
         </AuthGate>
       </QueryClientProvider>
     </GestureHandlerRootView>

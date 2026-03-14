@@ -99,15 +99,15 @@ export default function GenerateScreen() {
       >
         <View className="p-6">
           {/* Header */}
-          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-lg">Create</Text>
-          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-3xl mt-1 mb-6">
-            Reading Material
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xl">Create</Text>
+          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-4xl mt-1 mb-6">
+            ✨ New Story
           </Text>
 
           {/* Topic Input */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
-            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-3">
-              What do you want to read?
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-3">
+              💭 What's your story about?
             </Text>
             <View className="bg-owl-200 rounded-xl px-4 py-4">
               <TextInput
@@ -122,8 +122,8 @@ export default function GenerateScreen() {
               />
             </View>
 
-            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-500 mt-4 mb-3">
-              Quick ideas
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-base text-owl-500 mt-4 mb-3">
+              💡 Quick ideas
             </Text>
             <View className="flex-row flex-wrap gap-2">
               {topicSuggestions.map((suggestion) => (
@@ -134,7 +134,7 @@ export default function GenerateScreen() {
                   className="flex-row items-center bg-owl-200 rounded-xl px-3 py-2"
                 >
                   <Ionicons name={suggestion.icon as any} size={16} color="#888888" />
-                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm ml-1.5 text-owl-700">
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-base ml-1.5 text-owl-700">
                     {suggestion.label}
                   </Text>
                 </TouchableOpacity>
@@ -144,8 +144,8 @@ export default function GenerateScreen() {
 
           {/* Language Selection */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
-            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-3">
-              Target Language
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-3">
+              🌍 Target Language
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-2">
@@ -172,7 +172,7 @@ export default function GenerateScreen() {
             </ScrollView>
             <View className="bg-owl-200 rounded-xl p-3 mt-4 flex-row items-center">
               <Ionicons name="library" size={16} color="#888888" />
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-600 ml-2">
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-base text-owl-600 ml-2">
                 <Text style={{ fontFamily: "Nunito_700Bold" }}>{knownWords}</Text> known words in {language}
               </Text>
             </View>
@@ -180,8 +180,8 @@ export default function GenerateScreen() {
 
           {/* Difficulty Selection */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
-            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-3">
-              Difficulty Level
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-3">
+              🎯 Difficulty Level
             </Text>
             <View className="flex-row gap-2">
               {difficultyOptions.map((opt) => {
@@ -195,7 +195,7 @@ export default function GenerateScreen() {
                       isSelected ? opt.bg : "bg-owl-200"
                     }`}
                   >
-                    <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-sm ${
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-base ${
                       isSelected ? "text-white" : "text-owl-700"
                     }`}>
                       {opt.label}
@@ -208,8 +208,8 @@ export default function GenerateScreen() {
 
           {/* Writing Style */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
-            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-3">
-              Writing Style
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-3">
+              ✍️ Writing Style
             </Text>
             <View className="flex-row flex-wrap gap-2">
               {styleOptions.map((opt) => {
@@ -243,7 +243,7 @@ export default function GenerateScreen() {
             <View className="flex-row items-center">
               <Ionicons name="settings-outline" size={20} color="#888888" />
               <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-700 ml-3">
-                Advanced Options
+                ⚙️ Advanced Options
               </Text>
             </View>
             <Ionicons
@@ -257,7 +257,7 @@ export default function GenerateScreen() {
             <View className="bg-owl-100 rounded-2xl p-5 mb-5">
               {/* Word Count */}
               <View className="mb-6">
-                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-3">
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-3">
                   Word Count: <Text className="text-secondary-500">{wordCount}</Text>
                 </Text>
                 <View className="flex-row gap-2">
@@ -285,7 +285,7 @@ export default function GenerateScreen() {
 
               {/* Known Words Ratio */}
               <View className="mb-6">
-                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-3">
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-3">
                   Known Words: <Text className="text-primary-500">{knownWordsRatio}%</Text>
                 </Text>
                 <View className="flex-row gap-2">
@@ -371,14 +371,14 @@ export default function GenerateScreen() {
               <View className="flex-row items-center justify-center">
                 <ActivityIndicator color="white" size="small" />
                 <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-center text-lg ml-2">
-                  Creating...
+                  Crafting... ✨
                 </Text>
               </View>
             ) : (
               <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-center text-lg ${
                 !topic.trim() ? "text-owl-400" : "text-white"
               }`}>
-                Generate Reading Material
+                Create My Story ✨
               </Text>
             )}
           </TouchableOpacity>

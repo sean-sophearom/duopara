@@ -109,22 +109,22 @@ export default function PracticeScreen() {
       >
         {/* Header */}
         <View className="px-6 pt-6 pb-6">
-          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-lg">Practice your</Text>
-          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-3xl mt-1">{sourceLanguage} Skills</Text>
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xl">Train your</Text>
+          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-4xl mt-1">🏋️ {sourceLanguage}</Text>
           
           {/* Stats Row */}
           <View className="flex-row gap-3 mt-5">
             <View className="flex-1 bg-owl-100 rounded-2xl p-4 items-center">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-warning-500 text-xl">{vocabStats?.learning || 0}</Text>
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xs mt-1">Learning</Text>
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-warning-500 text-2xl">{vocabStats?.learning || 0}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">Learning</Text>
             </View>
             <View className="flex-1 bg-owl-100 rounded-2xl p-4 items-center">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-secondary-500 text-xl">{vocabStats?.learned || 0}</Text>
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xs mt-1">Learned</Text>
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-secondary-500 text-2xl">{vocabStats?.learned || 0}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">Learned</Text>
             </View>
             <View className="flex-1 bg-owl-100 rounded-2xl p-4 items-center">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-primary-500 text-xl">{vocabStats?.mastered || 0}</Text>
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-xs mt-1">Mastered</Text>
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-primary-500 text-2xl">{vocabStats?.mastered || 0}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">Mastered</Text>
             </View>
           </View>
         </View>
@@ -133,12 +133,12 @@ export default function PracticeScreen() {
           {/* Due for Review */}
           {(dueData?.dueCount || 0) > 0 && (
             <View className="bg-danger-100 rounded-2xl p-5 flex-row items-center mb-6">
-              <Ionicons name="notifications" size={22} color="#ff4b4b" />
-              <View className="flex-1 ml-4">
-                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-danger-600 text-base">
+              <Text className="text-2xl mr-3">⚡</Text>
+              <View className="flex-1">
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-danger-600 text-lg">
                   {dueData?.dueCount} words due!
                 </Text>
-                <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-danger-600 text-sm mt-0.5">
+                <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-danger-600 text-base mt-0.5">
                   Time for your daily review
                 </Text>
               </View>
@@ -147,7 +147,7 @@ export default function PracticeScreen() {
 
           {/* Word Status Filter */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
-            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-lg text-owl-800 mb-4">Words to Practice</Text>
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-owl-800 mb-4">⚔️ Training Words</Text>
 
             <View className="flex-row gap-2">
               {(["learning", "learned", "mastered"] as VocabularyStatus[]).map((status) => {
@@ -189,7 +189,7 @@ export default function PracticeScreen() {
 
           {/* Word Count */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
-            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-lg text-owl-800 mb-4">Number of Words</Text>
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-owl-800 mb-4">🎲 Session Size</Text>
 
             <View className="flex-row gap-2">
               {[3, 5, 10, 15, 20].map((count) => {
@@ -222,7 +222,7 @@ export default function PracticeScreen() {
           </View>
 
           {/* Game Selection */}
-          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-lg text-owl-800 mb-4">Choose a Game</Text>
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-owl-800 mb-4">🎮 Pick a Challenge</Text>
 
           <View className="gap-3">
             {gameTypes.map((game) => {
@@ -285,7 +285,7 @@ export default function PracticeScreen() {
             <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-center text-lg ${
               !selectedGame || availableWordCount === 0 ? "text-owl-400" : "text-white"
             }`}>
-              Start Practice
+              Let's Go! 🚀
             </Text>
           </TouchableOpacity>
         </View>

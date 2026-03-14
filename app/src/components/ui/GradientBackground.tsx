@@ -1,26 +1,22 @@
 import { View, StatusBar } from "react-native";
+import { useThemeColors } from "../../lib/theme";
 
 interface BackgroundProps {
   children: React.ReactNode;
   variant?: "light" | "primary" | "dark";
 }
 
-const backgrounds = {
-  light: { bg: "bg-owl-50", statusBar: "light-content" as const },
-  primary: { bg: "bg-primary-500", statusBar: "light-content" as const },
-  dark: { bg: "bg-owl-50", statusBar: "light-content" as const },
-};
-
 export function GradientBackground({
   children,
   variant = "light",
 }: BackgroundProps) {
-  const style = backgrounds[variant];
+  const colors = useThemeColors();
+  const statusBarStyle = variant === "primary" ? "light-content" : colors.statusBar;
 
   return (
-    <View className={`flex-1 ${style.bg}`}>
+    <View className={`flex-1 ${variant === "primary" ? "bg-primary-500" : "bg-owl-50"}`}>
       <StatusBar
-        barStyle={style.statusBar}
+        barStyle={statusBarStyle}
         backgroundColor="transparent"
         translucent
       />

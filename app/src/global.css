@@ -1,3 +1,71 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --owl-50: #f8fafc;
+  --owl-100: #ffffff;
+  --owl-200: #f1f5f9;
+  --owl-300: #e2e8f0;
+  --owl-400: #94a3b8;
+  --owl-500: #64748b;
+  --owl-600: #475569;
+  --owl-700: #334155;
+  --owl-800: #1e293b;
+  --owl-900: #0f172a;
+
+  --primary-50: #f0fdf4;
+  --primary-100: #dcfce7;
+  --primary-200: #bbf7d0;
+  --primary-300: #86efac;
+
+  --secondary-50: #eff6ff;
+  --secondary-100: #dbeafe;
+  --secondary-200: #bfdbfe;
+  --secondary-300: #93c5fd;
+
+  --warning-50: #fefce8;
+  --warning-100: #fef9c3;
+  --warning-200: #fef08a;
+  --warning-300: #fde047;
+
+  --danger-50: #fef2f2;
+  --danger-100: #fee2e2;
+  --danger-200: #fecaca;
+  --danger-300: #fca5a5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --owl-50: #0f0f0f;
+    --owl-100: #1a1a1a;
+    --owl-200: #252525;
+    --owl-300: #333333;
+    --owl-400: #555555;
+    --owl-500: #888888;
+    --owl-600: #a0a0a0;
+    --owl-700: #cccccc;
+    --owl-800: #e8e8e8;
+    --owl-900: #f5f5f5;
+
+    --primary-50: #0a2e0a;
+    --primary-100: #143d14;
+    --primary-200: #1e5c1e;
+    --primary-300: #2d7a2d;
+
+    --secondary-50: #0a1e2e;
+    --secondary-100: #0f2840;
+    --secondary-200: #163d5c;
+    --secondary-300: #1e5a8a;
+
+    --warning-50: #2e2400;
+    --warning-100: #3d3000;
+    --warning-200: #5c4a00;
+    --warning-300: #8a7000;
+
+    --danger-50: #2e0a0a;
+    --danger-100: #3d1a1a;
+    --danger-200: #5c2222;
+    --danger-300: #8a3333;
+  }
+}
