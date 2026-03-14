@@ -1,17 +1,6 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { View, Platform } from "react-native";
-import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  interpolate,
-} from "react-native-reanimated";
-import { useEffect } from "react";
-
-const AnimatedView = Animated.createAnimatedComponent(View);
 
 interface TabIconProps {
   name: keyof typeof Ionicons.glyphMap;
@@ -21,37 +10,24 @@ interface TabIconProps {
 }
 
 function TabIcon({ name, color, focused, size }: TabIconProps) {
-  const scale = useSharedValue(focused ? 1.15 : 1);
-  const translateY = useSharedValue(focused ? -4 : 0);
-
-  useEffect(() => {
-    scale.value = withSpring(focused ? 1.15 : 1, { damping: 15, stiffness: 200 });
-    translateY.value = withSpring(focused ? -4 : 0, { damping: 15, stiffness: 200 });
-  }, [focused]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { translateY: translateY.value },
-    ],
-  }));
-
   return (
-    <AnimatedView style={animatedStyle} className="items-center justify-center">
+    <View className="items-center justify-center" style={{ paddingTop: 2 }}>
+      <Ionicons
+        name={focused ? name.replace("-outline", "") as any : name}
+        size={22}
+        color={color}
+      />
       {focused && (
         <View
-          className="absolute -inset-3 rounded-2xl overflow-hidden"
+          className="rounded-full mt-1"
           style={{
-            backgroundColor: `${color}20`,
+            width: 4,
+            height: 4,
+            backgroundColor: color,
           }}
         />
       )}
-      <Ionicons
-        name={focused ? name.replace("-outline", "") as any : name}
-        size={size}
-        color={color}
-      />
-    </AnimatedView>
+    </View>
   );
 }
 
@@ -59,46 +35,31 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: {
-          backgroundColor: "#f8fafc",
-          elevation: 0,
-          shadowOpacity: 0,
-          borderBottomWidth: 0,
-        },
-        headerTintColor: "#1e293b",
-        headerTitleStyle: {
-          fontWeight: "700",
-          fontSize: 20,
-        },
-        headerShadowVisible: false,
-        tabBarActiveTintColor: "#2a94ff",
-        tabBarInactiveTintColor: "#94a3b8",
+        headerShown: false,
+        tabBarActiveTintColor: "#58cc02",
+        tabBarInactiveTintColor: "#555555",
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: "600",
-          marginTop: -2,
+          fontFamily: "Nunito_600SemiBold",
+          marginTop: 0,
         },
         tabBarStyle: {
           position: "absolute",
-          bottom: Platform.OS === "ios" ? 24 : 16,
-          left: 16,
-          right: 16,
-          height: 70,
-          backgroundColor: "rgba(255, 255, 255, 0.95)",
-          borderRadius: 28,
-          borderTopWidth: 0,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15,
-          shadowRadius: 20,
-          elevation: 20,
-          paddingBottom: 8,
-          paddingTop: 8,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: Platform.OS === "ios" ? 88 : 68,
+          backgroundColor: "#1a1a1a",
+          borderTopWidth: 1,
+          borderTopColor: "#252525",
+          paddingBottom: Platform.OS === "ios" ? 28 : 8,
+          paddingTop: 10,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarItemStyle: {
-          borderRadius: 20,
-          marginHorizontal: 2,
+          paddingTop: 4,
         },
       }}
     >
@@ -106,7 +67,6 @@ export default function TabsLayout() {
         name="dashboard"
         options={{
           title: "Home",
-          headerTitle: "Dashboard",
           tabBarIcon: ({ color, size, focused }) => (
             <TabIcon name="home-outline" color={color} size={size} focused={focused} />
           ),

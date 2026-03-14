@@ -1,11 +1,21 @@
 import "../src/global.css";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStore } from "../src/store/authStore";
 import { View, ActivityIndicator } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import {
+  useFonts,
+  Nunito_400Regular,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+} from "@expo-google-fonts/nunito";
+import * as SplashScreen from "expo-splash-screen";
+
+SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,8 +35,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!isInitialized) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50">
-        <ActivityIndicator size="large" color="#0ea5e9" />
+      <View className="flex-1 items-center justify-center bg-owl-50">
+        <ActivityIndicator size="large" color="#58cc02" />
       </View>
     );
   }
@@ -35,21 +45,39 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <QueryClientProvider client={queryClient}>
         <AuthGate>
           <Stack
             screenOptions={{
               headerStyle: {
-                backgroundColor: "#ffffff",
+                backgroundColor: "#0f0f0f",
               },
-              headerTintColor: "#1f2937",
+              headerTintColor: "#e8e8e8",
               headerTitleStyle: {
                 fontWeight: "600",
+                fontFamily: "Nunito_700Bold",
               },
               contentStyle: {
-                backgroundColor: "#f9fafb",
+                backgroundColor: "#0f0f0f",
               },
             }}
           >
@@ -71,7 +99,7 @@ export default function RootLayout() {
               }}
             />
           </Stack>
-          <StatusBar style="auto" />
+          <StatusBar style="light" />
         </AuthGate>
       </QueryClientProvider>
     </GestureHandlerRootView>

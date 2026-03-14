@@ -28,9 +28,9 @@ const variantStyles = {
       iconColor: "#ffffff",
     },
     unselected: {
-      bg: ["#f1f5f9", "#e2e8f0"] as const,
-      text: "text-gray-600",
-      iconColor: "#64748b",
+      bg: ["#252525", "#1a1a1a"] as const,
+      text: "text-owl-600",
+      iconColor: "#888888",
     },
   },
   primary: {
@@ -40,7 +40,7 @@ const variantStyles = {
       iconColor: "#ffffff",
     },
     unselected: {
-      bg: ["#eef8ff", "#d8eeff"] as const,
+      bg: ["#252525", "#1a1a1a"] as const,
       text: "text-primary-600",
       iconColor: "#2a94ff",
     },
@@ -52,7 +52,7 @@ const variantStyles = {
       iconColor: "#ffffff",
     },
     unselected: {
-      bg: ["#faf5ff", "#f3e8ff"] as const,
+      bg: ["#252525", "#1a1a1a"] as const,
       text: "text-secondary-600",
       iconColor: "#a855f7",
     },
@@ -64,8 +64,8 @@ const variantStyles = {
       iconColor: "#ffffff",
     },
     unselected: {
-      bg: ["#fff1f3", "#ffe4e8"] as const,
-      text: "text-accent-600",
+      bg: ["#252525", "#1a1a1a"] as const,
+      text: "text-owl-600",
       iconColor: "#f93f68",
     },
   },
@@ -76,8 +76,8 @@ const variantStyles = {
       iconColor: "#ffffff",
     },
     unselected: {
-      bg: ["#ecfdf5", "#d1fae5"] as const,
-      text: "text-success-600",
+      bg: ["#252525", "#1a1a1a"] as const,
+      text: "text-owl-600",
       iconColor: "#10b981",
     },
   },
@@ -88,8 +88,8 @@ const variantStyles = {
       iconColor: "#ffffff",
     },
     unselected: {
-      bg: ["#fff7ed", "#ffedd5"] as const,
-      text: "text-warning-600",
+      bg: ["#252525", "#1a1a1a"] as const,
+      text: "text-owl-600",
       iconColor: "#f97316",
     },
   },

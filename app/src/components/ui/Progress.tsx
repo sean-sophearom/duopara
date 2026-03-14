@@ -73,11 +73,11 @@ export function StreakBadge({
       >
         <Text style={{ fontSize: sizeStyle.badge * 0.4 }}>🔥</Text>
       </View>
-      <Text className={`font-bold text-owl-800 mt-1 ${sizeStyle.text}`}>
+      <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-owl-800 mt-1 ${sizeStyle.text}`}>
         {count}
       </Text>
       {showLabel && (
-        <Text className="text-xs text-owl-500">day streak</Text>
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-xs text-owl-500">day streak</Text>
       )}
     </View>
   );
@@ -111,11 +111,11 @@ export function CircularProgress({
         }}
       />
       <View
-        className="bg-white rounded-full items-center justify-center"
+        className="bg-owl-50 rounded-full items-center justify-center"
         style={{ width: size - 16, height: size - 16 }}
       >
         {children || (
-          <Text className="text-owl-800 font-bold">
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800">
             {Math.round(clampedProgress)}%
           </Text>
         )}

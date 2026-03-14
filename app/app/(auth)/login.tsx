@@ -31,8 +31,8 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView className="flex-1 bg-owl-50">
+      <StatusBar barStyle="light-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
@@ -43,15 +43,15 @@ export default function LoginScreen() {
             <View className="w-20 h-20 rounded-2xl bg-primary-500 items-center justify-center mb-4">
               <Text className="text-4xl">🦉</Text>
             </View>
-            <Text className="text-3xl font-bold text-owl-800">Duopara</Text>
-            <Text className="text-owl-500 mt-1">Learn through reading</Text>
+            <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-3xl text-owl-900">Duopara</Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-1">Learn through reading</Text>
           </View>
 
           {/* Error */}
           {error && (
-            <View className="bg-danger-100 rounded-xl p-4 mb-6 flex-row items-center">
+            <View className="bg-danger-100 rounded-2xl p-4 mb-6 flex-row items-center">
               <Ionicons name="alert-circle" size={20} color="#ff4b4b" />
-              <Text className="text-danger-700 text-sm ml-2 flex-1">{error}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-danger-600 text-sm ml-2 flex-1">{error}</Text>
               <TouchableOpacity onPress={clearError}>
                 <Ionicons name="close" size={20} color="#ff4b4b" />
               </TouchableOpacity>
@@ -60,8 +60,8 @@ export default function LoginScreen() {
 
           {/* Email Input */}
           <View className="mb-4">
-            <Text className="text-owl-700 font-medium mb-2 ml-1">Email</Text>
-            <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3 border-2 border-owl-200">
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-700 mb-2 ml-1">Email</Text>
+            <View className="flex-row items-center bg-owl-200 rounded-2xl px-4 py-3.5">
               <TextInput
                 value={email}
                 onChangeText={setEmail}
@@ -70,28 +70,30 @@ export default function LoginScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 className="flex-1 text-base text-owl-800"
-                placeholderTextColor="#afafaf"
+                placeholderTextColor="#555555"
+                style={{ fontFamily: "Nunito_400Regular" }}
               />
             </View>
           </View>
 
           {/* Password Input */}
           <View className="mb-8">
-            <Text className="text-owl-700 font-medium mb-2 ml-1">Password</Text>
-            <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3 border-2 border-owl-200">
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-700 mb-2 ml-1">Password</Text>
+            <View className="flex-row items-center bg-owl-200 rounded-2xl px-4 py-3.5">
               <TextInput
                 value={password}
                 onChangeText={setPassword}
                 placeholder="••••••••"
                 secureTextEntry={!showPassword}
                 className="flex-1 text-base text-owl-800"
-                placeholderTextColor="#afafaf"
+                placeholderTextColor="#555555"
+                style={{ fontFamily: "Nunito_400Regular" }}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
                   name={showPassword ? "eye-off-outline" : "eye-outline"}
                   size={22}
-                  color="#777777"
+                  color="#888888"
                 />
               </TouchableOpacity>
             </View>
@@ -109,10 +111,10 @@ export default function LoginScreen() {
 
           {/* Register Link */}
           <View className="flex-row justify-center mt-8">
-            <Text className="text-owl-500">Don't have an account? </Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500">Don't have an account? </Text>
             <Link href="/(auth)/register" asChild>
               <TouchableOpacity>
-                <Text className="text-primary-500 font-bold">SIGN UP</Text>
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-primary-500">SIGN UP</Text>
               </TouchableOpacity>
             </Link>
           </View>

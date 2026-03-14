@@ -58,12 +58,12 @@ export function AnimatedInput({
       : interpolateColor(
           focusProgress.value,
           [0, 1],
-          ["#e2e8f0", "#2a94ff"]
+          ["#333333", "#58cc02"]
         ),
     backgroundColor: interpolateColor(
       focusProgress.value,
       [0, 1],
-      [variant === "filled" ? "#f1f5f9" : "#ffffff", "#eef8ff"]
+      ["#252525", "#1a2e1a"]
     ),
   }));
 
@@ -77,7 +77,7 @@ export function AnimatedInput({
       : interpolateColor(
           focusProgress.value,
           [0, 1],
-          ["#64748b", "#2a94ff"]
+          ["#888888", "#58cc02"]
         ),
   }));
 
@@ -85,7 +85,7 @@ export function AnimatedInput({
     color: interpolateColor(
       focusProgress.value,
       [0, 1],
-      ["#94a3b8", "#2a94ff"]
+      ["#555555", "#58cc02"]
     ),
   }));
 
@@ -97,7 +97,7 @@ export function AnimatedInput({
       >
         {icon && (
           <Animated.View style={iconStyle} className="mr-3">
-            <Ionicons name={icon} size={22} color={isFocused ? "#2a94ff" : "#94a3b8"} />
+            <Ionicons name={icon} size={22} color={isFocused ? "#58cc02" : "#555555"} />
           </Animated.View>
         )}
         <View className="flex-1 relative">
@@ -111,8 +111,9 @@ export function AnimatedInput({
             value={value}
             onFocus={handleFocus}
             onBlur={handleBlur}
-            className="text-base text-gray-900 py-0"
-            placeholderTextColor="#94a3b8"
+            className="text-base text-owl-800 py-0"
+            placeholderTextColor="#555555"
+            style={{ fontFamily: "Nunito_400Regular" }}
             {...props}
           />
         </View>

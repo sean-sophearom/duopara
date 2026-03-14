@@ -53,36 +53,34 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View className="px-5 pt-4 pb-6">
-          <Text className="text-owl-500 text-base">{getGreeting()}</Text>
-          <Text className="text-owl-800 text-2xl font-bold mt-1">
+        <View className="px-6 pt-6 pb-8">
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-lg">
+            {getGreeting()}
+          </Text>
+          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-3xl mt-1">
             {user?.name || "Learner"}
           </Text>
         </View>
 
-        {/* Streak Card */}
-        <View className="px-5">
-          <View className="bg-white rounded-xl p-4 flex-row items-center" style={cardShadow}>
-            <View className="w-14 h-14 rounded-full bg-warning-100 items-center justify-center mr-4">
-              <Text className="text-2xl">🔥</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-2xl font-bold text-owl-800">
-                {stats?.activity?.currentStreak || 0} day streak
-              </Text>
-              <Text className="text-owl-500">Keep it going!</Text>
-            </View>
+        {/* Streak + Progress */}
+        <View className="px-6 flex-row gap-4">
+          <View className="bg-owl-100 rounded-2xl p-5 flex-1 items-center">
+            <Text className="text-3xl mb-1">🔥</Text>
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-2xl text-owl-900">
+              {stats?.activity?.currentStreak || 0}
+            </Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm">
+              day streak
+            </Text>
           </View>
-        </View>
-
-        {/* Progress Card */}
-        <View className="px-5 mt-4">
-          <View className="bg-white rounded-xl p-4" style={cardShadow}>
-            <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-owl-800 font-bold">{language} Progress</Text>
-              <Text className="text-owl-500 text-sm">{masteredWords}/{totalWords} words</Text>
-            </View>
-            <View className="h-3 bg-owl-100 rounded-full overflow-hidden">
+          <View className="bg-owl-100 rounded-2xl p-5 flex-1">
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-500 text-sm mb-2">
+              {language}
+            </Text>
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-900 text-lg">
+              {masteredWords}/{totalWords}
+            </Text>
+            <View className="h-2 bg-owl-200 rounded-full overflow-hidden mt-2">
               <View
                 className="h-full bg-primary-500 rounded-full"
                 style={{ width: `${masteryProgress}%` }}
@@ -93,18 +91,15 @@ export default function DashboardScreen() {
 
         {/* Due for Review */}
         {(dueData?.dueCount || 0) > 0 && (
-          <View className="px-5 mt-4">
+          <View className="px-6 mt-5">
             <Link href="/(tabs)/practice" asChild>
-              <TouchableOpacity activeOpacity={0.8}>
-                <View className="bg-secondary-100 rounded-xl p-4 flex-row items-center border-l-4 border-secondary-500">
-                  <View className="w-10 h-10 rounded-full bg-white items-center justify-center mr-3">
-                    <Ionicons name="notifications" size={20} color="#1cb0f6" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-secondary-800 font-bold">
+              <TouchableOpacity activeOpacity={0.7}>
+                <View className="bg-secondary-100 rounded-2xl p-5 flex-row items-center">
+                  <Ionicons name="notifications" size={22} color="#1cb0f6" />
+                  <View className="flex-1 ml-4">
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-secondary-600 text-base">
                       {dueData?.dueCount} words ready for review
                     </Text>
-                    <Text className="text-secondary-600 text-sm">Practice now!</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="#1cb0f6" />
                 </View>
@@ -113,62 +108,42 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Stats Grid */}
-        <View className="px-5 mt-6">
-          <Text className="text-lg font-bold text-owl-800 mb-3">Your Stats</Text>
+        {/* Stats */}
+        <View className="px-6 mt-8">
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-owl-800 mb-4">
+            Your Stats
+          </Text>
           <View className="flex-row flex-wrap gap-3">
-            <StatItem
-              icon="checkmark-circle"
-              iconColor="#58cc02"
-              iconBg="bg-primary-100"
-              value={vocabStats?.mastered || 0}
-              label="Mastered"
-            />
-            <StatItem
-              icon="book"
-              iconColor="#1cb0f6"
-              iconBg="bg-secondary-100"
-              value={stats?.reading?.completedSessions || 0}
-              label="Texts Read"
-            />
-            <StatItem
-              icon="school"
-              iconColor="#ffc800"
-              iconBg="bg-warning-100"
-              value={vocabStats?.learning || 0}
-              label="Learning"
-            />
-            <StatItem
-              icon="library"
-              iconColor="#ff4b4b"
-              iconBg="bg-danger-100"
-              value={totalWords}
-              label="Total Words"
-            />
+            <StatItem icon="checkmark-circle" iconColor="#58cc02" value={vocabStats?.mastered || 0} label="Mastered" />
+            <StatItem icon="book" iconColor="#1cb0f6" value={stats?.reading?.completedSessions || 0} label="Texts Read" />
+            <StatItem icon="school" iconColor="#ffc800" value={vocabStats?.learning || 0} label="Learning" />
+            <StatItem icon="library" iconColor="#ff4b4b" value={totalWords} label="Total Words" />
           </View>
         </View>
 
         {/* Quick Actions */}
-        <View className="px-5 mt-6">
-          <Text className="text-lg font-bold text-owl-800 mb-3">Quick Actions</Text>
+        <View className="px-6 mt-8">
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-owl-800 mb-4">
+            Quick Actions
+          </Text>
           <View className="flex-row gap-3">
             <Link href="/(tabs)/generate" asChild>
-              <TouchableOpacity activeOpacity={0.8} className="flex-1">
-                <View className="bg-primary-500 rounded-xl p-4 items-center border-b-4 border-primary-700">
-                  <View className="w-12 h-12 rounded-xl bg-primary-400 items-center justify-center mb-2">
-                    <Ionicons name="add" size={28} color="#ffffff" />
-                  </View>
-                  <Text className="text-white font-bold">Create Text</Text>
+              <TouchableOpacity activeOpacity={0.7} className="flex-1">
+                <View className="bg-primary-500 rounded-2xl p-5 items-center">
+                  <Ionicons name="add" size={28} color="#ffffff" />
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-base mt-2">
+                    Create Text
+                  </Text>
                 </View>
               </TouchableOpacity>
             </Link>
             <Link href="/(tabs)/practice" asChild>
-              <TouchableOpacity activeOpacity={0.8} className="flex-1">
-                <View className="bg-secondary-500 rounded-xl p-4 items-center border-b-4 border-secondary-700">
-                  <View className="w-12 h-12 rounded-xl bg-secondary-400 items-center justify-center mb-2">
-                    <Ionicons name="school" size={28} color="#ffffff" />
-                  </View>
-                  <Text className="text-white font-bold">Practice</Text>
+              <TouchableOpacity activeOpacity={0.7} className="flex-1">
+                <View className="bg-secondary-500 rounded-2xl p-5 items-center">
+                  <Ionicons name="school" size={28} color="#ffffff" />
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-base mt-2">
+                    Practice
+                  </Text>
                 </View>
               </TouchableOpacity>
             </Link>
@@ -177,32 +152,36 @@ export default function DashboardScreen() {
 
         {/* Recent Texts */}
         {recentTexts?.texts && recentTexts.texts.length > 0 && (
-          <View className="px-5 mt-6 mb-6">
-            <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-lg font-bold text-owl-800">Continue Reading</Text>
+          <View className="px-6 mt-8 mb-6">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-owl-800">
+                Continue Reading
+              </Text>
               <Link href="/(tabs)/history" asChild>
                 <TouchableOpacity className="flex-row items-center">
-                  <Text className="text-primary-500 font-bold mr-1">See all</Text>
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-primary-500 mr-1">
+                    See all
+                  </Text>
                   <Ionicons name="chevron-forward" size={16} color="#58cc02" />
                 </TouchableOpacity>
               </Link>
             </View>
             {recentTexts.texts.map((text: any) => (
               <Link key={text.id} href={`/read/${text.id}`} asChild>
-                <TouchableOpacity activeOpacity={0.8}>
-                  <View className="bg-white rounded-xl p-4 mb-3 flex-row items-center" style={cardShadow}>
-                    <View className="w-10 h-10 rounded-lg bg-primary-100 items-center justify-center mr-3">
+                <TouchableOpacity activeOpacity={0.7}>
+                  <View className="bg-owl-100 rounded-2xl p-5 mb-3 flex-row items-center">
+                    <View className="w-10 h-10 rounded-xl bg-primary-100 items-center justify-center mr-4">
                       <Ionicons name="document-text" size={20} color="#58cc02" />
                     </View>
                     <View className="flex-1">
-                      <Text className="font-bold text-owl-800" numberOfLines={1}>
+                      <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base" numberOfLines={1}>
                         {text.title || text.topic}
                       </Text>
-                      <Text className="text-owl-500 text-sm">
-                        {text.language} • {text.wordCount} words
+                      <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">
+                        {text.language} · {text.wordCount} words
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#afafaf" />
+                    <Ionicons name="chevron-forward" size={20} color="#555555" />
                   </View>
                 </TouchableOpacity>
               </Link>
@@ -214,20 +193,21 @@ export default function DashboardScreen() {
   );
 }
 
-function StatItem({ icon, iconColor, iconBg, value, label }: {
+function StatItem({ icon, iconColor, value, label }: {
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
-  iconBg: string;
   value: number;
   label: string;
 }) {
   return (
-    <View className="bg-white rounded-xl p-4 flex-1 min-w-[45%]" style={cardShadow}>
-      <View className={`w-10 h-10 rounded-lg ${iconBg} items-center justify-center mb-2`}>
-        <Ionicons name={icon} size={20} color={iconColor} />
-      </View>
-      <Text className="text-2xl font-bold text-owl-800">{value}</Text>
-      <Text className="text-owl-500 text-sm">{label}</Text>
+    <View className="bg-owl-100 rounded-2xl p-5 flex-1 min-w-[45%]">
+      <Ionicons name={icon} size={22} color={iconColor} />
+      <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-2xl text-owl-900 mt-2">
+        {value}
+      </Text>
+      <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm">
+        {label}
+      </Text>
     </View>
   );
 }
@@ -238,11 +218,3 @@ function getGreeting() {
   if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
-
-const cardShadow = {
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.06,
-  shadowRadius: 8,
-  elevation: 3,
-};

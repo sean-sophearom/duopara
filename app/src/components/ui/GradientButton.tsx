@@ -14,34 +14,26 @@ interface ButtonProps {
 const variants = {
   primary: {
     bg: "bg-primary-500",
-    border: "border-primary-700",
     text: "text-white",
-    shadow: "#4caf00",
   },
   secondary: {
     bg: "bg-secondary-500",
-    border: "border-secondary-700",
     text: "text-white",
-    shadow: "#1899d6",
   },
   danger: {
     bg: "bg-danger-500",
-    border: "border-danger-700",
     text: "text-white",
-    shadow: "#dc2626",
   },
   outline: {
-    bg: "bg-white",
-    border: "border-owl-200",
-    text: "text-owl-700",
-    shadow: "#e5e5e5",
+    bg: "bg-owl-200",
+    text: "text-owl-800",
   },
 };
 
 const sizes = {
   sm: { padding: "py-2 px-4", text: "text-sm", height: 36 },
   md: { padding: "py-3 px-6", text: "text-base", height: 48 },
-  lg: { padding: "py-4 px-8", text: "text-lg", height: 56 },
+  lg: { padding: "py-5 px-8", text: "text-lg", height: 56 },
 };
 
 export function GradientButton({
@@ -61,13 +53,11 @@ export function GradientButton({
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      activeOpacity={0.7}
       className={`
         ${style.bg} 
         ${sizeStyle.padding}
-        rounded-xl
-        border-b-4
-        ${style.border}
+        rounded-2xl
         ${fullWidth ? "w-full" : ""}
         ${disabled ? "opacity-50" : ""}
         flex-row items-center justify-center
@@ -75,11 +65,11 @@ export function GradientButton({
       style={{ minHeight: sizeStyle.height }}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "outline" ? "#3c3c3c" : "#ffffff"} />
+        <ActivityIndicator color={variant === "outline" ? "#e8e8e8" : "#ffffff"} />
       ) : (
         <View className="flex-row items-center gap-2">
           {icon}
-          <Text className={`${style.text} ${sizeStyle.text} font-bold`}>
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className={`${style.text} ${sizeStyle.text}`}>
             {title}
           </Text>
         </View>

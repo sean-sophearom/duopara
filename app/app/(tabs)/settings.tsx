@@ -13,14 +13,6 @@ import { settingsApi } from "../../src/lib/api";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const cardShadow = {
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.06,
-  shadowRadius: 8,
-  elevation: 3,
-};
-
 const difficultyOptions = [
   { value: "beginner", label: "Beginner", bg: "bg-primary-500" },
   { value: "intermediate", label: "Intermediate", bg: "bg-warning-500" },
@@ -99,33 +91,33 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View className="px-5 pt-4 pb-4">
-          <Text className="text-owl-500 text-base">Your</Text>
-          <Text className="text-owl-800 text-2xl font-bold mt-1">Settings</Text>
+        <View className="px-6 pt-6 pb-5">
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-lg">Your</Text>
+          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-3xl mt-1">Settings</Text>
 
           {/* Profile Card */}
-          <View className="bg-white rounded-xl p-4 mt-4 flex-row items-center" style={cardShadow}>
-            <View className="w-14 h-14 rounded-xl bg-secondary-100 items-center justify-center">
-              <Text className="text-xl font-bold text-secondary-600">
+          <View className="bg-owl-100 rounded-2xl p-5 mt-5 flex-row items-center">
+            <View className="w-14 h-14 rounded-xl bg-secondary-200 items-center justify-center">
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-secondary-500">
                 {user?.name?.[0]?.toUpperCase() ||
                   user?.email?.[0]?.toUpperCase() ||
                   "U"}
               </Text>
             </View>
-            <View className="ml-3 flex-1">
-              <Text className="font-bold text-owl-800 text-lg">
+            <View className="ml-4 flex-1">
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg">
                 {user?.name || "User"}
               </Text>
-              <Text className="text-owl-500 text-sm">{user?.email}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm">{user?.email}</Text>
             </View>
           </View>
         </View>
 
-        <View className="px-5">
+        <View className="px-6">
           {/* Target Language */}
-          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
-            <Text className="font-bold text-owl-800 mb-1">Target Language</Text>
-            <Text className="text-xs text-owl-500 mb-3">The language you're learning</Text>
+          <View className="bg-owl-100 rounded-2xl p-5 mb-5">
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-1">Target Language</Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 mb-4">The language you're learning</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-2">
                 {(languages || []).map((lang: any) => {
@@ -134,12 +126,12 @@ export default function SettingsScreen() {
                     <TouchableOpacity
                       key={lang.code}
                       onPress={() => setTargetLanguage(lang.code)}
-                      activeOpacity={0.8}
+                      activeOpacity={0.7}
                       className={`px-4 py-2.5 rounded-xl ${
-                        isSelected ? "bg-secondary-500" : "bg-owl-100"
+                        isSelected ? "bg-secondary-500" : "bg-owl-200"
                       }`}
                     >
-                      <Text className={`font-medium ${
+                      <Text style={{ fontFamily: "Nunito_600SemiBold" }} className={`${
                         isSelected ? "text-white" : "text-owl-700"
                       }`}>
                         {lang.name}
@@ -152,9 +144,9 @@ export default function SettingsScreen() {
           </View>
 
           {/* Native Language */}
-          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
-            <Text className="font-bold text-owl-800 mb-1">Native Language</Text>
-            <Text className="text-xs text-owl-500 mb-3">Your native language for translations</Text>
+          <View className="bg-owl-100 rounded-2xl p-5 mb-5">
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-1">Native Language</Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 mb-4">Your native language for translations</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-2">
                 {(languages || []).map((lang: any) => {
@@ -163,12 +155,12 @@ export default function SettingsScreen() {
                     <TouchableOpacity
                       key={lang.code}
                       onPress={() => setNativeLanguage(lang.code)}
-                      activeOpacity={0.8}
+                      activeOpacity={0.7}
                       className={`px-4 py-2.5 rounded-xl ${
-                        isSelected ? "bg-primary-500" : "bg-owl-100"
+                        isSelected ? "bg-primary-500" : "bg-owl-200"
                       }`}
                     >
-                      <Text className={`font-medium ${
+                      <Text style={{ fontFamily: "Nunito_600SemiBold" }} className={`${
                         isSelected ? "text-white" : "text-owl-700"
                       }`}>
                         {lang.name}
@@ -181,8 +173,8 @@ export default function SettingsScreen() {
           </View>
 
           {/* Default Difficulty */}
-          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
-            <Text className="font-bold text-owl-800 mb-3">Default Difficulty</Text>
+          <View className="bg-owl-100 rounded-2xl p-5 mb-5">
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base mb-4">Default Difficulty</Text>
             <View className="flex-row gap-2">
               {difficultyOptions.map((opt) => {
                 const isSelected = defaultDifficulty === opt.value;
@@ -190,12 +182,12 @@ export default function SettingsScreen() {
                   <TouchableOpacity
                     key={opt.value}
                     onPress={() => setDefaultDifficulty(opt.value)}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
                     className={`flex-1 py-3 rounded-xl items-center ${
-                      isSelected ? opt.bg : "bg-owl-100"
+                      isSelected ? opt.bg : "bg-owl-200"
                     }`}
                   >
-                    <Text className={`font-bold text-sm ${
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-sm ${
                       isSelected ? "text-white" : "text-owl-700"
                     }`}>
                       {opt.label}
@@ -207,14 +199,14 @@ export default function SettingsScreen() {
           </View>
 
           {/* Known Words Ratio */}
-          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
-            <View className="flex-row items-center justify-between mb-3">
+          <View className="bg-owl-100 rounded-2xl p-5 mb-5">
+            <View className="flex-row items-center justify-between mb-4">
               <View>
-                <Text className="font-bold text-owl-800">Known Words Ratio</Text>
-                <Text className="text-xs text-owl-500">Target % of known words in texts</Text>
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base">Known Words Ratio</Text>
+                <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 mt-0.5">Target % of known words in texts</Text>
               </View>
-              <View className="bg-secondary-100 px-3 py-1 rounded-full">
-                <Text className="text-secondary-700 font-bold">{knownWordsRatio}%</Text>
+              <View className="bg-secondary-200 px-3 py-1 rounded-full">
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-secondary-500">{knownWordsRatio}%</Text>
               </View>
             </View>
             <View className="flex-row gap-2">
@@ -224,12 +216,12 @@ export default function SettingsScreen() {
                   <TouchableOpacity
                     key={ratio}
                     onPress={() => setKnownWordsRatio(ratio)}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
                     className={`flex-1 py-2.5 rounded-xl items-center ${
-                      isSelected ? "bg-secondary-500" : "bg-owl-100"
+                      isSelected ? "bg-secondary-500" : "bg-owl-200"
                     }`}
                   >
-                    <Text className={`font-bold ${
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className={`${
                       isSelected ? "text-white" : "text-owl-600"
                     }`}>
                       {ratio}%
@@ -245,10 +237,10 @@ export default function SettingsScreen() {
             <TouchableOpacity
               onPress={handleSave}
               disabled={updateMutation.isPending}
-              activeOpacity={0.8}
-              className="bg-primary-500 rounded-xl py-4 border-b-4 border-primary-700 mb-4"
+              activeOpacity={0.7}
+              className="bg-primary-500 rounded-2xl py-5 mb-5"
             >
-              <Text className="text-white text-center font-bold text-lg">
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-center text-lg">
                 {updateMutation.isPending ? "Saving..." : "Save Changes"}
               </Text>
             </TouchableOpacity>
@@ -257,11 +249,11 @@ export default function SettingsScreen() {
           {/* Logout Button */}
           <TouchableOpacity
             onPress={handleLogout}
-            activeOpacity={0.8}
-            className="bg-danger-100 rounded-xl py-4 flex-row items-center justify-center border border-danger-200"
+            activeOpacity={0.7}
+            className="bg-danger-100 rounded-2xl py-4 flex-row items-center justify-center"
           >
             <Ionicons name="log-out-outline" size={20} color="#ff4b4b" />
-            <Text className="text-danger-600 font-bold text-lg ml-2">Logout</Text>
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-danger-600 text-lg ml-2">Logout</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

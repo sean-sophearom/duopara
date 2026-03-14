@@ -212,11 +212,11 @@ export default function PracticeSessionScreen() {
       <SafeAreaView className="flex-1 bg-owl-50 items-center justify-center">
         <Stack.Screen options={{ title: "Loading...", headerShown: false }} />
         <View className="items-center">
-          <View className="w-20 h-20 rounded-full bg-primary-100 items-center justify-center mb-6">
+          <View className="w-20 h-20 rounded-full bg-primary-200 items-center justify-center mb-6">
             <ActivityIndicator size="large" color="#58cc02" />
           </View>
-          <Text className="text-owl-800 text-xl font-bold">Preparing Practice</Text>
-          <Text className="text-owl-500 mt-2">Loading your vocabulary...</Text>
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-xl">Preparing Practice</Text>
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-2">Loading your vocabulary...</Text>
         </View>
       </SafeAreaView>
     );
@@ -231,10 +231,10 @@ export default function PracticeSessionScreen() {
       <SafeAreaView className="flex-1 bg-owl-50">
         <Stack.Screen options={{ title: "Results", headerShown: false }} />
         <View className="flex-1 items-center justify-center p-6">
-          <View className="bg-white rounded-2xl p-8 w-full max-w-sm" style={cardShadow}>
+          <View className="bg-owl-100 rounded-2xl p-8 w-full max-w-sm">
             {/* Trophy/Icon */}
             <View className="items-center mb-6">
-              <View className={`w-24 h-24 rounded-full items-center justify-center ${isGreat ? "bg-warning-100" : isGood ? "bg-primary-100" : "bg-secondary-100"}`}>
+              <View className={`w-24 h-24 rounded-full items-center justify-center ${isGreat ? "bg-warning-200" : isGood ? "bg-primary-200" : "bg-secondary-200"}`}>
                 {isGreat ? (
                   <Ionicons name="trophy" size={48} color="#ffc800" />
                 ) : isGood ? (
@@ -244,12 +244,12 @@ export default function PracticeSessionScreen() {
                 )}
               </View>
               
-              <Text className="text-5xl font-bold text-owl-800 mt-6">
+              <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-5xl text-owl-900 mt-6">
                 {Math.round(sessionStats.accuracy)}%
               </Text>
-              <Text className="text-owl-500 text-lg">Accuracy</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-lg">Accuracy</Text>
               
-              <Text className="text-center text-owl-600 mt-2 px-4">
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-center text-owl-600 mt-2 px-4">
                 {isGreat ? "Amazing work! You're a star!" : isGood ? "Great progress! Keep it up!" : "Keep practicing, you'll get there!"}
               </Text>
             </View>
@@ -257,30 +257,30 @@ export default function PracticeSessionScreen() {
             {/* Stats row */}
             <View className="flex-row justify-around mb-8">
               <View className="items-center">
-                <View className="w-16 h-16 rounded-xl bg-primary-500 items-center justify-center border-b-4 border-primary-700">
-                  <Text className="text-2xl font-bold text-white">
+                <View className="w-16 h-16 rounded-2xl bg-primary-500 items-center justify-center">
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-2xl text-white">
                     {sessionStats.correctCount}
                   </Text>
                 </View>
-                <Text className="text-sm text-owl-600 mt-2 font-medium">Correct</Text>
+                <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600 mt-2">Correct</Text>
               </View>
               <View className="items-center">
-                <View className="w-16 h-16 rounded-xl bg-danger-500 items-center justify-center border-b-4 border-danger-700">
-                  <Text className="text-2xl font-bold text-white">
+                <View className="w-16 h-16 rounded-2xl bg-danger-500 items-center justify-center">
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-2xl text-white">
                     {sessionStats.incorrectCount}
                   </Text>
                 </View>
-                <Text className="text-sm text-owl-600 mt-2 font-medium">Incorrect</Text>
+                <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600 mt-2">Incorrect</Text>
               </View>
             </View>
 
             {/* Continue button */}
             <TouchableOpacity
               onPress={() => router.back()}
-              activeOpacity={0.8}
-              className="bg-primary-500 rounded-xl py-4 border-b-4 border-primary-700"
+              activeOpacity={0.7}
+              className="bg-primary-500 rounded-2xl py-5"
             >
-              <Text className="text-white text-center font-bold text-lg">Continue</Text>
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-center text-lg">Continue</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -293,10 +293,10 @@ export default function PracticeSessionScreen() {
   if (!currentWord || !currentWord.gameData) {
     return (
       <SafeAreaView className="flex-1 bg-owl-50 items-center justify-center">
-        <View className="w-16 h-16 rounded-full bg-white items-center justify-center" style={cardShadow}>
+        <View className="w-16 h-16 rounded-full bg-owl-100 items-center justify-center">
           <ActivityIndicator size="small" color="#58cc02" />
         </View>
-        <Text className="text-owl-500 mt-4">Loading question...</Text>
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-4">Loading question...</Text>
       </SafeAreaView>
     );
   }
@@ -306,13 +306,13 @@ export default function PracticeSessionScreen() {
       <Stack.Screen
         options={{
           title: `${currentIndex + 1} / ${practiceWords.length}`,
-          headerStyle: { backgroundColor: '#f7f7f7' },
-          headerTitleStyle: { fontWeight: 'bold', color: '#3c3c3c' },
+          headerStyle: { backgroundColor: '#0f0f0f' },
+          headerTitleStyle: { fontWeight: 'bold', color: '#e8e8e8' },
         }}
       />
 
       {/* Progress bar */}
-      <View className="h-3 bg-owl-100 mx-4 mt-2 rounded-full overflow-hidden">
+      <View className="h-3 bg-owl-200 mx-4 mt-2 rounded-full overflow-hidden">
         <View
           className="h-full bg-primary-500 rounded-full"
           style={{ width: `${((currentIndex + 1) / practiceWords.length) * 100}%` }}
@@ -418,9 +418,9 @@ function DefinitionGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center">
-        <Text className="text-owl-500 text-sm mb-4">What does this mean?</Text>
-        <View className="bg-secondary-500 px-8 py-4 rounded-xl border-b-4 border-secondary-700">
-          <Text className="text-3xl font-bold text-white">
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mb-4">What does this mean?</Text>
+        <View className="bg-secondary-500 px-8 py-4 rounded-2xl">
+          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-3xl text-white">
             {word.vocabularyWord.word}
           </Text>
         </View>
@@ -431,11 +431,10 @@ function DefinitionGame({
           <TouchableOpacity
             key={idx}
             onPress={() => onAnswer(option === correctAnswer, option, correctAnswer)}
-            activeOpacity={0.8}
-            className="bg-white p-5 rounded-xl border-2 border-owl-200"
-            style={cardShadow}
+            activeOpacity={0.7}
+            className="bg-owl-100 p-5 rounded-2xl"
           >
-            <Text className="text-owl-800 text-center text-lg font-medium">{option}</Text>
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-800 text-center text-lg">{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -469,9 +468,9 @@ function TranslationGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center">
-        <Text className="text-owl-500 text-sm mb-4">Translate this word:</Text>
-        <View className="bg-primary-500 px-8 py-4 rounded-xl border-b-4 border-primary-700">
-          <Text className="text-3xl font-bold text-white">
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mb-4">Translate this word:</Text>
+        <View className="bg-primary-500 px-8 py-4 rounded-2xl">
+          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-3xl text-white">
             {word.vocabularyWord.word}
           </Text>
         </View>
@@ -482,11 +481,10 @@ function TranslationGame({
           <TouchableOpacity
             key={idx}
             onPress={() => onAnswer(option === correctAnswer, option, correctAnswer)}
-            activeOpacity={0.8}
-            className="bg-white p-5 rounded-xl border-2 border-owl-200"
-            style={cardShadow}
+            activeOpacity={0.7}
+            className="bg-owl-100 p-5 rounded-2xl"
           >
-            <Text className="text-owl-800 text-center text-lg font-medium">{option}</Text>
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-800 text-center text-lg">{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -521,9 +519,9 @@ function ReverseTranslationGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center">
-        <Text className="text-owl-500 text-sm mb-4">Which word means:</Text>
-        <View className="bg-warning-500 px-8 py-4 rounded-xl border-b-4 border-warning-700">
-          <Text className="text-3xl font-bold text-white text-center">
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mb-4">Which word means:</Text>
+        <View className="bg-warning-500 px-8 py-4 rounded-2xl">
+          <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-3xl text-white text-center">
             {word.gameData?.translation}
           </Text>
         </View>
@@ -534,11 +532,10 @@ function ReverseTranslationGame({
           <TouchableOpacity
             key={idx}
             onPress={() => onAnswer(option === correctAnswer, option, correctAnswer)}
-            activeOpacity={0.8}
-            className="bg-white p-5 rounded-xl border-2 border-owl-200"
-            style={cardShadow}
+            activeOpacity={0.7}
+            className="bg-owl-100 p-5 rounded-2xl"
           >
-            <Text className="text-owl-800 text-center text-lg font-medium">{option}</Text>
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-800 text-center text-lg">{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -580,9 +577,9 @@ function FillBlankGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center px-4">
-        <Text className="text-owl-500 text-sm mb-6">Fill in the blank:</Text>
-        <View className="bg-white rounded-xl p-6 w-full" style={cardShadow}>
-          <Text className="text-xl text-owl-800 text-center leading-8">
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mb-6">Fill in the blank:</Text>
+        <View className="bg-owl-100 rounded-2xl p-6 w-full">
+          <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-xl text-owl-800 text-center leading-8">
             {sentence.sentence.replace("___", "______")}
           </Text>
         </View>
@@ -594,10 +591,9 @@ function FillBlankGame({
             key={idx}
             onPress={() => onAnswer(option === correctAnswer, option, correctAnswer)}
             activeOpacity={0.8}
-            className="bg-white p-5 rounded-xl border-2 border-owl-200"
-            style={cardShadow}
+            className="bg-owl-100 p-5 rounded-2xl"
           >
-            <Text className="text-owl-800 text-center text-lg font-medium">{option}</Text>
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-800 text-center text-lg">{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -622,21 +618,21 @@ function TrueFalseGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center">
-        <Text className="text-owl-500 text-sm mb-6">Is this translation correct?</Text>
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mb-6">Is this translation correct?</Text>
         
-        <View className="bg-white rounded-xl p-8 items-center w-full" style={cardShadow}>
-          <View className="bg-secondary-500 px-6 py-3 rounded-xl border-b-4 border-secondary-700 mb-4">
-            <Text className="text-2xl font-bold text-white">
+        <View className="bg-owl-100 rounded-2xl p-8 items-center w-full">
+          <View className="bg-secondary-500 px-6 py-3 rounded-2xl mb-4">
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-2xl text-white">
               {word.vocabularyWord.word}
             </Text>
           </View>
           
-          <View className="my-2 w-12 h-12 rounded-full bg-owl-100 items-center justify-center">
+          <View className="my-2 w-12 h-12 rounded-full bg-owl-200 items-center justify-center">
             <Text className="text-2xl text-owl-400">=</Text>
           </View>
           
-          <View className="bg-primary-500 px-6 py-3 rounded-xl border-b-4 border-primary-700 mt-4">
-            <Text className="text-2xl font-bold text-white">
+          <View className="bg-primary-500 px-6 py-3 rounded-2xl mt-4">
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-2xl text-white">
               {displayTranslation}
             </Text>
           </View>
@@ -646,19 +642,19 @@ function TrueFalseGame({
       <View className="flex-row gap-4 pb-4">
         <TouchableOpacity
           onPress={() => onAnswer(!showCorrect, "false", correctAnswer)}
-          activeOpacity={0.8}
-          className="flex-1 bg-danger-500 p-6 items-center rounded-xl border-b-4 border-danger-700"
+          activeOpacity={0.7}
+          className="flex-1 bg-danger-500 p-6 items-center rounded-2xl"
         >
           <Ionicons name="close" size={36} color="#ffffff" />
-          <Text className="text-white font-bold mt-2 text-lg">False</Text>
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white mt-2 text-lg">False</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => onAnswer(showCorrect, "true", correctAnswer)}
-          activeOpacity={0.8}
-          className="flex-1 bg-primary-500 p-6 items-center rounded-xl border-b-4 border-primary-700"
+          activeOpacity={0.7}
+          className="flex-1 bg-primary-500 p-6 items-center rounded-2xl"
         >
           <Ionicons name="checkmark" size={36} color="#ffffff" />
-          <Text className="text-white font-bold mt-2 text-lg">True</Text>
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white mt-2 text-lg">True</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -720,7 +716,7 @@ function MatchingGame({
 
   return (
     <View className="flex-1">
-      <Text className="text-center text-owl-600 font-medium mb-6">
+      <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-center text-owl-600 mb-6">
         Match the words with their translations
       </Text>
 
@@ -736,9 +732,9 @@ function MatchingGame({
               return (
                 <View
                   key={word}
-                  className="p-4 rounded-xl bg-primary-100 border-2 border-primary-300"
+                  className="p-4 rounded-2xl bg-primary-200 border-2 border-primary-400"
                 >
-                  <Text className="text-center font-bold text-primary-700">
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-center text-primary-600">
                     {word}
                   </Text>
                 </View>
@@ -750,18 +746,18 @@ function MatchingGame({
                 key={word}
                 onPress={() => setSelectedWord(isSelected ? null : word)}
                 activeOpacity={0.8}
-                className={`p-4 rounded-xl border-2 ${
+                className={`p-4 rounded-2xl border-2 ${
                   isWrong
-                    ? "bg-danger-100 border-danger-400"
+                    ? "bg-danger-200 border-danger-400"
                     : isSelected
                     ? "bg-secondary-500 border-secondary-500"
-                    : "bg-white border-owl-200"
+                    : "bg-owl-100 border-owl-300"
                 }`}
-                style={cardShadow}
               >
                 <Text
-                  className={`text-center font-medium ${
-                    isWrong ? "text-danger-700" : isSelected ? "text-white" : "text-owl-800"
+                  style={{ fontFamily: "Nunito_600SemiBold" }}
+                  className={`text-center ${
+                    isWrong ? "text-danger-600" : isSelected ? "text-white" : "text-owl-800"
                   }`}
                 >
                   {word}
@@ -785,9 +781,9 @@ function MatchingGame({
               return (
                 <View
                   key={translation}
-                  className="p-4 rounded-xl bg-primary-100 border-2 border-primary-300"
+                  className="p-4 rounded-2xl bg-primary-200 border-2 border-primary-400"
                 >
-                  <Text className="text-center font-bold text-primary-700">
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-center text-primary-600">
                     {translation}
                   </Text>
                 </View>
@@ -799,18 +795,18 @@ function MatchingGame({
                 key={translation}
                 onPress={() => setSelectedTranslation(isSelected ? null : translation)}
                 activeOpacity={0.8}
-                className={`p-4 rounded-xl border-2 ${
+                className={`p-4 rounded-2xl border-2 ${
                   isWrong
-                    ? "bg-danger-100 border-danger-400"
+                    ? "bg-danger-200 border-danger-400"
                     : isSelected
                     ? "bg-primary-500 border-primary-500"
-                    : "bg-white border-owl-200"
+                    : "bg-owl-100 border-owl-300"
                 }`}
-                style={cardShadow}
               >
                 <Text
-                  className={`text-center font-medium ${
-                    isWrong ? "text-danger-700" : isSelected ? "text-white" : "text-owl-800"
+                  style={{ fontFamily: "Nunito_600SemiBold" }}
+                  className={`text-center ${
+                    isWrong ? "text-danger-600" : isSelected ? "text-white" : "text-owl-800"
                   }`}
                 >
                   {translation}
@@ -823,8 +819,8 @@ function MatchingGame({
 
       {/* Progress footer */}
       <View className="mt-4 items-center">
-        <View className="bg-owl-100 px-6 py-3 rounded-full">
-          <Text className="text-center text-owl-600 font-medium">
+        <View className="bg-owl-200 px-6 py-3 rounded-full">
+          <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-center text-owl-600">
             {matchedPairs.size} / {words.length} matched
           </Text>
         </View>
@@ -832,11 +828,3 @@ function MatchingGame({
     </View>
   );
 }
-
-const cardShadow = {
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.06,
-  shadowRadius: 8,
-  elevation: 3,
-};

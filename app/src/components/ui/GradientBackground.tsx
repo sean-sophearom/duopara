@@ -6,12 +6,11 @@ interface BackgroundProps {
 }
 
 const backgrounds = {
-  light: { bg: "bg-owl-50", statusBar: "dark-content" as const },
+  light: { bg: "bg-owl-50", statusBar: "light-content" as const },
   primary: { bg: "bg-primary-500", statusBar: "light-content" as const },
-  dark: { bg: "bg-owl-900", statusBar: "light-content" as const },
+  dark: { bg: "bg-owl-50", statusBar: "light-content" as const },
 };
 
-// Simple solid background - no gradients, no animations
 export function GradientBackground({
   children,
   variant = "light",
@@ -30,5 +29,4 @@ export function GradientBackground({
   );
 }
 
-// Alias
 export const Background = GradientBackground;

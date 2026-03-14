@@ -16,14 +16,6 @@ import { useAuthStore } from "../../src/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const cardShadow = {
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.06,
-  shadowRadius: 8,
-  elevation: 3,
-};
-
 const difficultyConfig = {
   beginner: { bg: "bg-primary-500", label: "Beginner" },
   intermediate: { bg: "bg-warning-500", label: "Intermediate" },
@@ -85,14 +77,14 @@ export default function HistoryScreen() {
     
     return (
       <Link href={`/read/${item.id}`} asChild>
-        <TouchableOpacity activeOpacity={0.8}>
-          <View className="bg-white rounded-xl p-4 mb-3" style={cardShadow}>
+        <TouchableOpacity activeOpacity={0.7}>
+          <View className="bg-owl-100 rounded-2xl p-5 mb-3">
             <View className="flex-row items-start justify-between">
               <View className="flex-1 mr-3">
-                <Text className="font-bold text-owl-800 text-base" numberOfLines={2}>
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-base" numberOfLines={2}>
                   {item.title || item.topic}
                 </Text>
-                <Text className="text-owl-500 text-sm mt-2 leading-5" numberOfLines={2}>
+                <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-2 leading-5" numberOfLines={2}>
                   {item.content?.substring(0, 100)}...
                 </Text>
               </View>
@@ -101,25 +93,25 @@ export default function HistoryScreen() {
                   e.stopPropagation();
                   handleDelete(item.id, item.title || item.topic);
                 }}
-                className="p-2 bg-danger-100 rounded-full"
+                className="p-2 bg-danger-100 rounded-xl"
               >
                 <Ionicons name="trash-outline" size={16} color="#ff4b4b" />
               </TouchableOpacity>
             </View>
 
             <View className="flex-row items-center mt-4 gap-2 flex-wrap">
-              <View className="bg-secondary-100 px-3 py-1.5 rounded-full">
-                <Text className="text-xs font-medium text-secondary-700">{item.language}</Text>
+              <View className="bg-owl-200 px-3 py-1.5 rounded-full">
+                <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-xs text-owl-600">{item.language}</Text>
               </View>
               <View className={`${difficulty.bg} px-3 py-1.5 rounded-full`}>
-                <Text className="text-xs font-bold text-white capitalize">
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xs text-white capitalize">
                   {item.difficulty}
                 </Text>
               </View>
-              <View className="bg-owl-100 px-3 py-1.5 rounded-full">
-                <Text className="text-xs font-medium text-owl-600">{item.wordCount} words</Text>
+              <View className="bg-owl-200 px-3 py-1.5 rounded-full">
+                <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-xs text-owl-600">{item.wordCount} words</Text>
               </View>
-              <Text className="text-owl-400 text-xs ml-auto">
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-400 text-xs ml-auto">
                 {new Date(item.createdAt).toLocaleDateString()}
               </Text>
             </View>
@@ -132,47 +124,48 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
       {/* Header */}
-      <View className="px-5 pt-4 pb-4">
-        <Text className="text-owl-500 text-base">Your</Text>
-        <Text className="text-owl-800 text-2xl font-bold mt-1">Reading History</Text>
+      <View className="px-6 pt-6 pb-5">
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-lg">Your</Text>
+        <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-900 text-3xl mt-1">
+          Reading Library
+        </Text>
         
-        <View className="bg-white rounded-xl p-3 flex-row items-center mt-4" style={cardShadow}>
-          <View className="w-10 h-10 rounded-lg bg-warning-100 items-center justify-center mr-3">
-            <Ionicons name="library" size={20} color="#ffc800" />
-          </View>
-          <Text className="text-owl-800 font-bold text-xl mr-2">{texts.length}</Text>
-          <Text className="text-owl-500">texts in your library</Text>
+        <View className="bg-owl-100 rounded-2xl p-4 flex-row items-center mt-5">
+          <Ionicons name="library" size={20} color="#ffc800" />
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-xl ml-3 mr-2">{texts.length}</Text>
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500">texts</Text>
         </View>
       </View>
 
       {/* Search and Filter */}
-      <View className="px-5 mb-4">
-        <View className="bg-white rounded-xl p-4" style={cardShadow}>
-          <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3 mb-3">
-            <Ionicons name="search" size={20} color="#777" />
+      <View className="px-6 mb-5">
+        <View className="bg-owl-100 rounded-2xl p-5">
+          <View className="flex-row items-center bg-owl-200 rounded-xl px-4 py-3 mb-4">
+            <Ionicons name="search" size={20} color="#888888" />
             <TextInput
               value={search}
               onChangeText={setSearch}
               placeholder="Search your texts..."
               className="flex-1 ml-3 text-owl-800 text-base"
-              placeholderTextColor="#afafaf"
+              placeholderTextColor="#555555"
+              style={{ fontFamily: "Nunito_400Regular" }}
             />
-            {search && (
+            {search ? (
               <TouchableOpacity onPress={() => setSearch("")}>
-                <Ionicons name="close-circle" size={20} color="#afafaf" />
+                <Ionicons name="close-circle" size={20} color="#555555" />
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
 
           <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={() => setLanguageFilter("")}
-              activeOpacity={0.8}
-              className={`px-4 py-2 rounded-xl ${
-                languageFilter === "" ? "bg-secondary-500" : "bg-owl-100"
+              activeOpacity={0.7}
+              className={`px-4 py-2.5 rounded-xl ${
+                languageFilter === "" ? "bg-secondary-500" : "bg-owl-200"
               }`}
             >
-              <Text className={`text-sm font-medium ${
+              <Text style={{ fontFamily: "Nunito_600SemiBold" }} className={`text-sm ${
                 languageFilter === "" ? "text-white" : "text-owl-600"
               }`}>
                 All
@@ -184,12 +177,12 @@ export default function HistoryScreen() {
                 onPress={() =>
                   setLanguageFilter(languageFilter === lang.code ? "" : lang.code)
                 }
-                activeOpacity={0.8}
-                className={`px-4 py-2 rounded-xl ${
-                  languageFilter === lang.code ? "bg-secondary-500" : "bg-owl-100"
+                activeOpacity={0.7}
+                className={`px-4 py-2.5 rounded-xl ${
+                  languageFilter === lang.code ? "bg-secondary-500" : "bg-owl-200"
                 }`}
               >
-                <Text className={`text-sm font-medium ${
+                <Text style={{ fontFamily: "Nunito_600SemiBold" }} className={`text-sm ${
                   languageFilter === lang.code ? "text-white" : "text-owl-600"
                 }`}>
                   {lang.name}
@@ -203,24 +196,20 @@ export default function HistoryScreen() {
       {/* Texts List */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <View className="bg-white rounded-xl p-6 items-center" style={cardShadow}>
-            <ActivityIndicator size="large" color="#58cc02" />
-            <Text className="text-owl-500 mt-3">Loading texts...</Text>
-          </View>
+          <ActivityIndicator size="large" color="#58cc02" />
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-4">Loading texts...</Text>
         </View>
       ) : texts.length === 0 ? (
         <View className="flex-1 items-center justify-center p-8">
-          <View className="w-24 h-24 rounded-full bg-warning-100 items-center justify-center mb-4">
-            <Ionicons name="book" size={48} color="#ffc800" />
-          </View>
-          <Text className="text-owl-800 text-xl font-bold mt-2">No texts found</Text>
-          <Text className="text-owl-500 text-center mt-2 max-w-xs">
+          <Ionicons name="book" size={48} color="#ffc800" />
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-xl mt-4">No texts found</Text>
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-center mt-2 text-base">
             Generate your first reading material to get started
           </Text>
           <Link href="/(tabs)/generate" asChild>
-            <TouchableOpacity activeOpacity={0.8} className="mt-6">
-              <View className="bg-primary-500 rounded-xl py-4 px-8 border-b-4 border-primary-700">
-                <Text className="text-white font-bold text-lg">Generate Text</Text>
+            <TouchableOpacity activeOpacity={0.7} className="mt-6">
+              <View className="bg-primary-500 rounded-2xl py-4 px-8">
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-lg">Generate Text</Text>
               </View>
             </TouchableOpacity>
           </Link>
@@ -230,7 +219,7 @@ export default function HistoryScreen() {
           data={texts}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
           refreshControl={
             <RefreshControl 
               refreshing={refreshing} 

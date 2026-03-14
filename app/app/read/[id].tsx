@@ -16,7 +16,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Speech from "expo-speech";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { GradientButton } from "../../src/components/ui";
 
@@ -371,15 +370,15 @@ export default function ReadScreen() {
     const clean = cleanWord(word);
 
     if (markedWords.has(clean) && highlightLearned) {
-      return "bg-green-100 text-green-800";
+      return "bg-green-900 text-green-300";
     }
     if (markedLearningWords.has(clean) && highlightLearning) {
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-yellow-900 text-yellow-300";
     }
     if (newWordsSet.has(clean) && highlightNew) {
-      return "text-primary-700 font-medium";
+      return "text-primary-500 font-medium";
     }
-    return "text-gray-800";
+    return "text-owl-800";
   };
 
   // Render normal content
@@ -395,7 +394,7 @@ export default function ReadScreen() {
       >
         <Text
           className={`text-lg leading-8 mb-2 rounded px-1 ${
-            speakingIdx === sIdx ? "bg-primary-100" : ""
+            speakingIdx === sIdx ? "bg-primary-200" : ""
           }`}
         >
           {sentence.split(/(\s+)/).map((part, wIdx) => {
@@ -431,14 +430,11 @@ export default function ReadScreen() {
     if (isTranslatingAll) {
       return (
         <View className="items-center py-12">
-          <LinearGradient
-            colors={["#a855f7", "#7c3aed"]}
-            className="w-16 h-16 rounded-2xl items-center justify-center mb-4"
-          >
-            <ActivityIndicator size="large" color="white" />
-          </LinearGradient>
-          <Text className="text-gray-700 font-medium">Translating text...</Text>
-          <Text className="text-gray-500 text-sm mt-1">This will be cached for future visits.</Text>
+          <View className="w-16 h-16 rounded-2xl bg-owl-200 items-center justify-center mb-4">
+            <ActivityIndicator size="large" color="#a855f7" />
+          </View>
+          <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-700">Translating text...</Text>
+          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">This will be cached for future visits.</Text>
         </View>
       );
     }
@@ -454,14 +450,14 @@ export default function ReadScreen() {
       return (
         <View
           key={sIdx}
-          className={`py-3 border-b border-gray-100 ${
-            speakingIdx === sIdx ? "bg-primary-50 rounded-xl -mx-2 px-2" : ""
+          className={`py-3 border-b border-owl-200 ${
+            speakingIdx === sIdx ? "bg-primary-200 rounded-xl -mx-2 px-2" : ""
           }`}
         >
           <View className="flex-row items-start gap-2">
             <TouchableOpacity
               onPress={() => speak(sentence)}
-              className="mt-1 w-8 h-8 rounded-lg bg-purple-50 items-center justify-center"
+              className="mt-1 w-8 h-8 rounded-lg bg-owl-200 items-center justify-center"
             >
               <Ionicons name="volume-medium" size={14} color="#a855f7" />
             </TouchableOpacity>
@@ -469,7 +465,7 @@ export default function ReadScreen() {
               onLongPress={() => handleSentencePress(sentence)}
               className="flex-1"
             >
-              <Text className="text-base leading-7 text-gray-900">
+              <Text className="text-base leading-7 text-owl-800">
                 {sentence.split(/(\s+)/).map((part, wIdx) => {
                   if (/^\s+$/.test(part)) {
                     return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
@@ -491,11 +487,11 @@ export default function ReadScreen() {
               </Text>
             </Pressable>
           </View>
-          <View className="ml-10 mt-2 pl-3 border-l-2 border-primary-300">
+          <View className="ml-10 mt-2 pl-3 border-l-2 border-primary-400">
             {trans == null ? (
               <ActivityIndicator size="small" color="#a855f7" />
             ) : (
-              <Text className="text-sm text-gray-600 italic">{displayTranslation}</Text>
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 italic">{displayTranslation}</Text>
             )}
           </View>
         </View>
@@ -505,29 +501,23 @@ export default function ReadScreen() {
 
   if (isLoadingText) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-50">
-        <LinearGradient
-          colors={["#2a94ff", "#a855f7"]}
-          className="w-20 h-20 rounded-3xl items-center justify-center mb-4"
-        >
-          <ActivityIndicator size="large" color="white" />
-        </LinearGradient>
-        <Text className="text-gray-500 mt-2">Loading your text...</Text>
+      <View className="flex-1 items-center justify-center bg-owl-50">
+        <View className="w-20 h-20 rounded-2xl bg-owl-200 items-center justify-center mb-4">
+          <ActivityIndicator size="large" color="#58cc02" />
+        </View>
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-2">Loading your text...</Text>
       </View>
     );
   }
 
   if (error || !text) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-50 p-8">
-        <LinearGradient
-          colors={["#fee2e2", "#fecaca"]}
-          className="w-24 h-24 rounded-3xl items-center justify-center mb-4"
-        >
+      <View className="flex-1 items-center justify-center bg-owl-50 p-8">
+        <View className="w-24 h-24 rounded-2xl bg-danger-200 items-center justify-center mb-4">
           <Text className="text-4xl">😕</Text>
-        </LinearGradient>
-        <Text className="text-gray-700 text-xl font-bold mt-2">Failed to load text</Text>
-        <Text className="text-gray-500 text-center mt-2">Something went wrong</Text>
+        </View>
+        <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-xl mt-2">Failed to load text</Text>
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-center mt-2">Something went wrong</Text>
         <View className="mt-6">
           <GradientButton
             title="Go Back"
@@ -550,75 +540,54 @@ export default function ReadScreen() {
   return (
     <>
       <Stack.Screen options={{ title: text.title || text.topic || "Reading" }} />
-      <SafeAreaView edges={["bottom"]} className="flex-1 bg-slate-50">
+      <SafeAreaView edges={["bottom"]} className="flex-1 bg-owl-50">
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           {/* Hero Header */}
-          <LinearGradient
-            colors={["#2a94ff", "#6366f1", "#a855f7"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="px-5 pt-4 pb-6"
-            style={{ borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-          >
+          <View className="bg-owl-100 px-6 pt-5 pb-6" style={{ borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}>
             <Animated.View entering={FadeInDown.delay(100).springify()}>
-              <Text className="text-2xl font-bold text-white">{text.title || text.topic}</Text>
+              <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-2xl text-owl-900">{text.title || text.topic}</Text>
               <View className="flex-row items-center gap-2 mt-3 flex-wrap">
-                <View className="bg-white/20 px-3 py-1.5 rounded-full flex-row items-center">
+                <View className="bg-owl-200 px-3 py-1.5 rounded-full flex-row items-center">
                   <Text className="text-sm mr-1">🌍</Text>
-                  <Text className="text-white text-xs font-medium">{text.language}</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-700 text-xs">{text.language}</Text>
                 </View>
-                <LinearGradient
-                  colors={difficulty.colors}
-                  className="px-3 py-1.5 rounded-full flex-row items-center"
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
+                <View style={{ backgroundColor: difficulty.colors[0] }} className="px-3 py-1.5 rounded-full flex-row items-center">
                   <Text className="text-sm mr-1">{difficulty.emoji}</Text>
-                  <Text className="text-white text-xs font-bold capitalize">
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-xs capitalize">
                     {text.difficulty}
                   </Text>
-                </LinearGradient>
-                <View className="bg-white/20 px-3 py-1.5 rounded-full flex-row items-center">
+                </View>
+                <View className="bg-owl-200 px-3 py-1.5 rounded-full flex-row items-center">
                   <Text className="text-sm mr-1">📝</Text>
-                  <Text className="text-white text-xs font-medium">{text.wordCount} words</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-700 text-xs">{text.wordCount} words</Text>
                 </View>
               </View>
             </Animated.View>
-          </LinearGradient>
+          </View>
 
           {/* Playback Controls */}
           <Animated.View 
             entering={FadeInUp.delay(200).springify()}
-            className="px-5 -mt-4"
+            className="px-6 -mt-4"
           >
-            <LinearGradient
-              colors={["#ffffff", "#f8fafc"]}
-              className="rounded-2xl p-4"
-              style={{
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.1,
-                shadowRadius: 12,
-                elevation: 5,
-              }}
-            >
+            <View className="bg-owl-100 rounded-2xl p-4">
               <View className="flex-row items-center gap-2 flex-wrap">
                 {/* Speed control */}
-                <View className="flex-row items-center bg-gray-100 rounded-xl px-1 py-1">
+                <View className="flex-row items-center bg-owl-200 rounded-xl px-1 py-1">
                   <TouchableOpacity
                     onPress={() => updateSpeechRate(Math.max(0.5, speechRate - 0.1))}
                     className="w-8 h-8 items-center justify-center"
                   >
-                    <Text className="text-gray-600 font-bold">−</Text>
+                    <Text className="text-owl-600 font-bold">−</Text>
                   </TouchableOpacity>
-                  <Text className="w-12 text-center text-xs font-bold text-gray-700">
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="w-12 text-center text-xs text-owl-700">
                     {speechRate.toFixed(1)}×
                   </Text>
                   <TouchableOpacity
                     onPress={() => updateSpeechRate(Math.min(2.0, speechRate + 0.1))}
                     className="w-8 h-8 items-center justify-center"
                   >
-                    <Text className="text-gray-600 font-bold">+</Text>
+                    <Text className="text-owl-600 font-bold">+</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -626,28 +595,20 @@ export default function ReadScreen() {
                 {isSpeaking ? (
                   <TouchableOpacity
                     onPress={stopSpeaking}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
+                    className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-danger-500"
                   >
-                    <LinearGradient
-                      colors={["#ef4444", "#dc2626"]}
-                      className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl"
-                    >
-                      <Ionicons name="stop" size={14} color="white" />
-                      <Text className="text-white text-sm font-bold">Stop</Text>
-                    </LinearGradient>
+                    <Ionicons name="stop" size={14} color="white" />
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-sm">Stop</Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
                     onPress={speakAll}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
+                    className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-500"
                   >
-                    <LinearGradient
-                      colors={["#10b981", "#059669"]}
-                      className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl"
-                    >
-                      <Ionicons name="play" size={14} color="white" />
-                      <Text className="text-white text-sm font-bold">Read All</Text>
-                    </LinearGradient>
+                    <Ionicons name="play" size={14} color="white" />
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-sm">Read All</Text>
                   </TouchableOpacity>
                 )}
 
@@ -655,243 +616,177 @@ export default function ReadScreen() {
                 {parallelTranslations.length > 0 ? (
                   <TouchableOpacity
                     onPress={() => setShowParallelView(!showParallelView)}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
+                    className={`flex-row items-center gap-2 px-4 py-2.5 rounded-xl ${
+                      showParallelView ? "bg-secondary-500" : "bg-owl-200"
+                    }`}
                   >
-                    <LinearGradient
-                      colors={showParallelView ? ["#2a94ff", "#1a75ff"] : ["#f8fafc", "#f1f5f9"]}
-                      className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl"
-                      style={{ borderWidth: showParallelView ? 0 : 1, borderColor: "#e2e8f0" }}
-                    >
-                      <Ionicons
-                        name={showParallelView ? "eye-off" : "eye"}
-                        size={14}
-                        color={showParallelView ? "white" : "#374151"}
-                      />
-                      <Text className={`text-sm font-bold ${showParallelView ? "text-white" : "text-gray-700"}`}>
-                        Translation
-                      </Text>
-                    </LinearGradient>
+                    <Ionicons
+                      name={showParallelView ? "eye-off" : "eye"}
+                      size={14}
+                      color={showParallelView ? "white" : "#cccccc"}
+                    />
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-sm ${
+                      showParallelView ? "text-white" : "text-owl-700"
+                    }`}>
+                      Translation
+                    </Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
                     onPress={translateAll}
                     disabled={isTranslatingAll}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
+                    className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary-500"
                   >
-                    <LinearGradient
-                      colors={["#a855f7", "#7c3aed"]}
-                      className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl"
-                    >
-                      {isTranslatingAll ? (
-                        <ActivityIndicator size="small" color="white" />
-                      ) : (
-                        <Ionicons name="language" size={14} color="white" />
-                      )}
-                      <Text className="text-white text-sm font-bold">
-                        {isTranslatingAll ? "..." : "Translate All"}
-                      </Text>
-                    </LinearGradient>
+                    {isTranslatingAll ? (
+                      <ActivityIndicator size="small" color="white" />
+                    ) : (
+                      <Ionicons name="language" size={14} color="white" />
+                    )}
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-sm">
+                      {isTranslatingAll ? "..." : "Translate All"}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
-            </LinearGradient>
+            </View>
           </Animated.View>
 
           {/* Literal/Natural toggle */}
           {showParallelView && parallelTranslations.length > 0 && (
             <View className="px-5 mt-3">
-              <View className="flex-row rounded-xl overflow-hidden self-start bg-gray-100">
+              <View className="flex-row rounded-xl overflow-hidden self-start bg-owl-200">
                 <TouchableOpacity
                   onPress={() => setUseLiteralTranslation(false)}
-                  activeOpacity={0.8}
+                  activeOpacity={0.7}
+                  className={`px-4 py-2 ${!useLiteralTranslation ? "bg-primary-500" : ""}`}
                 >
-                  <LinearGradient
-                    colors={!useLiteralTranslation ? ["#2a94ff", "#1a75ff"] : ["#f1f5f9", "#f1f5f9"]}
-                    className="px-4 py-2"
-                  >
-                    <Text className={`text-sm font-bold ${!useLiteralTranslation ? "text-white" : "text-gray-600"}`}>
-                      Natural
-                    </Text>
-                  </LinearGradient>
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-sm ${!useLiteralTranslation ? "text-white" : "text-owl-600"}`}>
+                    Natural
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setUseLiteralTranslation(true)}
-                  activeOpacity={0.8}
+                  activeOpacity={0.7}
+                  className={`px-4 py-2 ${useLiteralTranslation ? "bg-primary-500" : ""}`}
                 >
-                  <LinearGradient
-                    colors={useLiteralTranslation ? ["#2a94ff", "#1a75ff"] : ["#f1f5f9", "#f1f5f9"]}
-                    className="px-4 py-2"
-                  >
-                    <Text className={`text-sm font-bold ${useLiteralTranslation ? "text-white" : "text-gray-600"}`}>
-                      Literal
-                    </Text>
-                  </LinearGradient>
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-sm ${useLiteralTranslation ? "text-white" : "text-owl-600"}`}>
+                    Literal
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
           {/* Tip */}
-          <LinearGradient
-            colors={["#dbeafe", "#bfdbfe"]}
-            className="mx-5 mt-4 p-4 rounded-2xl flex-row items-center"
-          >
-            <View className="w-10 h-10 rounded-xl bg-white/60 items-center justify-center mr-3">
+          <View className="mx-6 mt-4 p-4 rounded-2xl flex-row items-center bg-owl-100">
+            <View className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center mr-3">
               <Text className="text-xl">💡</Text>
             </View>
             <View className="flex-1">
-              <Text className="text-sm text-blue-800 font-medium">
+              <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600">
                 Tap any word to translate. Long-press a sentence for full translation.
               </Text>
             </View>
-          </LinearGradient>
+          </View>
 
           {/* Content */}
-          <View className="px-5 py-4">
-            <LinearGradient
-              colors={["#ffffff", "#f8fafc"]}
-              className="rounded-2xl p-4"
-              style={{
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
-            >
+          <View className="px-6 py-4">
+            <View className="rounded-2xl p-4 bg-owl-100">
               {showParallelView ? renderParallelContent() : renderContent()}
-            </LinearGradient>
+            </View>
           </View>
 
           {/* Difficulty Controls */}
-          <View className="mx-5 mb-4">
-            <LinearGradient
-              colors={["#ffffff", "#f8fafc"]}
-              className="rounded-2xl p-4"
-              style={{
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
-            >
+          <View className="mx-6 mb-4">
+            <View className="rounded-2xl p-4 bg-owl-100">
               <View className="flex-row items-center mb-3">
-                <View className="w-8 h-8 rounded-xl bg-purple-100 items-center justify-center mr-2">
+                <View className="w-8 h-8 rounded-xl bg-owl-200 items-center justify-center mr-2">
                   <Text className="text-base">🎚️</Text>
                 </View>
-                <Text className="font-bold text-gray-700">Adjust difficulty</Text>
+                <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-700">Adjust difficulty</Text>
               </View>
               <View className="flex-row gap-3">
                 <TouchableOpacity
                   onPress={() => simplifyMutation.mutate()}
                   disabled={simplifyMutation.isPending || text.difficulty === "beginner"}
-                  className="flex-1 overflow-hidden rounded-xl"
-                  activeOpacity={0.8}
+                  className={`flex-1 rounded-xl py-3 items-center ${text.difficulty === "beginner" ? "bg-owl-200" : "bg-primary-500"}`}
+                  activeOpacity={0.7}
                 >
-                  <LinearGradient
-                    colors={text.difficulty === "beginner" ? ["#f1f5f9", "#e2e8f0"] : ["#10b981", "#059669"]}
-                    className="py-3 items-center"
-                  >
-                    {simplifyMutation.isPending ? (
-                      <ActivityIndicator size="small" color="white" />
-                    ) : (
-                      <View className="flex-row items-center gap-1">
-                        <Text className="text-lg">⬇️</Text>
-                        <Text className={`font-bold ${text.difficulty === "beginner" ? "text-gray-400" : "text-white"}`}>
-                          Simplify
-                        </Text>
-                      </View>
-                    )}
-                  </LinearGradient>
+                  {simplifyMutation.isPending ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <View className="flex-row items-center gap-1">
+                      <Text className="text-lg">⬇️</Text>
+                      <Text style={{ fontFamily: "Nunito_700Bold" }} className={text.difficulty === "beginner" ? "text-owl-400" : "text-white"}>
+                        Simplify
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => harderMutation.mutate()}
                   disabled={harderMutation.isPending || text.difficulty === "advanced"}
-                  className="flex-1 overflow-hidden rounded-xl"
-                  activeOpacity={0.8}
+                  className={`flex-1 rounded-xl py-3 items-center ${text.difficulty === "advanced" ? "bg-owl-200" : "bg-danger-500"}`}
+                  activeOpacity={0.7}
                 >
-                  <LinearGradient
-                    colors={text.difficulty === "advanced" ? ["#f1f5f9", "#e2e8f0"] : ["#ef4444", "#dc2626"]}
-                    className="py-3 items-center"
-                  >
-                    {harderMutation.isPending ? (
-                      <ActivityIndicator size="small" color="white" />
-                    ) : (
-                      <View className="flex-row items-center gap-1">
-                        <Text className="text-lg">⬆️</Text>
-                        <Text className={`font-bold ${text.difficulty === "advanced" ? "text-gray-400" : "text-white"}`}>
-                          Harder
-                        </Text>
-                      </View>
-                    )}
-                  </LinearGradient>
+                  {harderMutation.isPending ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <View className="flex-row items-center gap-1">
+                      <Text className="text-lg">⬆️</Text>
+                      <Text style={{ fontFamily: "Nunito_700Bold" }} className={text.difficulty === "advanced" ? "text-owl-400" : "text-white"}>
+                        Harder
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               </View>
-            </LinearGradient>
+            </View>
           </View>
 
           {/* Stats */}
-          <View className="mx-5 mb-4">
-            <LinearGradient
-              colors={["#ffffff", "#f8fafc"]}
-              className="rounded-2xl p-4"
-              style={{
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
-            >
+          <View className="mx-6 mb-4">
+            <View className="rounded-2xl p-4 bg-owl-100">
               <View className="flex-row items-center gap-3">
-                <View className="flex-1 bg-primary-50 rounded-xl p-3 items-center">
-                  <Text className="text-primary-600 font-bold text-xl">
+                <View className="flex-1 bg-primary-200 rounded-xl p-3 items-center">
+                  <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-primary-500 text-xl">
                     {text.newWordsIntroduced?.length || 0}
                   </Text>
-                  <Text className="text-primary-700 text-xs">New words</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-primary-600 text-xs">New words</Text>
                 </View>
-                <View className="flex-1 bg-green-50 rounded-xl p-3 items-center">
-                  <Text className="text-green-600 font-bold text-xl">{markedWords.size}</Text>
-                  <Text className="text-green-700 text-xs">Marked</Text>
+                <View className="flex-1 bg-green-900 rounded-xl p-3 items-center">
+                  <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-green-400 text-xl">{markedWords.size}</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-green-500 text-xs">Marked</Text>
                 </View>
-                <View className="flex-1 bg-purple-50 rounded-xl p-3 items-center">
-                  <Text className="text-purple-600 font-bold text-xl">{wordsLookedUpRef.current.size}</Text>
-                  <Text className="text-purple-700 text-xs">Looked up</Text>
+                <View className="flex-1 bg-owl-200 rounded-xl p-3 items-center">
+                  <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-700 text-xl">{wordsLookedUpRef.current.size}</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-600 text-xs">Looked up</Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           </View>
 
           {/* Legend */}
-          <View className="mx-5 mb-8">
-            <LinearGradient
-              colors={["#ffffff", "#f8fafc"]}
-              className="rounded-2xl p-4"
-              style={{
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
-            >
-              <Text className="font-bold text-gray-700 mb-3">Word colors:</Text>
+          <View className="mx-6 mb-8">
+            <View className="rounded-2xl p-4 bg-owl-100">
+              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-700 mb-3">Word colors:</Text>
               <View className="flex-row flex-wrap gap-3">
-                <View className="flex-row items-center bg-primary-50 px-3 py-1.5 rounded-full">
+                <View className="flex-row items-center bg-primary-200 px-3 py-1.5 rounded-full">
                   <View className="w-3 h-3 rounded-full bg-primary-400 mr-2" />
-                  <Text className="text-sm text-primary-700 font-medium">New word</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-primary-500">New word</Text>
                 </View>
-                <View className="flex-row items-center bg-yellow-50 px-3 py-1.5 rounded-full">
+                <View className="flex-row items-center bg-yellow-900 px-3 py-1.5 rounded-full">
                   <View className="w-3 h-3 rounded-full bg-yellow-400 mr-2" />
-                  <Text className="text-sm text-yellow-700 font-medium">Learning</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-yellow-300">Learning</Text>
                 </View>
-                <View className="flex-row items-center bg-green-50 px-3 py-1.5 rounded-full">
+                <View className="flex-row items-center bg-green-900 px-3 py-1.5 rounded-full">
                   <View className="w-3 h-3 rounded-full bg-green-500 mr-2" />
-                  <Text className="text-sm text-green-700 font-medium">Learned</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-green-300">Learned</Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           </View>
         </ScrollView>
 
@@ -907,67 +802,58 @@ export default function ReadScreen() {
             onPress={() => setShowWordModal(false)}
           >
             <Pressable>
-              <LinearGradient
-                colors={["#ffffff", "#f8fafc"]}
-                className="rounded-t-3xl p-6 max-h-[70%]"
-              >
-                <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-4" />
+              <View className="rounded-t-3xl p-6 max-h-[70%] bg-owl-100">
+                <View className="w-12 h-1 bg-owl-300 rounded-full self-center mb-4" />
                 
                 <View className="flex-row items-center justify-between mb-4">
                   <View className="flex-row items-center gap-3">
-                    <LinearGradient
-                      colors={["#2a94ff", "#6366f1"]}
-                      className="px-4 py-2 rounded-xl"
-                    >
-                      <Text className="text-xl font-bold text-white">{selectedWord}</Text>
-                    </LinearGradient>
+                    <View className="px-4 py-2 rounded-xl bg-secondary-500">
+                      <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-xl text-white">{selectedWord}</Text>
+                    </View>
                     <TouchableOpacity 
                       onPress={() => selectedWord && speak(selectedWord)}
-                      className="w-10 h-10 rounded-xl bg-purple-100 items-center justify-center"
+                      className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center"
                     >
-                      <Ionicons name="volume-medium" size={20} color="#a855f7" />
+                      <Ionicons name="volume-medium" size={20} color="#cccccc" />
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity 
                     onPress={() => setShowWordModal(false)}
-                    className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+                    className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
                   >
-                    <Ionicons name="close" size={20} color="#6b7280" />
+                    <Ionicons name="close" size={20} color="#888888" />
                   </TouchableOpacity>
                 </View>
 
                 {isLoadingWord ? (
                   <View className="py-8 items-center">
-                    <LinearGradient
-                      colors={["#2a94ff", "#a855f7"]}
-                      className="w-16 h-16 rounded-2xl items-center justify-center mb-4"
-                    >
+                    <View className="w-16 h-16 rounded-2xl items-center justify-center mb-4 bg-secondary-500">
                       <ActivityIndicator size="large" color="white" />
-                    </LinearGradient>
-                    <Text className="text-gray-500">Translating...</Text>
+                    </View>
+                    <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-500">Translating...</Text>
                   </View>
                 ) : wordInfo ? (
                   <ScrollView showsVerticalScrollIndicator={false}>
-                    <Text className="text-3xl font-bold text-primary-600">
+                    <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-3xl text-primary-500">
                       {wordInfo.translation}
                     </Text>
                     {wordInfo.alternativeTranslations &&
                       wordInfo.alternativeTranslations.length > 0 && (
-                        <Text className="text-gray-500 mt-1">
+                        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-1">
                           Also: {wordInfo.alternativeTranslations.join(", ")}
                         </Text>
                       )}
 
                     {wordInfo.partOfSpeech && (
                       <View className="flex-row items-center mt-3 gap-2">
-                        <View className="bg-gray-100 px-3 py-1.5 rounded-full">
-                          <Text className="text-sm text-gray-600 italic font-medium">
+                        <View className="bg-owl-200 px-3 py-1.5 rounded-full">
+                          <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600 italic">
                             {wordInfo.partOfSpeech}
                           </Text>
                         </View>
                         {wordInfo.gender && (
-                          <View className="bg-purple-100 px-3 py-1.5 rounded-full">
-                            <Text className="text-sm text-purple-600 font-medium">{wordInfo.gender}</Text>
+                          <View className="bg-owl-200 px-3 py-1.5 rounded-full">
+                            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600">{wordInfo.gender}</Text>
                           </View>
                         )}
                       </View>
@@ -975,22 +861,16 @@ export default function ReadScreen() {
 
                     {wordInfo.baseForm &&
                       wordInfo.baseForm.toLowerCase() !== selectedWord?.toLowerCase() && (
-                        <LinearGradient
-                          colors={["#dbeafe", "#bfdbfe"]}
-                          className="p-3 rounded-xl mt-3"
-                        >
-                          <Text className="text-blue-800">
-                            Base form: <Text className="font-bold">{wordInfo.baseForm}</Text>
+                        <View className="p-3 rounded-xl mt-3 bg-secondary-200">
+                          <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-secondary-600">
+                            Base form: <Text style={{ fontFamily: "Nunito_700Bold" }}>{wordInfo.baseForm}</Text>
                           </Text>
-                        </LinearGradient>
+                        </View>
                       )}
 
                     {wordInfo.conjugation && Object.keys(wordInfo.conjugation).length > 0 && (
-                      <LinearGradient
-                        colors={["#ffedd5", "#fed7aa"]}
-                        className="p-3 rounded-xl mt-3"
-                      >
-                        <Text className="text-orange-800 text-sm font-medium">
+                      <View className="p-3 rounded-xl mt-3 bg-warning-200">
+                        <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-warning-600 text-sm">
                           {[
                             wordInfo.conjugation.tense,
                             wordInfo.conjugation.person,
@@ -999,22 +879,19 @@ export default function ReadScreen() {
                             .filter(Boolean)
                             .join(" • ")}
                         </Text>
-                      </LinearGradient>
+                      </View>
                     )}
 
                     {wordInfo.contextualNote && (
-                      <LinearGradient
-                        colors={["#fef9c3", "#fef08a"]}
-                        className="p-3 rounded-xl mt-3"
-                      >
-                        <Text className="text-yellow-800 text-sm">{wordInfo.contextualNote}</Text>
-                      </LinearGradient>
+                      <View className="p-3 rounded-xl mt-3 bg-owl-200">
+                        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-600 text-sm">{wordInfo.contextualNote}</Text>
+                      </View>
                     )}
 
                     {selectedSentence && (
-                      <View className="bg-gray-100 p-3 rounded-xl mt-3">
-                        <Text className="text-sm text-gray-500 mb-1 font-medium">Context:</Text>
-                        <Text className="text-gray-700 italic">"{selectedSentence}"</Text>
+                      <View className="bg-owl-200 p-3 rounded-xl mt-3">
+                        <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-500 mb-1">Context:</Text>
+                        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-700 italic">"{selectedSentence}"</Text>
                       </View>
                     )}
 
@@ -1025,55 +902,40 @@ export default function ReadScreen() {
                           markedLearningWords.has(selectedWord || "") ||
                           markedWords.has(selectedWord || "")
                         }
-                        className="flex-1 overflow-hidden rounded-xl"
-                        activeOpacity={0.8}
+                        className={`flex-1 rounded-xl py-3 items-center ${
+                          markedLearningWords.has(selectedWord || "") ? "bg-warning-200" : "bg-owl-200"
+                        }`}
+                        activeOpacity={0.7}
                       >
-                        <LinearGradient
-                          colors={
-                            markedLearningWords.has(selectedWord || "")
-                              ? ["#fef3c7", "#fde68a"]
-                              : ["#f8fafc", "#f1f5f9"]
-                          }
-                          className="py-3 items-center"
-                          style={{ borderWidth: 1, borderColor: markedLearningWords.has(selectedWord || "") ? "#fbbf24" : "#e2e8f0" }}
-                        >
-                          <Text className={`font-bold ${
-                            markedLearningWords.has(selectedWord || "") ? "text-yellow-700" : "text-gray-700"
-                          }`}>
-                            {markedLearningWords.has(selectedWord || "") ? "📚 Learning" : "Mark Learning"}
-                          </Text>
-                        </LinearGradient>
+                        <Text style={{ fontFamily: "Nunito_700Bold" }} className={`${
+                          markedLearningWords.has(selectedWord || "") ? "text-warning-600" : "text-owl-700"
+                        }`}>
+                          {markedLearningWords.has(selectedWord || "") ? "📚 Learning" : "Mark Learning"}
+                        </Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         onPress={() => selectedWord && markLearnedMutation.mutate(selectedWord)}
                         disabled={markedWords.has(selectedWord || "")}
-                        className="flex-1 overflow-hidden rounded-xl"
-                        activeOpacity={0.8}
+                        className={`flex-1 rounded-xl py-3 items-center ${
+                          markedWords.has(selectedWord || "") ? "bg-green-900" : "bg-primary-500"
+                        }`}
+                        activeOpacity={0.7}
                       >
-                        <LinearGradient
-                          colors={
-                            markedWords.has(selectedWord || "")
-                              ? ["#d1fae5", "#a7f3d0"]
-                              : ["#10b981", "#059669"]
-                          }
-                          className="py-3 items-center"
-                        >
-                          <Text className={`font-bold ${
-                            markedWords.has(selectedWord || "") ? "text-green-700" : "text-white"
-                          }`}>
-                            {markedWords.has(selectedWord || "") ? "✅ Learned" : "Mark Learned"}
-                          </Text>
-                        </LinearGradient>
+                        <Text style={{ fontFamily: "Nunito_700Bold" }} className={`${
+                          markedWords.has(selectedWord || "") ? "text-green-300" : "text-white"
+                        }`}>
+                          {markedWords.has(selectedWord || "") ? "✅ Learned" : "Mark Learned"}
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </ScrollView>
                 ) : (
                   <View className="py-8 items-center">
-                    <Text className="text-gray-500">Failed to translate. Try again.</Text>
+                    <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500">Failed to translate. Try again.</Text>
                   </View>
                 )}
-              </LinearGradient>
+              </View>
             </Pressable>
           </Pressable>
         </Modal>
@@ -1090,97 +952,82 @@ export default function ReadScreen() {
             onPress={() => setShowSentenceModal(false)}
           >
             <Pressable>
-              <LinearGradient
-                colors={["#ffffff", "#f8fafc"]}
-                className="rounded-t-3xl p-6 max-h-[70%]"
-              >
-                <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-4" />
+              <View className="rounded-t-3xl p-6 max-h-[70%] bg-owl-100">
+                <View className="w-12 h-1 bg-owl-300 rounded-full self-center mb-4" />
                 
                 <View className="flex-row items-center justify-between mb-4">
                   <View className="flex-row items-center gap-3">
-                    <View className="w-10 h-10 rounded-xl bg-purple-100 items-center justify-center">
+                    <View className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center">
                       <Text className="text-xl">📝</Text>
                     </View>
-                    <Text className="text-xl font-bold text-gray-900">Sentence</Text>
+                    <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-xl text-owl-900">Sentence</Text>
                     <TouchableOpacity
                       onPress={() => selectedSentence && speak(selectedSentence)}
-                      className="w-10 h-10 rounded-xl bg-primary-100 items-center justify-center"
+                      className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center"
                     >
-                      <Ionicons name="volume-medium" size={20} color="#2a94ff" />
+                      <Ionicons name="volume-medium" size={20} color="#cccccc" />
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity 
                     onPress={() => setShowSentenceModal(false)}
-                    className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+                    className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
                   >
-                    <Ionicons name="close" size={20} color="#6b7280" />
+                    <Ionicons name="close" size={20} color="#888888" />
                   </TouchableOpacity>
                 </View>
 
                 {isLoadingSentence ? (
                   <View className="py-8 items-center">
-                    <LinearGradient
-                      colors={["#a855f7", "#7c3aed"]}
-                      className="w-16 h-16 rounded-2xl items-center justify-center mb-4"
-                    >
+                    <View className="w-16 h-16 rounded-2xl items-center justify-center mb-4 bg-secondary-500">
                       <ActivityIndicator size="large" color="white" />
-                    </LinearGradient>
-                    <Text className="text-gray-500">Translating...</Text>
+                    </View>
+                    <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-500">Translating...</Text>
                   </View>
                 ) : sentenceInfo ? (
                   <ScrollView showsVerticalScrollIndicator={false}>
-                    <View className="bg-gray-100 p-4 rounded-xl mb-4">
-                      <Text className="text-gray-700 italic text-base leading-6">{selectedSentence}</Text>
+                    <View className="bg-owl-200 p-4 rounded-xl mb-4">
+                      <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-700 italic text-base leading-6">{selectedSentence}</Text>
                     </View>
 
-                    <LinearGradient
-                      colors={["#dbeafe", "#bfdbfe"]}
-                      className="p-4 rounded-xl mb-4"
-                    >
-                      <Text className="text-lg font-medium text-blue-900">
+                    <View className="p-4 rounded-xl mb-4 bg-secondary-200">
+                      <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-lg text-secondary-600">
                         {sentenceInfo.translation}
                       </Text>
-                    </LinearGradient>
+                    </View>
 
                     {sentenceInfo.literalTranslation && (
-                      <LinearGradient
-                        colors={["#f3e8ff", "#e9d5ff"]}
-                        className="p-4 rounded-xl mb-4"
-                      >
-                        <Text className="text-sm font-bold text-purple-800 mb-1">
+                      <View className="p-4 rounded-xl mb-4 bg-owl-200">
+                        <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-sm text-owl-700 mb-1">
                           Word-for-word
                         </Text>
-                        <Text className="text-sm text-purple-700">
+                        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-600">
                           {sentenceInfo.literalTranslation}
                         </Text>
-                      </LinearGradient>
+                      </View>
                     )}
 
                     {sentenceInfo.grammarNotes && sentenceInfo.grammarNotes.length > 0 && (
-                      <LinearGradient
-                        colors={["#dbeafe", "#bfdbfe"]}
-                        className="p-4 rounded-xl"
-                      >
-                        <Text className="text-sm font-bold text-blue-800 mb-2">
+                      <View className="p-4 rounded-xl bg-secondary-200">
+                        <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-sm text-secondary-600 mb-2">
                           Grammar Notes 📚
                         </Text>
                         {sentenceInfo.grammarNotes.map((note, idx) => (
-                          <View key={idx} className="mb-2 bg-white/50 p-2 rounded-lg">
-                            <Text className="text-sm text-blue-700">
-                              <Text className="font-bold">{note.element}:</Text>{" "}
+                          <View key={idx} className="mb-2 bg-owl-100 p-2 rounded-lg">
+                            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-secondary-500">
+                              <Text style={{ fontFamily: "Nunito_700Bold" }}>{note.element}:</Text>{" "}
                               {note.explanation}
                             </Text>
                           </View>
                         ))}
-                      </LinearGradient>
+                      </View>
                     )}
                   </ScrollView>
                 ) : (
                   <View className="py-8 items-center">
-                    <Text className="text-gray-500">Failed to translate. Try again.</Text>
+                    <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500">Failed to translate. Try again.</Text>
                   </View>
                 )}
-              </LinearGradient>
+              </View>
             </Pressable>
           </Pressable>
         </Modal>

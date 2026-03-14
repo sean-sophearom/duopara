@@ -30,20 +30,20 @@ export function ActionCard({
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.8}
-      className={`${style.bg} rounded-xl p-4 flex-1 min-w-[45%] border-b-4 border-b-black/10`}
+      activeOpacity={0.7}
+      className={`${style.bg} rounded-2xl p-5 flex-1 min-w-[45%]`}
     >
       {badge !== undefined && (
-        <View className="absolute -top-2 -right-2 bg-white rounded-full px-2 py-0.5 shadow">
-          <Text className="text-xs font-bold text-owl-800">{badge}</Text>
+        <View className="absolute -top-2 -right-2 bg-owl-100 rounded-full px-2 py-0.5">
+          <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xs text-owl-800">{badge}</Text>
         </View>
       )}
-      <View className={`w-10 h-10 rounded-lg ${style.iconBg} items-center justify-center mb-2`}>
+      <View className={`w-10 h-10 rounded-xl ${style.iconBg} items-center justify-center mb-2`}>
         <Ionicons name={icon} size={22} color="#ffffff" />
       </View>
-      <Text className="text-white font-bold text-base">{title}</Text>
+      <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-base">{title}</Text>
       {subtitle && (
-        <Text className="text-white/80 text-sm mt-0.5">{subtitle}</Text>
+        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-white/80 text-sm mt-0.5">{subtitle}</Text>
       )}
     </TouchableOpacity>
   );
@@ -58,10 +58,10 @@ interface NotificationCardProps {
 }
 
 const notificationStyles = {
-  info: { bg: "bg-secondary-100", border: "border-secondary-400", icon: "#1cb0f6", text: "text-secondary-800" },
-  success: { bg: "bg-primary-100", border: "border-primary-400", icon: "#58cc02", text: "text-primary-800" },
-  warning: { bg: "bg-warning-100", border: "border-warning-400", icon: "#ffc800", text: "text-warning-800" },
-  danger: { bg: "bg-danger-100", border: "border-danger-400", icon: "#ff4b4b", text: "text-danger-800" },
+  info: { bg: "bg-secondary-100", border: "border-secondary-400", icon: "#1cb0f6", text: "text-secondary-600" },
+  success: { bg: "bg-primary-100", border: "border-primary-400", icon: "#58cc02", text: "text-primary-600" },
+  warning: { bg: "bg-warning-100", border: "border-warning-400", icon: "#ffc800", text: "text-warning-600" },
+  danger: { bg: "bg-danger-100", border: "border-danger-400", icon: "#ff4b4b", text: "text-danger-600" },
 };
 
 export function NotificationCard({
@@ -74,10 +74,8 @@ export function NotificationCard({
   const style = notificationStyles[variant];
 
   const Content = (
-    <View className={`${style.bg} rounded-xl p-4 flex-row items-center border-l-4 ${style.border}`}>
-      <View className="w-10 h-10 rounded-full bg-white items-center justify-center mr-3">
-        <Ionicons name={icon} size={20} color={style.icon} />
-      </View>
+    <View className={`${style.bg} rounded-2xl p-5 flex-row items-center`}>
+      <Ionicons name={icon} size={22} color={style.icon} style={{ marginRight: 12 }} />
       <View className="flex-1">
         <Text className={`font-bold ${style.text}`}>{title}</Text>
         {subtitle && (
