@@ -16,6 +16,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Speech from "expo-speech";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { GradientButton } from "../../src/components/ui";
 
 // Utility
 export function splitSentences(text: string): string[] {
@@ -428,10 +431,14 @@ export default function ReadScreen() {
     if (isTranslatingAll) {
       return (
         <View className="items-center py-12">
-          <ActivityIndicator size="large" color="#0ea5e9" />
-          <Text className="text-gray-500 mt-4 text-center">
-            Translating text...{"\n"}This will be cached for future visits.
-          </Text>
+          <LinearGradient
+            colors={["#a855f7", "#7c3aed"]}
+            className="w-16 h-16 rounded-2xl items-center justify-center mb-4"
+          >
+            <ActivityIndicator size="large" color="white" />
+          </LinearGradient>
+          <Text className="text-gray-700 font-medium">Translating text...</Text>
+          <Text className="text-gray-500 text-sm mt-1">This will be cached for future visits.</Text>
         </View>
       );
     }
@@ -448,15 +455,15 @@ export default function ReadScreen() {
         <View
           key={sIdx}
           className={`py-3 border-b border-gray-100 ${
-            speakingIdx === sIdx ? "bg-primary-50" : ""
+            speakingIdx === sIdx ? "bg-primary-50 rounded-xl -mx-2 px-2" : ""
           }`}
         >
           <View className="flex-row items-start gap-2">
             <TouchableOpacity
               onPress={() => speak(sentence)}
-              className="mt-1 p-1"
+              className="mt-1 w-8 h-8 rounded-lg bg-purple-50 items-center justify-center"
             >
-              <Ionicons name="volume-medium" size={16} color="#9ca3af" />
+              <Ionicons name="volume-medium" size={14} color="#a855f7" />
             </TouchableOpacity>
             <Pressable
               onLongPress={() => handleSentencePress(sentence)}
@@ -484,11 +491,11 @@ export default function ReadScreen() {
               </Text>
             </Pressable>
           </View>
-          <View className="ml-8 mt-2 pl-3 border-l-2 border-primary-200">
+          <View className="ml-10 mt-2 pl-3 border-l-2 border-primary-300">
             {trans == null ? (
-              <ActivityIndicator size="small" color="#0ea5e9" />
+              <ActivityIndicator size="small" color="#a855f7" />
             ) : (
-              <Text className="text-sm text-gray-500">{displayTranslation}</Text>
+              <Text className="text-sm text-gray-600 italic">{displayTranslation}</Text>
             )}
           </View>
         </View>
@@ -498,269 +505,393 @@ export default function ReadScreen() {
 
   if (isLoadingText) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50">
-        <ActivityIndicator size="large" color="#0ea5e9" />
+      <View className="flex-1 items-center justify-center bg-slate-50">
+        <LinearGradient
+          colors={["#2a94ff", "#a855f7"]}
+          className="w-20 h-20 rounded-3xl items-center justify-center mb-4"
+        >
+          <ActivityIndicator size="large" color="white" />
+        </LinearGradient>
+        <Text className="text-gray-500 mt-2">Loading your text...</Text>
       </View>
     );
   }
 
   if (error || !text) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 p-8">
-        <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
-        <Text className="text-gray-700 text-lg mt-4">Failed to load text</Text>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="mt-4 px-6 py-3 bg-primary-600 rounded-lg"
+      <View className="flex-1 items-center justify-center bg-slate-50 p-8">
+        <LinearGradient
+          colors={["#fee2e2", "#fecaca"]}
+          className="w-24 h-24 rounded-3xl items-center justify-center mb-4"
         >
-          <Text className="text-white font-medium">Go Back</Text>
-        </TouchableOpacity>
+          <Text className="text-4xl">😕</Text>
+        </LinearGradient>
+        <Text className="text-gray-700 text-xl font-bold mt-2">Failed to load text</Text>
+        <Text className="text-gray-500 text-center mt-2">Something went wrong</Text>
+        <View className="mt-6">
+          <GradientButton
+            title="Go Back"
+            onPress={() => router.back()}
+            variant="primary"
+          />
+        </View>
       </View>
     );
   }
 
+  const difficultyConfig = {
+    beginner: { colors: ["#10b981", "#059669"] as [string, string], emoji: "🌱" },
+    intermediate: { colors: ["#f59e0b", "#d97706"] as [string, string], emoji: "📖" },
+    advanced: { colors: ["#ef4444", "#dc2626"] as [string, string], emoji: "🔥" },
+  };
+
+  const difficulty = difficultyConfig[text.difficulty as keyof typeof difficultyConfig] || difficultyConfig.intermediate;
+
   return (
     <>
       <Stack.Screen options={{ title: text.title || text.topic || "Reading" }} />
-      <SafeAreaView edges={["bottom"]} className="flex-1 bg-white">
-        <ScrollView className="flex-1">
-          {/* Header */}
-          <View className="px-4 pt-4 pb-2">
-            <Text className="text-2xl font-bold text-gray-900">{text.title || text.topic}</Text>
-            <View className="flex-row items-center gap-2 mt-2">
-              <View className="bg-primary-100 px-2 py-1 rounded">
-                <Text className="text-xs text-primary-700">{text.language}</Text>
-              </View>
-              <View
-                className={`px-2 py-1 rounded ${
-                  text.difficulty === "beginner"
-                    ? "bg-green-100"
-                    : text.difficulty === "advanced"
-                    ? "bg-red-100"
-                    : "bg-yellow-100"
-                }`}
-              >
-                <Text
-                  className={`text-xs ${
-                    text.difficulty === "beginner"
-                      ? "text-green-700"
-                      : text.difficulty === "advanced"
-                      ? "text-red-700"
-                      : "text-yellow-700"
-                  }`}
+      <SafeAreaView edges={["bottom"]} className="flex-1 bg-slate-50">
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          {/* Hero Header */}
+          <LinearGradient
+            colors={["#2a94ff", "#6366f1", "#a855f7"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            className="px-5 pt-4 pb-6"
+            style={{ borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+          >
+            <Animated.View entering={FadeInDown.delay(100).springify()}>
+              <Text className="text-2xl font-bold text-white">{text.title || text.topic}</Text>
+              <View className="flex-row items-center gap-2 mt-3 flex-wrap">
+                <View className="bg-white/20 px-3 py-1.5 rounded-full flex-row items-center">
+                  <Text className="text-sm mr-1">🌍</Text>
+                  <Text className="text-white text-xs font-medium">{text.language}</Text>
+                </View>
+                <LinearGradient
+                  colors={difficulty.colors}
+                  className="px-3 py-1.5 rounded-full flex-row items-center"
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
                 >
-                  {text.difficulty}
-                </Text>
+                  <Text className="text-sm mr-1">{difficulty.emoji}</Text>
+                  <Text className="text-white text-xs font-bold capitalize">
+                    {text.difficulty}
+                  </Text>
+                </LinearGradient>
+                <View className="bg-white/20 px-3 py-1.5 rounded-full flex-row items-center">
+                  <Text className="text-sm mr-1">📝</Text>
+                  <Text className="text-white text-xs font-medium">{text.wordCount} words</Text>
+                </View>
               </View>
-              <Text className="text-gray-500 text-sm">{text.wordCount} words</Text>
-            </View>
-          </View>
+            </Animated.View>
+          </LinearGradient>
 
           {/* Playback Controls */}
-          <View className="px-4 py-2 flex-row items-center gap-3 flex-wrap">
-            {/* Speed control */}
-            <View className="flex-row items-center bg-gray-100 rounded-lg px-1 py-1">
-              <TouchableOpacity
-                onPress={() => updateSpeechRate(Math.max(0.5, speechRate - 0.1))}
-                className="w-8 h-8 items-center justify-center"
-              >
-                <Text className="text-gray-600 font-bold">−</Text>
-              </TouchableOpacity>
-              <Text className="w-12 text-center text-xs font-medium text-gray-700">
-                {speechRate.toFixed(1)}×
-              </Text>
-              <TouchableOpacity
-                onPress={() => updateSpeechRate(Math.min(2.0, speechRate + 0.1))}
-                className="w-8 h-8 items-center justify-center"
-              >
-                <Text className="text-gray-600 font-bold">+</Text>
-              </TouchableOpacity>
-            </View>
+          <Animated.View 
+            entering={FadeInUp.delay(200).springify()}
+            className="px-5 -mt-4"
+          >
+            <LinearGradient
+              colors={["#ffffff", "#f8fafc"]}
+              className="rounded-2xl p-4"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 12,
+                elevation: 5,
+              }}
+            >
+              <View className="flex-row items-center gap-2 flex-wrap">
+                {/* Speed control */}
+                <View className="flex-row items-center bg-gray-100 rounded-xl px-1 py-1">
+                  <TouchableOpacity
+                    onPress={() => updateSpeechRate(Math.max(0.5, speechRate - 0.1))}
+                    className="w-8 h-8 items-center justify-center"
+                  >
+                    <Text className="text-gray-600 font-bold">−</Text>
+                  </TouchableOpacity>
+                  <Text className="w-12 text-center text-xs font-bold text-gray-700">
+                    {speechRate.toFixed(1)}×
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => updateSpeechRate(Math.min(2.0, speechRate + 0.1))}
+                    className="w-8 h-8 items-center justify-center"
+                  >
+                    <Text className="text-gray-600 font-bold">+</Text>
+                  </TouchableOpacity>
+                </View>
 
-            {/* Play/Stop */}
-            {isSpeaking ? (
-              <TouchableOpacity
-                onPress={stopSpeaking}
-                className="flex-row items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200"
-              >
-                <Ionicons name="stop" size={14} color="#dc2626" />
-                <Text className="text-red-600 text-sm font-medium">Stop</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={speakAll}
-                className="flex-row items-center gap-2 px-3 py-2 rounded-lg bg-gray-100"
-              >
-                <Ionicons name="play" size={14} color="#374151" />
-                <Text className="text-gray-700 text-sm font-medium">Read All</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Translate All */}
-            {parallelTranslations.length > 0 ? (
-              <TouchableOpacity
-                onPress={() => setShowParallelView(!showParallelView)}
-                className={`flex-row items-center gap-2 px-3 py-2 rounded-lg ${
-                  showParallelView ? "bg-primary-100" : "bg-gray-100"
-                }`}
-              >
-                <Ionicons
-                  name={showParallelView ? "eye-off" : "eye"}
-                  size={14}
-                  color={showParallelView ? "#0284c7" : "#374151"}
-                />
-                <Text
-                  className={`text-sm font-medium ${
-                    showParallelView ? "text-primary-700" : "text-gray-700"
-                  }`}
-                >
-                  Translation
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={translateAll}
-                disabled={isTranslatingAll}
-                className="flex-row items-center gap-2 px-3 py-2 rounded-lg bg-primary-600"
-              >
-                {isTranslatingAll ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                {/* Play/Stop */}
+                {isSpeaking ? (
+                  <TouchableOpacity
+                    onPress={stopSpeaking}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={["#ef4444", "#dc2626"]}
+                      className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl"
+                    >
+                      <Ionicons name="stop" size={14} color="white" />
+                      <Text className="text-white text-sm font-bold">Stop</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
                 ) : (
-                  <Ionicons name="language" size={14} color="#fff" />
+                  <TouchableOpacity
+                    onPress={speakAll}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={["#10b981", "#059669"]}
+                      className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl"
+                    >
+                      <Ionicons name="play" size={14} color="white" />
+                      <Text className="text-white text-sm font-bold">Read All</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
                 )}
-                <Text className="text-white text-sm font-medium">
-                  {isTranslatingAll ? "Translating..." : "Translate All"}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+
+                {/* Translate All */}
+                {parallelTranslations.length > 0 ? (
+                  <TouchableOpacity
+                    onPress={() => setShowParallelView(!showParallelView)}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={showParallelView ? ["#2a94ff", "#1a75ff"] : ["#f8fafc", "#f1f5f9"]}
+                      className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl"
+                      style={{ borderWidth: showParallelView ? 0 : 1, borderColor: "#e2e8f0" }}
+                    >
+                      <Ionicons
+                        name={showParallelView ? "eye-off" : "eye"}
+                        size={14}
+                        color={showParallelView ? "white" : "#374151"}
+                      />
+                      <Text className={`text-sm font-bold ${showParallelView ? "text-white" : "text-gray-700"}`}>
+                        Translation
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={translateAll}
+                    disabled={isTranslatingAll}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={["#a855f7", "#7c3aed"]}
+                      className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl"
+                    >
+                      {isTranslatingAll ? (
+                        <ActivityIndicator size="small" color="white" />
+                      ) : (
+                        <Ionicons name="language" size={14} color="white" />
+                      )}
+                      <Text className="text-white text-sm font-bold">
+                        {isTranslatingAll ? "..." : "Translate All"}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </LinearGradient>
+          </Animated.View>
 
           {/* Literal/Natural toggle */}
           {showParallelView && parallelTranslations.length > 0 && (
-            <View className="px-4 pb-2">
-              <View className="flex-row rounded-lg overflow-hidden border border-gray-200 self-start">
+            <View className="px-5 mt-3">
+              <View className="flex-row rounded-xl overflow-hidden self-start bg-gray-100">
                 <TouchableOpacity
                   onPress={() => setUseLiteralTranslation(false)}
-                  className={`px-3 py-1.5 ${
-                    !useLiteralTranslation ? "bg-primary-600" : "bg-white"
-                  }`}
+                  activeOpacity={0.8}
                 >
-                  <Text
-                    className={`text-sm font-medium ${
-                      !useLiteralTranslation ? "text-white" : "text-gray-600"
-                    }`}
+                  <LinearGradient
+                    colors={!useLiteralTranslation ? ["#2a94ff", "#1a75ff"] : ["#f1f5f9", "#f1f5f9"]}
+                    className="px-4 py-2"
                   >
-                    Natural
-                  </Text>
+                    <Text className={`text-sm font-bold ${!useLiteralTranslation ? "text-white" : "text-gray-600"}`}>
+                      Natural
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setUseLiteralTranslation(true)}
-                  className={`px-3 py-1.5 ${
-                    useLiteralTranslation ? "bg-primary-600" : "bg-white"
-                  }`}
+                  activeOpacity={0.8}
                 >
-                  <Text
-                    className={`text-sm font-medium ${
-                      useLiteralTranslation ? "text-white" : "text-gray-600"
-                    }`}
+                  <LinearGradient
+                    colors={useLiteralTranslation ? ["#2a94ff", "#1a75ff"] : ["#f1f5f9", "#f1f5f9"]}
+                    className="px-4 py-2"
                   >
-                    Literal
-                  </Text>
+                    <Text className={`text-sm font-bold ${useLiteralTranslation ? "text-white" : "text-gray-600"}`}>
+                      Literal
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
           {/* Tip */}
-          <View className="mx-4 mb-4 p-3 bg-primary-50 rounded-xl border border-primary-200">
-            <Text className="text-sm text-primary-700">
-              <Text className="font-semibold">Tip:</Text> Tap any word to translate. Long-press a
-              sentence for full translation with grammar notes.
-            </Text>
-          </View>
+          <LinearGradient
+            colors={["#dbeafe", "#bfdbfe"]}
+            className="mx-5 mt-4 p-4 rounded-2xl flex-row items-center"
+          >
+            <View className="w-10 h-10 rounded-xl bg-white/60 items-center justify-center mr-3">
+              <Text className="text-xl">💡</Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-sm text-blue-800 font-medium">
+                Tap any word to translate. Long-press a sentence for full translation.
+              </Text>
+            </View>
+          </LinearGradient>
 
           {/* Content */}
-          <View className="px-4 pb-4">
-            {showParallelView ? renderParallelContent() : renderContent()}
+          <View className="px-5 py-4">
+            <LinearGradient
+              colors={["#ffffff", "#f8fafc"]}
+              className="rounded-2xl p-4"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+            >
+              {showParallelView ? renderParallelContent() : renderContent()}
+            </LinearGradient>
           </View>
 
           {/* Difficulty Controls */}
-          <View className="mx-4 mb-4 p-4 bg-gray-50 rounded-xl">
-            <Text className="text-sm text-gray-600 mb-3">Adjust difficulty:</Text>
-            <View className="flex-row gap-3">
-              <TouchableOpacity
-                onPress={() => simplifyMutation.mutate()}
-                disabled={simplifyMutation.isPending || text.difficulty === "beginner"}
-                className={`flex-1 py-3 rounded-xl border border-gray-300 items-center ${
-                  text.difficulty === "beginner" ? "opacity-50" : ""
-                }`}
-              >
-                {simplifyMutation.isPending ? (
-                  <ActivityIndicator size="small" color="#6b7280" />
-                ) : (
-                  <View className="flex-row items-center gap-1">
-                    <Ionicons name="chevron-down" size={16} color="#6b7280" />
-                    <Text className="text-gray-700 font-medium">Simplify</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => harderMutation.mutate()}
-                disabled={harderMutation.isPending || text.difficulty === "advanced"}
-                className={`flex-1 py-3 rounded-xl border border-gray-300 items-center ${
-                  text.difficulty === "advanced" ? "opacity-50" : ""
-                }`}
-              >
-                {harderMutation.isPending ? (
-                  <ActivityIndicator size="small" color="#6b7280" />
-                ) : (
-                  <View className="flex-row items-center gap-1">
-                    <Ionicons name="chevron-up" size={16} color="#6b7280" />
-                    <Text className="text-gray-700 font-medium">Harder</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
+          <View className="mx-5 mb-4">
+            <LinearGradient
+              colors={["#ffffff", "#f8fafc"]}
+              className="rounded-2xl p-4"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+            >
+              <View className="flex-row items-center mb-3">
+                <View className="w-8 h-8 rounded-xl bg-purple-100 items-center justify-center mr-2">
+                  <Text className="text-base">🎚️</Text>
+                </View>
+                <Text className="font-bold text-gray-700">Adjust difficulty</Text>
+              </View>
+              <View className="flex-row gap-3">
+                <TouchableOpacity
+                  onPress={() => simplifyMutation.mutate()}
+                  disabled={simplifyMutation.isPending || text.difficulty === "beginner"}
+                  className="flex-1 overflow-hidden rounded-xl"
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={text.difficulty === "beginner" ? ["#f1f5f9", "#e2e8f0"] : ["#10b981", "#059669"]}
+                    className="py-3 items-center"
+                  >
+                    {simplifyMutation.isPending ? (
+                      <ActivityIndicator size="small" color="white" />
+                    ) : (
+                      <View className="flex-row items-center gap-1">
+                        <Text className="text-lg">⬇️</Text>
+                        <Text className={`font-bold ${text.difficulty === "beginner" ? "text-gray-400" : "text-white"}`}>
+                          Simplify
+                        </Text>
+                      </View>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => harderMutation.mutate()}
+                  disabled={harderMutation.isPending || text.difficulty === "advanced"}
+                  className="flex-1 overflow-hidden rounded-xl"
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={text.difficulty === "advanced" ? ["#f1f5f9", "#e2e8f0"] : ["#ef4444", "#dc2626"]}
+                    className="py-3 items-center"
+                  >
+                    {harderMutation.isPending ? (
+                      <ActivityIndicator size="small" color="white" />
+                    ) : (
+                      <View className="flex-row items-center gap-1">
+                        <Text className="text-lg">⬆️</Text>
+                        <Text className={`font-bold ${text.difficulty === "advanced" ? "text-gray-400" : "text-white"}`}>
+                          Harder
+                        </Text>
+                      </View>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
           </View>
 
           {/* Stats */}
-          <View className="mx-4 mb-4 p-4 bg-gray-50 rounded-xl">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-4">
-                <Text className="text-gray-600 text-sm">
-                  <Text className="text-primary-600 font-medium">
+          <View className="mx-5 mb-4">
+            <LinearGradient
+              colors={["#ffffff", "#f8fafc"]}
+              className="rounded-2xl p-4"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+            >
+              <View className="flex-row items-center gap-3">
+                <View className="flex-1 bg-primary-50 rounded-xl p-3 items-center">
+                  <Text className="text-primary-600 font-bold text-xl">
                     {text.newWordsIntroduced?.length || 0}
-                  </Text>{" "}
-                  new words
-                </Text>
-                <Text className="text-gray-600 text-sm">
-                  <Text className="text-green-600 font-medium">{markedWords.size}</Text> marked
-                </Text>
+                  </Text>
+                  <Text className="text-primary-700 text-xs">New words</Text>
+                </View>
+                <View className="flex-1 bg-green-50 rounded-xl p-3 items-center">
+                  <Text className="text-green-600 font-bold text-xl">{markedWords.size}</Text>
+                  <Text className="text-green-700 text-xs">Marked</Text>
+                </View>
+                <View className="flex-1 bg-purple-50 rounded-xl p-3 items-center">
+                  <Text className="text-purple-600 font-bold text-xl">{wordsLookedUpRef.current.size}</Text>
+                  <Text className="text-purple-700 text-xs">Looked up</Text>
+                </View>
               </View>
-              <View className="flex-row items-center gap-1">
-                <Ionicons name="book-outline" size={16} color="#6b7280" />
-                <Text className="text-gray-500 text-sm">{text.language}</Text>
-              </View>
-            </View>
+            </LinearGradient>
           </View>
 
           {/* Legend */}
-          <View className="mx-4 mb-8 p-4 bg-gray-50 rounded-xl">
-            <Text className="font-medium text-gray-700 mb-2">Word colors:</Text>
-            <View className="flex-row flex-wrap gap-3">
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 rounded bg-primary-200 mr-2" />
-                <Text className="text-sm text-gray-600">New word</Text>
+          <View className="mx-5 mb-8">
+            <LinearGradient
+              colors={["#ffffff", "#f8fafc"]}
+              className="rounded-2xl p-4"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+            >
+              <Text className="font-bold text-gray-700 mb-3">Word colors:</Text>
+              <View className="flex-row flex-wrap gap-3">
+                <View className="flex-row items-center bg-primary-50 px-3 py-1.5 rounded-full">
+                  <View className="w-3 h-3 rounded-full bg-primary-400 mr-2" />
+                  <Text className="text-sm text-primary-700 font-medium">New word</Text>
+                </View>
+                <View className="flex-row items-center bg-yellow-50 px-3 py-1.5 rounded-full">
+                  <View className="w-3 h-3 rounded-full bg-yellow-400 mr-2" />
+                  <Text className="text-sm text-yellow-700 font-medium">Learning</Text>
+                </View>
+                <View className="flex-row items-center bg-green-50 px-3 py-1.5 rounded-full">
+                  <View className="w-3 h-3 rounded-full bg-green-500 mr-2" />
+                  <Text className="text-sm text-green-700 font-medium">Learned</Text>
+                </View>
               </View>
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 rounded bg-yellow-100 mr-2" />
-                <Text className="text-sm text-gray-600">Learning</Text>
-              </View>
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 rounded bg-green-100 mr-2" />
-                <Text className="text-sm text-gray-600">Learned</Text>
-              </View>
-            </View>
+            </LinearGradient>
           </View>
         </ScrollView>
 
@@ -772,138 +903,177 @@ export default function ReadScreen() {
           onRequestClose={() => setShowWordModal(false)}
         >
           <Pressable
-            className="flex-1 justify-end bg-black/40"
+            className="flex-1 justify-end bg-black/50"
             onPress={() => setShowWordModal(false)}
           >
-            <Pressable className="bg-white rounded-t-3xl p-6 max-h-[70%]">
-              <View className="flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center gap-3">
-                  <Text className="text-2xl font-bold text-gray-900">{selectedWord}</Text>
-                  <TouchableOpacity onPress={() => selectedWord && speak(selectedWord)}>
-                    <Ionicons name="volume-medium" size={24} color="#0ea5e9" />
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity onPress={() => setShowWordModal(false)}>
-                  <Ionicons name="close" size={24} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-
-              {isLoadingWord ? (
-                <View className="py-8 items-center">
-                  <ActivityIndicator size="large" color="#0ea5e9" />
-                  <Text className="text-gray-500 mt-4">Translating...</Text>
-                </View>
-              ) : wordInfo ? (
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  <Text className="text-3xl font-semibold text-primary-600">
-                    {wordInfo.translation}
-                  </Text>
-                  {wordInfo.alternativeTranslations &&
-                    wordInfo.alternativeTranslations.length > 0 && (
-                      <Text className="text-gray-500 mt-1">
-                        Also: {wordInfo.alternativeTranslations.join(", ")}
-                      </Text>
-                    )}
-
-                  {wordInfo.partOfSpeech && (
-                    <View className="flex-row items-center mt-3 gap-2">
-                      <View className="bg-gray-100 px-3 py-1 rounded-full">
-                        <Text className="text-sm text-gray-600 italic">
-                          {wordInfo.partOfSpeech}
-                        </Text>
-                      </View>
-                      {wordInfo.gender && (
-                        <View className="bg-purple-100 px-3 py-1 rounded-full">
-                          <Text className="text-sm text-purple-600">{wordInfo.gender}</Text>
-                        </View>
-                      )}
-                    </View>
-                  )}
-
-                  {wordInfo.baseForm &&
-                    wordInfo.baseForm.toLowerCase() !== selectedWord?.toLowerCase() && (
-                      <View className="bg-blue-50 p-3 rounded-lg mt-3">
-                        <Text className="text-blue-800">
-                          Base form: <Text className="font-semibold">{wordInfo.baseForm}</Text>
-                        </Text>
-                      </View>
-                    )}
-
-                  {wordInfo.conjugation && Object.keys(wordInfo.conjugation).length > 0 && (
-                    <View className="bg-orange-50 p-3 rounded-lg mt-3">
-                      <Text className="text-orange-800 text-sm">
-                        {[
-                          wordInfo.conjugation.tense,
-                          wordInfo.conjugation.person,
-                          wordInfo.conjugation.mood,
-                        ]
-                          .filter(Boolean)
-                          .join(" • ")}
-                      </Text>
-                    </View>
-                  )}
-
-                  {wordInfo.contextualNote && (
-                    <View className="bg-yellow-50 p-3 rounded-lg mt-3">
-                      <Text className="text-yellow-800 text-sm">{wordInfo.contextualNote}</Text>
-                    </View>
-                  )}
-
-                  {selectedSentence && (
-                    <View className="bg-gray-50 p-3 rounded-lg mt-3">
-                      <Text className="text-sm text-gray-500 mb-1">Context:</Text>
-                      <Text className="text-gray-700 italic">"{selectedSentence}"</Text>
-                    </View>
-                  )}
-
-                  <View className="flex-row gap-3 mt-6">
-                    <TouchableOpacity
-                      onPress={() => selectedWord && markLearningMutation.mutate(selectedWord)}
-                      disabled={
-                        markedLearningWords.has(selectedWord || "") ||
-                        markedWords.has(selectedWord || "")
-                      }
-                      className={`flex-1 py-3 rounded-xl border ${
-                        markedLearningWords.has(selectedWord || "")
-                          ? "bg-yellow-50 border-yellow-300"
-                          : "border-gray-300"
-                      }`}
+            <Pressable>
+              <LinearGradient
+                colors={["#ffffff", "#f8fafc"]}
+                className="rounded-t-3xl p-6 max-h-[70%]"
+              >
+                <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-4" />
+                
+                <View className="flex-row items-center justify-between mb-4">
+                  <View className="flex-row items-center gap-3">
+                    <LinearGradient
+                      colors={["#2a94ff", "#6366f1"]}
+                      className="px-4 py-2 rounded-xl"
                     >
-                      <Text
-                        className={`text-center font-medium ${
-                          markedLearningWords.has(selectedWord || "")
-                            ? "text-yellow-700"
-                            : "text-gray-700"
-                        }`}
-                      >
-                        {markedLearningWords.has(selectedWord || "")
-                          ? "✓ Learning"
-                          : "Mark Learning"}
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      onPress={() => selectedWord && markLearnedMutation.mutate(selectedWord)}
-                      disabled={markedWords.has(selectedWord || "")}
-                      className={`flex-1 py-3 rounded-xl ${
-                        markedWords.has(selectedWord || "") ? "bg-green-100" : "bg-green-600"
-                      }`}
+                      <Text className="text-xl font-bold text-white">{selectedWord}</Text>
+                    </LinearGradient>
+                    <TouchableOpacity 
+                      onPress={() => selectedWord && speak(selectedWord)}
+                      className="w-10 h-10 rounded-xl bg-purple-100 items-center justify-center"
                     >
-                      <Text
-                        className={`text-center font-medium ${
-                          markedWords.has(selectedWord || "") ? "text-green-700" : "text-white"
-                        }`}
-                      >
-                        {markedWords.has(selectedWord || "") ? "✓ Learned" : "Mark Learned"}
-                      </Text>
+                      <Ionicons name="volume-medium" size={20} color="#a855f7" />
                     </TouchableOpacity>
                   </View>
-                </ScrollView>
-              ) : (
-                <View className="py-8 items-center">
-                  <Text className="text-gray-500">Failed to translate. Try again.</Text>
+                  <TouchableOpacity 
+                    onPress={() => setShowWordModal(false)}
+                    className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+                  >
+                    <Ionicons name="close" size={20} color="#6b7280" />
+                  </TouchableOpacity>
                 </View>
-              )}
+
+                {isLoadingWord ? (
+                  <View className="py-8 items-center">
+                    <LinearGradient
+                      colors={["#2a94ff", "#a855f7"]}
+                      className="w-16 h-16 rounded-2xl items-center justify-center mb-4"
+                    >
+                      <ActivityIndicator size="large" color="white" />
+                    </LinearGradient>
+                    <Text className="text-gray-500">Translating...</Text>
+                  </View>
+                ) : wordInfo ? (
+                  <ScrollView showsVerticalScrollIndicator={false}>
+                    <Text className="text-3xl font-bold text-primary-600">
+                      {wordInfo.translation}
+                    </Text>
+                    {wordInfo.alternativeTranslations &&
+                      wordInfo.alternativeTranslations.length > 0 && (
+                        <Text className="text-gray-500 mt-1">
+                          Also: {wordInfo.alternativeTranslations.join(", ")}
+                        </Text>
+                      )}
+
+                    {wordInfo.partOfSpeech && (
+                      <View className="flex-row items-center mt-3 gap-2">
+                        <View className="bg-gray-100 px-3 py-1.5 rounded-full">
+                          <Text className="text-sm text-gray-600 italic font-medium">
+                            {wordInfo.partOfSpeech}
+                          </Text>
+                        </View>
+                        {wordInfo.gender && (
+                          <View className="bg-purple-100 px-3 py-1.5 rounded-full">
+                            <Text className="text-sm text-purple-600 font-medium">{wordInfo.gender}</Text>
+                          </View>
+                        )}
+                      </View>
+                    )}
+
+                    {wordInfo.baseForm &&
+                      wordInfo.baseForm.toLowerCase() !== selectedWord?.toLowerCase() && (
+                        <LinearGradient
+                          colors={["#dbeafe", "#bfdbfe"]}
+                          className="p-3 rounded-xl mt-3"
+                        >
+                          <Text className="text-blue-800">
+                            Base form: <Text className="font-bold">{wordInfo.baseForm}</Text>
+                          </Text>
+                        </LinearGradient>
+                      )}
+
+                    {wordInfo.conjugation && Object.keys(wordInfo.conjugation).length > 0 && (
+                      <LinearGradient
+                        colors={["#ffedd5", "#fed7aa"]}
+                        className="p-3 rounded-xl mt-3"
+                      >
+                        <Text className="text-orange-800 text-sm font-medium">
+                          {[
+                            wordInfo.conjugation.tense,
+                            wordInfo.conjugation.person,
+                            wordInfo.conjugation.mood,
+                          ]
+                            .filter(Boolean)
+                            .join(" • ")}
+                        </Text>
+                      </LinearGradient>
+                    )}
+
+                    {wordInfo.contextualNote && (
+                      <LinearGradient
+                        colors={["#fef9c3", "#fef08a"]}
+                        className="p-3 rounded-xl mt-3"
+                      >
+                        <Text className="text-yellow-800 text-sm">{wordInfo.contextualNote}</Text>
+                      </LinearGradient>
+                    )}
+
+                    {selectedSentence && (
+                      <View className="bg-gray-100 p-3 rounded-xl mt-3">
+                        <Text className="text-sm text-gray-500 mb-1 font-medium">Context:</Text>
+                        <Text className="text-gray-700 italic">"{selectedSentence}"</Text>
+                      </View>
+                    )}
+
+                    <View className="flex-row gap-3 mt-6">
+                      <TouchableOpacity
+                        onPress={() => selectedWord && markLearningMutation.mutate(selectedWord)}
+                        disabled={
+                          markedLearningWords.has(selectedWord || "") ||
+                          markedWords.has(selectedWord || "")
+                        }
+                        className="flex-1 overflow-hidden rounded-xl"
+                        activeOpacity={0.8}
+                      >
+                        <LinearGradient
+                          colors={
+                            markedLearningWords.has(selectedWord || "")
+                              ? ["#fef3c7", "#fde68a"]
+                              : ["#f8fafc", "#f1f5f9"]
+                          }
+                          className="py-3 items-center"
+                          style={{ borderWidth: 1, borderColor: markedLearningWords.has(selectedWord || "") ? "#fbbf24" : "#e2e8f0" }}
+                        >
+                          <Text className={`font-bold ${
+                            markedLearningWords.has(selectedWord || "") ? "text-yellow-700" : "text-gray-700"
+                          }`}>
+                            {markedLearningWords.has(selectedWord || "") ? "📚 Learning" : "Mark Learning"}
+                          </Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => selectedWord && markLearnedMutation.mutate(selectedWord)}
+                        disabled={markedWords.has(selectedWord || "")}
+                        className="flex-1 overflow-hidden rounded-xl"
+                        activeOpacity={0.8}
+                      >
+                        <LinearGradient
+                          colors={
+                            markedWords.has(selectedWord || "")
+                              ? ["#d1fae5", "#a7f3d0"]
+                              : ["#10b981", "#059669"]
+                          }
+                          className="py-3 items-center"
+                        >
+                          <Text className={`font-bold ${
+                            markedWords.has(selectedWord || "") ? "text-green-700" : "text-white"
+                          }`}>
+                            {markedWords.has(selectedWord || "") ? "✅ Learned" : "Mark Learned"}
+                          </Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </View>
+                  </ScrollView>
+                ) : (
+                  <View className="py-8 items-center">
+                    <Text className="text-gray-500">Failed to translate. Try again.</Text>
+                  </View>
+                )}
+              </LinearGradient>
             </Pressable>
           </Pressable>
         </Modal>
@@ -916,71 +1086,101 @@ export default function ReadScreen() {
           onRequestClose={() => setShowSentenceModal(false)}
         >
           <Pressable
-            className="flex-1 justify-end bg-black/40"
+            className="flex-1 justify-end bg-black/50"
             onPress={() => setShowSentenceModal(false)}
           >
-            <Pressable className="bg-white rounded-t-3xl p-6 max-h-[70%]">
-              <View className="flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center gap-3">
-                  <Text className="text-xl font-bold text-gray-900">Sentence Translation</Text>
-                  <TouchableOpacity
-                    onPress={() => selectedSentence && speak(selectedSentence)}
+            <Pressable>
+              <LinearGradient
+                colors={["#ffffff", "#f8fafc"]}
+                className="rounded-t-3xl p-6 max-h-[70%]"
+              >
+                <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-4" />
+                
+                <View className="flex-row items-center justify-between mb-4">
+                  <View className="flex-row items-center gap-3">
+                    <View className="w-10 h-10 rounded-xl bg-purple-100 items-center justify-center">
+                      <Text className="text-xl">📝</Text>
+                    </View>
+                    <Text className="text-xl font-bold text-gray-900">Sentence</Text>
+                    <TouchableOpacity
+                      onPress={() => selectedSentence && speak(selectedSentence)}
+                      className="w-10 h-10 rounded-xl bg-primary-100 items-center justify-center"
+                    >
+                      <Ionicons name="volume-medium" size={20} color="#2a94ff" />
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity 
+                    onPress={() => setShowSentenceModal(false)}
+                    className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
                   >
-                    <Ionicons name="volume-medium" size={24} color="#0ea5e9" />
+                    <Ionicons name="close" size={20} color="#6b7280" />
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={() => setShowSentenceModal(false)}>
-                  <Ionicons name="close" size={24} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
 
-              {isLoadingSentence ? (
-                <View className="py-8 items-center">
-                  <ActivityIndicator size="large" color="#0ea5e9" />
-                  <Text className="text-gray-500 mt-4">Translating...</Text>
-                </View>
-              ) : sentenceInfo ? (
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  <View className="bg-gray-50 p-3 rounded-lg mb-4">
-                    <Text className="text-gray-700 italic">{selectedSentence}</Text>
+                {isLoadingSentence ? (
+                  <View className="py-8 items-center">
+                    <LinearGradient
+                      colors={["#a855f7", "#7c3aed"]}
+                      className="w-16 h-16 rounded-2xl items-center justify-center mb-4"
+                    >
+                      <ActivityIndicator size="large" color="white" />
+                    </LinearGradient>
+                    <Text className="text-gray-500">Translating...</Text>
                   </View>
-
-                  <Text className="text-lg font-medium text-gray-900 mb-4">
-                    {sentenceInfo.translation}
-                  </Text>
-
-                  {sentenceInfo.literalTranslation && (
-                    <View className="bg-purple-50 p-3 rounded-lg mb-4">
-                      <Text className="text-sm font-medium text-purple-800 mb-1">
-                        Word-for-word
-                      </Text>
-                      <Text className="text-sm text-purple-700">
-                        {sentenceInfo.literalTranslation}
-                      </Text>
+                ) : sentenceInfo ? (
+                  <ScrollView showsVerticalScrollIndicator={false}>
+                    <View className="bg-gray-100 p-4 rounded-xl mb-4">
+                      <Text className="text-gray-700 italic text-base leading-6">{selectedSentence}</Text>
                     </View>
-                  )}
 
-                  {sentenceInfo.grammarNotes && sentenceInfo.grammarNotes.length > 0 && (
-                    <View className="bg-blue-50 p-3 rounded-lg">
-                      <Text className="text-sm font-medium text-blue-800 mb-2">
-                        Grammar Notes
+                    <LinearGradient
+                      colors={["#dbeafe", "#bfdbfe"]}
+                      className="p-4 rounded-xl mb-4"
+                    >
+                      <Text className="text-lg font-medium text-blue-900">
+                        {sentenceInfo.translation}
                       </Text>
-                      {sentenceInfo.grammarNotes.map((note, idx) => (
-                        <View key={idx} className="mb-2">
-                          <Text className="text-sm text-blue-700">
-                            <Text className="font-medium">{note.element}:</Text>{" "}
-                            {note.explanation}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </ScrollView>
-              ) : (
-                <View className="py-8 items-center">
-                  <Text className="text-gray-500">Failed to translate. Try again.</Text>
-                </View>
-              )}
+                    </LinearGradient>
+
+                    {sentenceInfo.literalTranslation && (
+                      <LinearGradient
+                        colors={["#f3e8ff", "#e9d5ff"]}
+                        className="p-4 rounded-xl mb-4"
+                      >
+                        <Text className="text-sm font-bold text-purple-800 mb-1">
+                          Word-for-word
+                        </Text>
+                        <Text className="text-sm text-purple-700">
+                          {sentenceInfo.literalTranslation}
+                        </Text>
+                      </LinearGradient>
+                    )}
+
+                    {sentenceInfo.grammarNotes && sentenceInfo.grammarNotes.length > 0 && (
+                      <LinearGradient
+                        colors={["#dbeafe", "#bfdbfe"]}
+                        className="p-4 rounded-xl"
+                      >
+                        <Text className="text-sm font-bold text-blue-800 mb-2">
+                          Grammar Notes 📚
+                        </Text>
+                        {sentenceInfo.grammarNotes.map((note, idx) => (
+                          <View key={idx} className="mb-2 bg-white/50 p-2 rounded-lg">
+                            <Text className="text-sm text-blue-700">
+                              <Text className="font-bold">{note.element}:</Text>{" "}
+                              {note.explanation}
+                            </Text>
+                          </View>
+                        ))}
+                      </LinearGradient>
+                    )}
+                  </ScrollView>
+                ) : (
+                  <View className="py-8 items-center">
+                    <Text className="text-gray-500">Failed to translate. Try again.</Text>
+                  </View>
+                )}
+              </LinearGradient>
             </Pressable>
           </Pressable>
         </Modal>

@@ -4,17 +4,25 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/store/authStore";
 import { practiceApi, vocabularyApi } from "../../src/lib/api";
 import { Ionicons } from "@expo/vector-icons";
 import { GAME_INFO, GameType, VocabularyStatus } from "../../src/types/games";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type ViewState = "select" | "config";
+
+const cardShadow = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  elevation: 3,
+};
 
 export default function PracticeScreen() {
   const { user } = useAuthStore();
@@ -96,186 +104,207 @@ export default function PracticeScreen() {
 
   const gameTypes = Object.values(GAME_INFO);
 
-  return (
-    <ScrollView className="flex-1 bg-gray-50">
-      <View className="p-4">
-        {/* Due for Review */}
-        {(dueData?.dueCount || 0) > 0 && (
-          <TouchableOpacity
-            className="bg-primary-50 border border-primary-200 rounded-xl p-4 mb-6 flex-row items-center"
-          >
-            <View className="w-12 h-12 rounded-full bg-primary-100 items-center justify-center">
-              <Ionicons name="notifications" size={24} color="#0284c7" />
-            </View>
-            <View className="ml-4 flex-1">
-              <Text className="font-semibold text-primary-900">
-                {dueData?.dueCount} words due for review!
-              </Text>
-              <Text className="text-sm text-primary-700">
-                Practice now to maintain your progress
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
+  const statusConfig = {
+    learning: { color: "bg-warning-500", lightBg: "bg-warning-100", textColor: "text-warning-700" },
+    learned: { color: "bg-secondary-500", lightBg: "bg-secondary-100", textColor: "text-secondary-700" },
+    mastered: { color: "bg-primary-500", lightBg: "bg-primary-100", textColor: "text-primary-700" },
+  };
 
-        {/* Word Status Filter */}
-        <View className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
-          <Text className="font-semibold text-gray-900 mb-3">
-            Words to Practice
-          </Text>
-          <View className="flex-row gap-2">
-            {(["learning", "learned", "mastered"] as VocabularyStatus[]).map(
-              (status) => {
+  return (
+    <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View className="px-5 pt-4 pb-6">
+          <Text className="text-owl-500 text-base">Practice your</Text>
+          <Text className="text-owl-800 text-2xl font-bold mt-1">{sourceLanguage} Skills</Text>
+          
+          {/* Stats Row */}
+          <View className="flex-row gap-3 mt-4">
+            <View className="flex-1 bg-white rounded-xl p-3 items-center" style={cardShadow}>
+              <Text className="text-warning-500 font-bold text-xl">{vocabStats?.learning || 0}</Text>
+              <Text className="text-owl-500 text-xs">Learning</Text>
+            </View>
+            <View className="flex-1 bg-white rounded-xl p-3 items-center" style={cardShadow}>
+              <Text className="text-secondary-500 font-bold text-xl">{vocabStats?.learned || 0}</Text>
+              <Text className="text-owl-500 text-xs">Learned</Text>
+            </View>
+            <View className="flex-1 bg-white rounded-xl p-3 items-center" style={cardShadow}>
+              <Text className="text-primary-500 font-bold text-xl">{vocabStats?.mastered || 0}</Text>
+              <Text className="text-owl-500 text-xs">Mastered</Text>
+            </View>
+          </View>
+        </View>
+
+        <View className="px-5">
+          {/* Due for Review */}
+          {(dueData?.dueCount || 0) > 0 && (
+            <View className="bg-danger-100 rounded-xl p-4 flex-row items-center mb-5 border-l-4 border-danger-500">
+              <View className="w-10 h-10 rounded-full bg-white items-center justify-center mr-3">
+                <Ionicons name="notifications" size={20} color="#ff4b4b" />
+              </View>
+              <View className="flex-1">
+                <Text className="font-bold text-danger-800">
+                  {dueData?.dueCount} words due!
+                </Text>
+                <Text className="text-danger-600 text-sm">
+                  Time for your daily review
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Word Status Filter */}
+          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
+            <Text className="text-lg font-bold text-owl-800 mb-3">Words to Practice</Text>
+
+            <View className="flex-row gap-2">
+              {(["learning", "learned", "mastered"] as VocabularyStatus[]).map((status) => {
                 const isSelected = selectedStatuses.includes(status);
+                const config = statusConfig[status];
                 const count = vocabStats?.[status] || 0;
-                const colors = {
-                  learning: isSelected
-                    ? "bg-yellow-100 border-yellow-500"
-                    : "bg-gray-100 border-gray-200",
-                  learned: isSelected
-                    ? "bg-blue-100 border-blue-500"
-                    : "bg-gray-100 border-gray-200",
-                  mastered: isSelected
-                    ? "bg-green-100 border-green-500"
-                    : "bg-gray-100 border-gray-200",
-                };
-                const textColors = {
-                  learning: isSelected ? "text-yellow-700" : "text-gray-600",
-                  learned: isSelected ? "text-blue-700" : "text-gray-600",
-                  mastered: isSelected ? "text-green-700" : "text-gray-600",
-                };
+                
                 return (
                   <TouchableOpacity
                     key={status}
                     onPress={() => toggleStatus(status)}
-                    className={`flex-1 p-3 rounded-lg border ${colors[status]}`}
+                    activeOpacity={0.8}
+                    className={`flex-1 p-3 rounded-xl items-center ${
+                      isSelected ? config.color : "bg-owl-100"
+                    }`}
                   >
-                    <Text
-                      className={`font-medium text-center capitalize ${textColors[status]}`}
-                    >
+                    <Text className={`font-bold text-sm capitalize ${
+                      isSelected ? "text-white" : "text-owl-600"
+                    }`}>
                       {status}
                     </Text>
-                    <Text className="text-center text-sm text-gray-500">
+                    <Text className={`text-xs ${
+                      isSelected ? "text-white/80" : "text-owl-400"
+                    }`}>
                       {count}
                     </Text>
                   </TouchableOpacity>
                 );
-              }
-            )}
-          </View>
-          <Text className="text-sm text-gray-500 mt-3 text-center">
-            {availableWordCount} words available
-          </Text>
-        </View>
+              })}
+            </View>
 
-        {/* Word Count */}
-        <View className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
-          <Text className="font-semibold text-gray-900 mb-3">
-            Number of Words
-          </Text>
-          <View className="flex-row gap-2">
-            {[3, 5, 10, 15, 20].map((count) => (
-              <TouchableOpacity
-                key={count}
-                onPress={() => setWordCount(count)}
-                disabled={count > availableWordCount}
-                className={`flex-1 py-3 rounded-lg border ${
-                  wordCount === count
-                    ? "bg-primary-50 border-primary-500"
-                    : count > availableWordCount
-                    ? "bg-gray-50 border-gray-100"
-                    : "bg-white border-gray-200"
-                }`}
-              >
-                <Text
-                  className={`text-center font-medium ${
-                    wordCount === count
-                      ? "text-primary-700"
-                      : count > availableWordCount
-                      ? "text-gray-300"
-                      : "text-gray-700"
-                  }`}
-                >
-                  {count}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <View className="bg-primary-100 rounded-lg p-3 mt-4 flex-row items-center justify-center">
+              <Ionicons name="library" size={16} color="#58cc02" />
+              <Text className="text-primary-700 font-medium ml-2">
+                {availableWordCount} words available
+              </Text>
+            </View>
           </View>
-        </View>
 
-        {/* Game Selection */}
-        <View className="mb-4">
-          <Text className="font-semibold text-gray-900 mb-3 text-lg">
-            Choose a Game
-          </Text>
+          {/* Word Count */}
+          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
+            <Text className="text-lg font-bold text-owl-800 mb-3">Number of Words</Text>
+
+            <View className="flex-row gap-2">
+              {[3, 5, 10, 15, 20].map((count) => {
+                const isDisabled = count > availableWordCount;
+                const isSelected = wordCount === count;
+                
+                return (
+                  <TouchableOpacity
+                    key={count}
+                    onPress={() => !isDisabled && setWordCount(count)}
+                    disabled={isDisabled}
+                    activeOpacity={0.8}
+                    className={`flex-1 py-3 rounded-xl items-center border-2 ${
+                      isSelected
+                        ? "bg-secondary-500 border-secondary-500"
+                        : isDisabled
+                        ? "bg-owl-50 border-owl-100"
+                        : "bg-white border-owl-200"
+                    }`}
+                  >
+                    <Text className={`font-bold text-lg ${
+                      isSelected ? "text-white" : isDisabled ? "text-owl-300" : "text-owl-700"
+                    }`}>
+                      {count}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Game Selection */}
+          <Text className="text-lg font-bold text-owl-800 mb-3">Choose a Game</Text>
+
           <View className="gap-3">
             {gameTypes.map((game) => {
               const isDisabled = availableWordCount < game.minWords;
+              const isSelected = selectedGame === game.type;
+              
               return (
                 <TouchableOpacity
                   key={game.type}
-                  onPress={() =>
-                    !isDisabled && setSelectedGame(game.type)
-                  }
+                  onPress={() => !isDisabled && setSelectedGame(game.type)}
                   disabled={isDisabled}
-                  className={`bg-white rounded-xl p-4 border ${
-                    selectedGame === game.type
-                      ? "border-primary-500 bg-primary-50"
-                      : isDisabled
-                      ? "border-gray-100 bg-gray-50"
-                      : "border-gray-200"
-                  }`}
+                  activeOpacity={0.8}
                 >
-                  <View className="flex-row items-center">
-                    <Text className="text-2xl mr-3">{game.icon}</Text>
-                    <View className="flex-1">
-                      <Text
-                        className={`font-semibold ${
-                          isDisabled ? "text-gray-400" : "text-gray-900"
-                        }`}
-                      >
+                  <View
+                    className={`rounded-xl p-4 flex-row items-center ${
+                      isSelected
+                        ? "bg-primary-500 border-b-4 border-primary-700"
+                        : isDisabled
+                        ? "bg-owl-100"
+                        : "bg-white"
+                    }`}
+                    style={isSelected ? undefined : cardShadow}
+                  >
+                    <View className={`w-12 h-12 rounded-xl items-center justify-center ${
+                      isSelected ? "bg-primary-400" : "bg-owl-100"
+                    }`}>
+                      <Text className="text-xl">{game.icon}</Text>
+                    </View>
+                    <View className="flex-1 ml-3">
+                      <Text className={`font-bold ${
+                        isSelected ? "text-white" : isDisabled ? "text-owl-400" : "text-owl-800"
+                      }`}>
                         {game.name}
                       </Text>
-                      <Text
-                        className={`text-sm ${
-                          isDisabled ? "text-gray-300" : "text-gray-500"
-                        }`}
-                      >
+                      <Text className={`text-sm ${
+                        isSelected ? "text-white/80" : isDisabled ? "text-owl-300" : "text-owl-500"
+                      }`}>
                         {game.description}
                       </Text>
                     </View>
-                    {selectedGame === game.type && (
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={24}
-                        color="#0284c7"
-                      />
+                    {isSelected && (
+                      <View className="w-8 h-8 rounded-full bg-white items-center justify-center">
+                        <Ionicons name="checkmark" size={20} color="#58cc02" />
+                      </View>
                     )}
                   </View>
                 </TouchableOpacity>
               );
             })}
           </View>
-        </View>
 
-        {/* Start Button */}
-        <TouchableOpacity
-          onPress={handleStartGame}
-          disabled={!selectedGame || availableWordCount === 0}
-          className={`py-4 rounded-xl items-center mb-6 ${
-            !selectedGame || availableWordCount === 0
-              ? "bg-primary-300"
-              : "bg-primary-600"
-          }`}
-        >
-          <View className="flex-row items-center">
-            <Ionicons name="play" size={20} color="white" />
-            <Text className="text-white font-semibold text-lg ml-2">
+          {/* Start Button */}
+          <TouchableOpacity
+            onPress={handleStartGame}
+            disabled={!selectedGame || availableWordCount === 0}
+            activeOpacity={0.8}
+            className={`mt-6 mb-4 rounded-xl py-4 border-b-4 ${
+              !selectedGame || availableWordCount === 0
+                ? "bg-owl-200 border-owl-300"
+                : "bg-primary-500 border-primary-700"
+            }`}
+          >
+            <Text className={`text-center font-bold text-lg ${
+              !selectedGame || availableWordCount === 0 ? "text-owl-400" : "text-white"
+            }`}>
               Start Practice
             </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

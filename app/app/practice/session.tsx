@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,7 +17,7 @@ import {
   GameConfig,
   VocabularyWord,
 } from "../../src/types/games";
-// import { shuffleArray } from "@duopara/shared";
+
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -29,12 +28,6 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Animated, {
-  FadeIn,
-  FadeOut,
-  SlideInRight,
-  SlideOutLeft,
-} from "react-native-reanimated";
 
 type ViewState = "loading" | "playing" | "results";
 
@@ -216,66 +209,80 @@ export default function PracticeSessionScreen() {
   // Render loading
   if (viewState === "loading") {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center">
-        <Stack.Screen options={{ title: "Loading..." }} />
-        <ActivityIndicator size="large" color="#0ea5e9" />
-        <Text className="text-gray-600 mt-4">Preparing your practice...</Text>
+      <SafeAreaView className="flex-1 bg-owl-50 items-center justify-center">
+        <Stack.Screen options={{ title: "Loading...", headerShown: false }} />
+        <View className="items-center">
+          <View className="w-20 h-20 rounded-full bg-primary-100 items-center justify-center mb-6">
+            <ActivityIndicator size="large" color="#58cc02" />
+          </View>
+          <Text className="text-owl-800 text-xl font-bold">Preparing Practice</Text>
+          <Text className="text-owl-500 mt-2">Loading your vocabulary...</Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   // Render results
   if (viewState === "results" && sessionStats) {
+    const isGreat = sessionStats.accuracy >= 80;
+    const isGood = sessionStats.accuracy >= 50;
+    
     return (
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <Stack.Screen options={{ title: "Results" }} />
+      <SafeAreaView className="flex-1 bg-owl-50">
+        <Stack.Screen options={{ title: "Results", headerShown: false }} />
         <View className="flex-1 items-center justify-center p-6">
-          <Animated.View
-            entering={FadeIn.duration(500)}
-            className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-lg"
-          >
+          <View className="bg-white rounded-2xl p-8 w-full max-w-sm" style={cardShadow}>
+            {/* Trophy/Icon */}
             <View className="items-center mb-6">
-              {sessionStats.accuracy >= 80 ? (
-                <Ionicons name="trophy" size={64} color="#f59e0b" />
-              ) : sessionStats.accuracy >= 50 ? (
-                <Ionicons name="thumbs-up" size={64} color="#22c55e" />
-              ) : (
-                <Ionicons name="school" size={64} color="#6366f1" />
-              )}
-              <Text className="text-3xl font-bold text-gray-900 mt-4">
+              <View className={`w-24 h-24 rounded-full items-center justify-center ${isGreat ? "bg-warning-100" : isGood ? "bg-primary-100" : "bg-secondary-100"}`}>
+                {isGreat ? (
+                  <Ionicons name="trophy" size={48} color="#ffc800" />
+                ) : isGood ? (
+                  <Ionicons name="thumbs-up" size={48} color="#58cc02" />
+                ) : (
+                  <Ionicons name="school" size={48} color="#1cb0f6" />
+                )}
+              </View>
+              
+              <Text className="text-5xl font-bold text-owl-800 mt-6">
                 {Math.round(sessionStats.accuracy)}%
               </Text>
-              <Text className="text-gray-500">Accuracy</Text>
+              <Text className="text-owl-500 text-lg">Accuracy</Text>
+              
+              <Text className="text-center text-owl-600 mt-2 px-4">
+                {isGreat ? "Amazing work! You're a star!" : isGood ? "Great progress! Keep it up!" : "Keep practicing, you'll get there!"}
+              </Text>
             </View>
 
+            {/* Stats row */}
             <View className="flex-row justify-around mb-8">
               <View className="items-center">
-                <View className="w-12 h-12 rounded-full bg-green-100 items-center justify-center">
-                  <Text className="text-xl font-bold text-green-600">
+                <View className="w-16 h-16 rounded-xl bg-primary-500 items-center justify-center border-b-4 border-primary-700">
+                  <Text className="text-2xl font-bold text-white">
                     {sessionStats.correctCount}
                   </Text>
                 </View>
-                <Text className="text-sm text-gray-500 mt-1">Correct</Text>
+                <Text className="text-sm text-owl-600 mt-2 font-medium">Correct</Text>
               </View>
               <View className="items-center">
-                <View className="w-12 h-12 rounded-full bg-red-100 items-center justify-center">
-                  <Text className="text-xl font-bold text-red-600">
+                <View className="w-16 h-16 rounded-xl bg-danger-500 items-center justify-center border-b-4 border-danger-700">
+                  <Text className="text-2xl font-bold text-white">
                     {sessionStats.incorrectCount}
                   </Text>
                 </View>
-                <Text className="text-sm text-gray-500 mt-1">Incorrect</Text>
+                <Text className="text-sm text-owl-600 mt-2 font-medium">Incorrect</Text>
               </View>
             </View>
 
+            {/* Continue button */}
             <TouchableOpacity
               onPress={() => router.back()}
-              className="bg-primary-600 py-4 rounded-xl items-center"
+              activeOpacity={0.8}
+              className="bg-primary-500 rounded-xl py-4 border-b-4 border-primary-700"
             >
-              <Text className="text-white font-semibold text-lg">
-                Continue
-              </Text>
+              <Text className="text-white text-center font-bold text-lg">Continue</Text>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -285,51 +292,50 @@ export default function PracticeSessionScreen() {
   const currentWord = practiceWords[currentIndex];
   if (!currentWord || !currentWord.gameData) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center">
-        <Text className="text-gray-600">Loading question...</Text>
+      <SafeAreaView className="flex-1 bg-owl-50 items-center justify-center">
+        <View className="w-16 h-16 rounded-full bg-white items-center justify-center" style={cardShadow}>
+          <ActivityIndicator size="small" color="#58cc02" />
+        </View>
+        <Text className="text-owl-500 mt-4">Loading question...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-owl-50">
       <Stack.Screen
         options={{
           title: `${currentIndex + 1} / ${practiceWords.length}`,
+          headerStyle: { backgroundColor: '#f7f7f7' },
+          headerTitleStyle: { fontWeight: 'bold', color: '#3c3c3c' },
         }}
       />
 
       {/* Progress bar */}
-      <View className="h-2 bg-gray-200">
+      <View className="h-3 bg-owl-100 mx-4 mt-2 rounded-full overflow-hidden">
         <View
-          className="h-full bg-primary-500"
-          style={{
-            width: `${((currentIndex + 1) / practiceWords.length) * 100}%`,
-          }}
+          className="h-full bg-primary-500 rounded-full"
+          style={{ width: `${((currentIndex + 1) / practiceWords.length) * 100}%` }}
         />
       </View>
 
       {/* Feedback overlay */}
       {showFeedback && (
-        <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(200)}
+        <View
           className={`absolute inset-0 z-50 items-center justify-center ${
-            showFeedback === "correct" ? "bg-green-500/20" : "bg-red-500/20"
+            showFeedback === "correct" ? "bg-primary-500/20" : "bg-danger-500/20"
           }`}
         >
-          <View
-            className={`w-24 h-24 rounded-full items-center justify-center ${
-              showFeedback === "correct" ? "bg-green-500" : "bg-red-500"
-            }`}
-          >
+          <View className={`w-28 h-28 rounded-full items-center justify-center ${
+            showFeedback === "correct" ? "bg-primary-500" : "bg-danger-500"
+          }`}>
             <Ionicons
               name={showFeedback === "correct" ? "checkmark" : "close"}
-              size={48}
+              size={56}
               color="white"
             />
           </View>
-        </Animated.View>
+        </View>
       )}
 
       {/* Game content */}
@@ -381,7 +387,7 @@ export default function PracticeSessionScreen() {
           />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -412,10 +418,12 @@ function DefinitionGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center">
-        <Text className="text-sm text-gray-500 mb-2">What does this mean?</Text>
-        <Text className="text-4xl font-bold text-gray-900">
-          {word.vocabularyWord.word}
-        </Text>
+        <Text className="text-owl-500 text-sm mb-4">What does this mean?</Text>
+        <View className="bg-secondary-500 px-8 py-4 rounded-xl border-b-4 border-secondary-700">
+          <Text className="text-3xl font-bold text-white">
+            {word.vocabularyWord.word}
+          </Text>
+        </View>
       </View>
 
       <View className="gap-3 pb-4">
@@ -423,9 +431,11 @@ function DefinitionGame({
           <TouchableOpacity
             key={idx}
             onPress={() => onAnswer(option === correctAnswer, option, correctAnswer)}
-            className="bg-white p-4 rounded-xl border border-gray-200 active:bg-gray-50"
+            activeOpacity={0.8}
+            className="bg-white p-5 rounded-xl border-2 border-owl-200"
+            style={cardShadow}
           >
-            <Text className="text-gray-800 text-center text-lg">{option}</Text>
+            <Text className="text-owl-800 text-center text-lg font-medium">{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -459,10 +469,12 @@ function TranslationGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center">
-        <Text className="text-sm text-gray-500 mb-2">Translate this word:</Text>
-        <Text className="text-4xl font-bold text-gray-900">
-          {word.vocabularyWord.word}
-        </Text>
+        <Text className="text-owl-500 text-sm mb-4">Translate this word:</Text>
+        <View className="bg-primary-500 px-8 py-4 rounded-xl border-b-4 border-primary-700">
+          <Text className="text-3xl font-bold text-white">
+            {word.vocabularyWord.word}
+          </Text>
+        </View>
       </View>
 
       <View className="gap-3 pb-4">
@@ -470,9 +482,11 @@ function TranslationGame({
           <TouchableOpacity
             key={idx}
             onPress={() => onAnswer(option === correctAnswer, option, correctAnswer)}
-            className="bg-white p-4 rounded-xl border border-gray-200 active:bg-gray-50"
+            activeOpacity={0.8}
+            className="bg-white p-5 rounded-xl border-2 border-owl-200"
+            style={cardShadow}
           >
-            <Text className="text-gray-800 text-center text-lg">{option}</Text>
+            <Text className="text-owl-800 text-center text-lg font-medium">{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -507,12 +521,12 @@ function ReverseTranslationGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center">
-        <Text className="text-sm text-gray-500 mb-2">
-          Which word means:
-        </Text>
-        <Text className="text-3xl font-bold text-primary-600 text-center">
-          {word.gameData?.translation}
-        </Text>
+        <Text className="text-owl-500 text-sm mb-4">Which word means:</Text>
+        <View className="bg-warning-500 px-8 py-4 rounded-xl border-b-4 border-warning-700">
+          <Text className="text-3xl font-bold text-white text-center">
+            {word.gameData?.translation}
+          </Text>
+        </View>
       </View>
 
       <View className="gap-3 pb-4">
@@ -520,9 +534,11 @@ function ReverseTranslationGame({
           <TouchableOpacity
             key={idx}
             onPress={() => onAnswer(option === correctAnswer, option, correctAnswer)}
-            className="bg-white p-4 rounded-xl border border-gray-200 active:bg-gray-50"
+            activeOpacity={0.8}
+            className="bg-white p-5 rounded-xl border-2 border-owl-200"
+            style={cardShadow}
           >
-            <Text className="text-gray-800 text-center text-lg">{option}</Text>
+            <Text className="text-owl-800 text-center text-lg font-medium">{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -554,7 +570,7 @@ function FillBlankGame({
   if (!sentence) {
     return (
       <View className="flex-1 items-center justify-center">
-        <Text className="text-gray-500">No example available</Text>
+        <Text className="text-owl-500">No example available</Text>
       </View>
     );
   }
@@ -564,12 +580,12 @@ function FillBlankGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center px-4">
-        <Text className="text-sm text-gray-500 mb-4">
-          Fill in the blank:
-        </Text>
-        <Text className="text-xl text-gray-800 text-center leading-8">
-          {sentence.sentence.replace("___", "_____")}
-        </Text>
+        <Text className="text-owl-500 text-sm mb-6">Fill in the blank:</Text>
+        <View className="bg-white rounded-xl p-6 w-full" style={cardShadow}>
+          <Text className="text-xl text-owl-800 text-center leading-8">
+            {sentence.sentence.replace("___", "______")}
+          </Text>
+        </View>
       </View>
 
       <View className="gap-3 pb-4">
@@ -577,9 +593,11 @@ function FillBlankGame({
           <TouchableOpacity
             key={idx}
             onPress={() => onAnswer(option === correctAnswer, option, correctAnswer)}
-            className="bg-white p-4 rounded-xl border border-gray-200 active:bg-gray-50"
+            activeOpacity={0.8}
+            className="bg-white p-5 rounded-xl border-2 border-owl-200"
+            style={cardShadow}
           >
-            <Text className="text-gray-800 text-center text-lg">{option}</Text>
+            <Text className="text-owl-800 text-center text-lg font-medium">{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -604,32 +622,43 @@ function TrueFalseGame({
   return (
     <View className="flex-1">
       <View className="flex-1 items-center justify-center">
-        <Text className="text-sm text-gray-500 mb-4">
-          Is this translation correct?
-        </Text>
-        <Text className="text-3xl font-bold text-gray-900 mb-4">
-          {word.vocabularyWord.word}
-        </Text>
-        <Text className="text-2xl text-primary-600">=</Text>
-        <Text className="text-3xl font-bold text-primary-700 mt-4">
-          {displayTranslation}
-        </Text>
+        <Text className="text-owl-500 text-sm mb-6">Is this translation correct?</Text>
+        
+        <View className="bg-white rounded-xl p-8 items-center w-full" style={cardShadow}>
+          <View className="bg-secondary-500 px-6 py-3 rounded-xl border-b-4 border-secondary-700 mb-4">
+            <Text className="text-2xl font-bold text-white">
+              {word.vocabularyWord.word}
+            </Text>
+          </View>
+          
+          <View className="my-2 w-12 h-12 rounded-full bg-owl-100 items-center justify-center">
+            <Text className="text-2xl text-owl-400">=</Text>
+          </View>
+          
+          <View className="bg-primary-500 px-6 py-3 rounded-xl border-b-4 border-primary-700 mt-4">
+            <Text className="text-2xl font-bold text-white">
+              {displayTranslation}
+            </Text>
+          </View>
+        </View>
       </View>
 
       <View className="flex-row gap-4 pb-4">
         <TouchableOpacity
           onPress={() => onAnswer(!showCorrect, "false", correctAnswer)}
-          className="flex-1 bg-red-100 p-6 rounded-xl items-center active:bg-red-200"
+          activeOpacity={0.8}
+          className="flex-1 bg-danger-500 p-6 items-center rounded-xl border-b-4 border-danger-700"
         >
-          <Ionicons name="close" size={32} color="#dc2626" />
-          <Text className="text-red-700 font-semibold mt-2">False</Text>
+          <Ionicons name="close" size={36} color="#ffffff" />
+          <Text className="text-white font-bold mt-2 text-lg">False</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => onAnswer(showCorrect, "true", correctAnswer)}
-          className="flex-1 bg-green-100 p-6 rounded-xl items-center active:bg-green-200"
+          activeOpacity={0.8}
+          className="flex-1 bg-primary-500 p-6 items-center rounded-xl border-b-4 border-primary-700"
         >
-          <Ionicons name="checkmark" size={32} color="#16a34a" />
-          <Text className="text-green-700 font-semibold mt-2">True</Text>
+          <Ionicons name="checkmark" size={36} color="#ffffff" />
+          <Text className="text-white font-bold mt-2 text-lg">True</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -691,40 +720,48 @@ function MatchingGame({
 
   return (
     <View className="flex-1">
-      <Text className="text-center text-gray-500 mb-4">
+      <Text className="text-center text-owl-600 font-medium mb-6">
         Match the words with their translations
       </Text>
 
       <View className="flex-row flex-1">
         {/* Words column */}
-        <View className="flex-1 gap-2 pr-2">
+        <View className="flex-1 gap-3 pr-2">
           {shuffledWords.map((word) => {
             const isMatched = matchedPairs.has(word);
             const isSelected = selectedWord === word;
             const isWrong = wrongPair?.word === word;
 
+            if (isMatched) {
+              return (
+                <View
+                  key={word}
+                  className="p-4 rounded-xl bg-primary-100 border-2 border-primary-300"
+                >
+                  <Text className="text-center font-bold text-primary-700">
+                    {word}
+                  </Text>
+                </View>
+              );
+            }
+
             return (
               <TouchableOpacity
                 key={word}
-                onPress={() => !isMatched && setSelectedWord(word)}
-                disabled={isMatched}
-                className={`p-4 rounded-xl border ${
-                  isMatched
-                    ? "bg-green-50 border-green-300"
-                    : isWrong
-                    ? "bg-red-50 border-red-300"
+                onPress={() => setSelectedWord(isSelected ? null : word)}
+                activeOpacity={0.8}
+                className={`p-4 rounded-xl border-2 ${
+                  isWrong
+                    ? "bg-danger-100 border-danger-400"
                     : isSelected
-                    ? "bg-primary-50 border-primary-500"
-                    : "bg-white border-gray-200"
+                    ? "bg-secondary-500 border-secondary-500"
+                    : "bg-white border-owl-200"
                 }`}
+                style={cardShadow}
               >
                 <Text
                   className={`text-center font-medium ${
-                    isMatched
-                      ? "text-green-700"
-                      : isWrong
-                      ? "text-red-700"
-                      : "text-gray-800"
+                    isWrong ? "text-danger-700" : isSelected ? "text-white" : "text-owl-800"
                   }`}
                 >
                   {word}
@@ -735,7 +772,7 @@ function MatchingGame({
         </View>
 
         {/* Translations column */}
-        <View className="flex-1 gap-2 pl-2">
+        <View className="flex-1 gap-3 pl-2">
           {shuffledTranslations.map((translation) => {
             const matchedWord = words.find(
               (w) => w.gameData?.translation === translation
@@ -744,28 +781,36 @@ function MatchingGame({
             const isSelected = selectedTranslation === translation;
             const isWrong = wrongPair?.translation === translation;
 
+            if (isMatched) {
+              return (
+                <View
+                  key={translation}
+                  className="p-4 rounded-xl bg-primary-100 border-2 border-primary-300"
+                >
+                  <Text className="text-center font-bold text-primary-700">
+                    {translation}
+                  </Text>
+                </View>
+              );
+            }
+
             return (
               <TouchableOpacity
                 key={translation}
-                onPress={() => !isMatched && setSelectedTranslation(translation)}
-                disabled={isMatched}
-                className={`p-4 rounded-xl border ${
-                  isMatched
-                    ? "bg-green-50 border-green-300"
-                    : isWrong
-                    ? "bg-red-50 border-red-300"
+                onPress={() => setSelectedTranslation(isSelected ? null : translation)}
+                activeOpacity={0.8}
+                className={`p-4 rounded-xl border-2 ${
+                  isWrong
+                    ? "bg-danger-100 border-danger-400"
                     : isSelected
-                    ? "bg-primary-50 border-primary-500"
-                    : "bg-white border-gray-200"
+                    ? "bg-primary-500 border-primary-500"
+                    : "bg-white border-owl-200"
                 }`}
+                style={cardShadow}
               >
                 <Text
                   className={`text-center font-medium ${
-                    isMatched
-                      ? "text-green-700"
-                      : isWrong
-                      ? "text-red-700"
-                      : "text-gray-800"
+                    isWrong ? "text-danger-700" : isSelected ? "text-white" : "text-owl-800"
                   }`}
                 >
                   {translation}
@@ -776,9 +821,22 @@ function MatchingGame({
         </View>
       </View>
 
-      <Text className="text-center text-gray-500 mt-4">
-        {matchedPairs.size} / {words.length} matched
-      </Text>
+      {/* Progress footer */}
+      <View className="mt-4 items-center">
+        <View className="bg-owl-100 px-6 py-3 rounded-full">
+          <Text className="text-center text-owl-600 font-medium">
+            {matchedPairs.size} / {words.length} matched
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
+
+const cardShadow = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  elevation: 3,
+};

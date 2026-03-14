@@ -5,6 +5,7 @@ import { useAuthStore } from "../../src/store/authStore";
 import { statsApi, textsApi, vocabularyApi, practiceApi } from "../../src/lib/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useCallback } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DashboardScreen() {
   const { user } = useAuthStore();
@@ -37,116 +38,138 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }, []);
 
+  const totalWords = vocabStats?.total || 0;
+  const masteredWords = vocabStats?.mastered || 0;
+  const masteryProgress = totalWords > 0 ? (masteredWords / totalWords) * 100 : 0;
+
   return (
-    <ScrollView
-      className="flex-1 bg-gray-50"
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      <View className="p-4">
+    <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#58cc02" />
+        }
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <View className="mb-6">
-          <Text className="text-2xl font-bold text-gray-900">
-            Welcome back{user?.name ? `, ${user.name}` : ""}!
-          </Text>
-          <Text className="text-gray-600 mt-1">
-            Continue your {language} learning journey
+        <View className="px-5 pt-4 pb-6">
+          <Text className="text-owl-500 text-base">{getGreeting()}</Text>
+          <Text className="text-owl-800 text-2xl font-bold mt-1">
+            {user?.name || "Learner"}
           </Text>
         </View>
 
-        {/* Quick stats */}
-        <View className="flex-row flex-wrap gap-3 mb-6">
-          <View className="bg-white rounded-xl p-4 flex-1 min-w-[45%] border border-gray-200">
-            <View className="flex-row items-center mb-2">
-              <View className="w-10 h-10 rounded-lg bg-orange-100 items-center justify-center">
-                <Ionicons name="flame" size={20} color="#ea580c" />
-              </View>
-              <Text className="text-sm text-gray-600 ml-3">Streak</Text>
+        {/* Streak Card */}
+        <View className="px-5">
+          <View className="bg-white rounded-xl p-4 flex-row items-center" style={cardShadow}>
+            <View className="w-14 h-14 rounded-full bg-warning-100 items-center justify-center mr-4">
+              <Text className="text-2xl">🔥</Text>
             </View>
-            <Text className="text-2xl font-bold text-gray-900">
-              {stats?.activity?.currentStreak || 0}
-              <Text className="text-base font-normal text-gray-500"> days</Text>
-            </Text>
+            <View className="flex-1">
+              <Text className="text-2xl font-bold text-owl-800">
+                {stats?.activity?.currentStreak || 0} day streak
+              </Text>
+              <Text className="text-owl-500">Keep it going!</Text>
+            </View>
           </View>
+        </View>
 
-          <View className="bg-white rounded-xl p-4 flex-1 min-w-[45%] border border-gray-200">
-            <View className="flex-row items-center mb-2">
-              <View className="w-10 h-10 rounded-lg bg-green-100 items-center justify-center">
-                <Ionicons name="checkmark-circle" size={20} color="#16a34a" />
-              </View>
-              <Text className="text-sm text-gray-600 ml-3">Mastered</Text>
+        {/* Progress Card */}
+        <View className="px-5 mt-4">
+          <View className="bg-white rounded-xl p-4" style={cardShadow}>
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-owl-800 font-bold">{language} Progress</Text>
+              <Text className="text-owl-500 text-sm">{masteredWords}/{totalWords} words</Text>
             </View>
-            <Text className="text-2xl font-bold text-gray-900">
-              {vocabStats?.mastered || 0}
-              <Text className="text-base font-normal text-gray-500"> words</Text>
-            </Text>
-          </View>
-
-          <View className="bg-white rounded-xl p-4 flex-1 min-w-[45%] border border-gray-200">
-            <View className="flex-row items-center mb-2">
-              <View className="w-10 h-10 rounded-lg bg-primary-100 items-center justify-center">
-                <Ionicons name="book" size={20} color="#0284c7" />
-              </View>
-              <Text className="text-sm text-gray-600 ml-3">Texts Read</Text>
+            <View className="h-3 bg-owl-100 rounded-full overflow-hidden">
+              <View
+                className="h-full bg-primary-500 rounded-full"
+                style={{ width: `${masteryProgress}%` }}
+              />
             </View>
-            <Text className="text-2xl font-bold text-gray-900">
-              {stats?.reading?.completedSessions || 0}
-            </Text>
-          </View>
-
-          <View className="bg-white rounded-xl p-4 flex-1 min-w-[45%] border border-gray-200">
-            <View className="flex-row items-center mb-2">
-              <View className="w-10 h-10 rounded-lg bg-purple-100 items-center justify-center">
-                <Ionicons name="library" size={20} color="#9333ea" />
-              </View>
-              <Text className="text-sm text-gray-600 ml-3">Vocabulary</Text>
-            </View>
-            <Text className="text-2xl font-bold text-gray-900">
-              {vocabStats?.total || 0}
-              <Text className="text-base font-normal text-gray-500"> words</Text>
-            </Text>
           </View>
         </View>
 
         {/* Due for Review */}
         {(dueData?.dueCount || 0) > 0 && (
-          <Link href="/(tabs)/practice" asChild>
-            <TouchableOpacity className="bg-primary-50 border border-primary-200 rounded-xl p-4 mb-6 flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 rounded-lg bg-primary-100 items-center justify-center">
-                  <Ionicons name="school" size={20} color="#0284c7" />
+          <View className="px-5 mt-4">
+            <Link href="/(tabs)/practice" asChild>
+              <TouchableOpacity activeOpacity={0.8}>
+                <View className="bg-secondary-100 rounded-xl p-4 flex-row items-center border-l-4 border-secondary-500">
+                  <View className="w-10 h-10 rounded-full bg-white items-center justify-center mr-3">
+                    <Ionicons name="notifications" size={20} color="#1cb0f6" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-secondary-800 font-bold">
+                      {dueData?.dueCount} words ready for review
+                    </Text>
+                    <Text className="text-secondary-600 text-sm">Practice now!</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#1cb0f6" />
                 </View>
-                <View className="ml-3">
-                  <Text className="font-semibold text-primary-900">
-                    {dueData?.dueCount} words due for review
-                  </Text>
-                  <Text className="text-sm text-primary-700">
-                    Tap to start practicing
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color="#0284c7" />
-            </TouchableOpacity>
-          </Link>
+              </TouchableOpacity>
+            </Link>
+          </View>
         )}
 
+        {/* Stats Grid */}
+        <View className="px-5 mt-6">
+          <Text className="text-lg font-bold text-owl-800 mb-3">Your Stats</Text>
+          <View className="flex-row flex-wrap gap-3">
+            <StatItem
+              icon="checkmark-circle"
+              iconColor="#58cc02"
+              iconBg="bg-primary-100"
+              value={vocabStats?.mastered || 0}
+              label="Mastered"
+            />
+            <StatItem
+              icon="book"
+              iconColor="#1cb0f6"
+              iconBg="bg-secondary-100"
+              value={stats?.reading?.completedSessions || 0}
+              label="Texts Read"
+            />
+            <StatItem
+              icon="school"
+              iconColor="#ffc800"
+              iconBg="bg-warning-100"
+              value={vocabStats?.learning || 0}
+              label="Learning"
+            />
+            <StatItem
+              icon="library"
+              iconColor="#ff4b4b"
+              iconBg="bg-danger-100"
+              value={totalWords}
+              label="Total Words"
+            />
+          </View>
+        </View>
+
         {/* Quick Actions */}
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-900 mb-3">
-            Quick Actions
-          </Text>
+        <View className="px-5 mt-6">
+          <Text className="text-lg font-bold text-owl-800 mb-3">Quick Actions</Text>
           <View className="flex-row gap-3">
             <Link href="/(tabs)/generate" asChild>
-              <TouchableOpacity className="flex-1 bg-primary-600 rounded-xl p-4 items-center">
-                <Ionicons name="sparkles" size={24} color="white" />
-                <Text className="text-white font-medium mt-2">Generate Text</Text>
+              <TouchableOpacity activeOpacity={0.8} className="flex-1">
+                <View className="bg-primary-500 rounded-xl p-4 items-center border-b-4 border-primary-700">
+                  <View className="w-12 h-12 rounded-xl bg-primary-400 items-center justify-center mb-2">
+                    <Ionicons name="add" size={28} color="#ffffff" />
+                  </View>
+                  <Text className="text-white font-bold">Create Text</Text>
+                </View>
               </TouchableOpacity>
             </Link>
             <Link href="/(tabs)/practice" asChild>
-              <TouchableOpacity className="flex-1 bg-green-600 rounded-xl p-4 items-center">
-                <Ionicons name="school" size={24} color="white" />
-                <Text className="text-white font-medium mt-2">Practice</Text>
+              <TouchableOpacity activeOpacity={0.8} className="flex-1">
+                <View className="bg-secondary-500 rounded-xl p-4 items-center border-b-4 border-secondary-700">
+                  <View className="w-12 h-12 rounded-xl bg-secondary-400 items-center justify-center mb-2">
+                    <Ionicons name="school" size={28} color="#ffffff" />
+                  </View>
+                  <Text className="text-white font-bold">Practice</Text>
+                </View>
               </TouchableOpacity>
             </Link>
           </View>
@@ -154,42 +177,72 @@ export default function DashboardScreen() {
 
         {/* Recent Texts */}
         {recentTexts?.texts && recentTexts.texts.length > 0 && (
-          <View>
+          <View className="px-5 mt-6 mb-6">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-lg font-semibold text-gray-900">
-                Recent Texts
-              </Text>
+              <Text className="text-lg font-bold text-owl-800">Continue Reading</Text>
               <Link href="/(tabs)/history" asChild>
-                <TouchableOpacity>
-                  <Text className="text-primary-600 font-medium">See all</Text>
+                <TouchableOpacity className="flex-row items-center">
+                  <Text className="text-primary-500 font-bold mr-1">See all</Text>
+                  <Ionicons name="chevron-forward" size={16} color="#58cc02" />
                 </TouchableOpacity>
               </Link>
             </View>
             {recentTexts.texts.map((text: any) => (
               <Link key={text.id} href={`/read/${text.id}`} asChild>
-                <TouchableOpacity className="bg-white rounded-xl p-4 mb-3 border border-gray-200">
-                  <Text className="font-medium text-gray-900" numberOfLines={1}>
-                    {text.title || text.topic}
-                  </Text>
-                  <View className="flex-row items-center mt-2">
-                    <View className="bg-primary-100 px-2 py-1 rounded">
-                      <Text className="text-xs text-primary-700">
-                        {text.language}
+                <TouchableOpacity activeOpacity={0.8}>
+                  <View className="bg-white rounded-xl p-4 mb-3 flex-row items-center" style={cardShadow}>
+                    <View className="w-10 h-10 rounded-lg bg-primary-100 items-center justify-center mr-3">
+                      <Ionicons name="document-text" size={20} color="#58cc02" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-bold text-owl-800" numberOfLines={1}>
+                        {text.title || text.topic}
+                      </Text>
+                      <Text className="text-owl-500 text-sm">
+                        {text.language} • {text.wordCount} words
                       </Text>
                     </View>
-                    <Text className="text-gray-500 text-sm ml-2">
-                      {text.wordCount} words
-                    </Text>
-                    <Text className="text-gray-400 text-sm ml-2">
-                      {new Date(text.createdAt).toLocaleDateString()}
-                    </Text>
+                    <Ionicons name="chevron-forward" size={20} color="#afafaf" />
                   </View>
                 </TouchableOpacity>
               </Link>
             ))}
           </View>
         )}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
+
+function StatItem({ icon, iconColor, iconBg, value, label }: {
+  icon: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
+  iconBg: string;
+  value: number;
+  label: string;
+}) {
+  return (
+    <View className="bg-white rounded-xl p-4 flex-1 min-w-[45%]" style={cardShadow}>
+      <View className={`w-10 h-10 rounded-lg ${iconBg} items-center justify-center mb-2`}>
+        <Ionicons name={icon} size={20} color={iconColor} />
+      </View>
+      <Text className="text-2xl font-bold text-owl-800">{value}</Text>
+      <Text className="text-owl-500 text-sm">{label}</Text>
+    </View>
+  );
+}
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+const cardShadow = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  elevation: 3,
+};

@@ -12,29 +12,36 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { generateApi, settingsApi, vocabularyApi } from "../../src/lib/api";
 import { useAuthStore } from "../../src/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const cardShadow = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  elevation: 3,
+};
 
 const topicSuggestions = [
   { icon: "cafe", label: "Café", topic: "Ordering coffee and pastries at a local café" },
-  { icon: "airplane", label: "Airport", topic: "Navigating an airport and catching a flight" },
+  { icon: "airplane", label: "Travel", topic: "Navigating an airport and catching a flight" },
   { icon: "shirt", label: "Shopping", topic: "Shopping for clothes at a store" },
-  { icon: "restaurant", label: "Restaurant", topic: "Having dinner at a restaurant" },
+  { icon: "restaurant", label: "Dining", topic: "Having dinner at a restaurant" },
   { icon: "people", label: "Friends", topic: "Meeting new people and making friends" },
-  { icon: "briefcase", label: "Job Interview", topic: "A job interview scenario" },
-  { icon: "school", label: "University", topic: "First day at a foreign university" },
-  { icon: "newspaper", label: "News", topic: "Reading about current events" },
+  { icon: "briefcase", label: "Work", topic: "A job interview scenario" },
 ];
 
 const styleOptions = [
-  { value: "story", label: "Story", description: "Narrative with characters" },
-  { value: "dialogue", label: "Dialogue", description: "Conversation format" },
-  { value: "article", label: "Article", description: "Informative style" },
-  { value: "description", label: "Description", description: "Vivid descriptions" },
+  { value: "story", label: "Story" },
+  { value: "dialogue", label: "Dialogue" },
+  { value: "article", label: "Article" },
+  { value: "description", label: "Description" },
 ];
 
 const difficultyOptions = [
-  { value: "beginner", label: "Beginner", description: "Simple vocabulary" },
-  { value: "intermediate", label: "Intermediate", description: "Varied structures" },
-  { value: "advanced", label: "Advanced", description: "Complex & idiomatic" },
+  { value: "beginner", label: "Beginner", bg: "bg-primary-500" },
+  { value: "intermediate", label: "Intermediate", bg: "bg-warning-500" },
+  { value: "advanced", label: "Advanced", bg: "bg-danger-500" },
 ];
 
 export default function GenerateScreen() {
@@ -92,302 +99,294 @@ export default function GenerateScreen() {
       : 0) + (includeLearningWords ? vocabStats?.learning || 0 : 0);
 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
-      <View className="p-4">
-        {/* Topic Input */}
-        <View className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
-          <Text className="text-lg font-semibold text-gray-900 mb-3">
-            What would you like to read about?
-          </Text>
-          <View className="flex-row items-center border border-gray-300 rounded-xl px-4 py-3 bg-white">
-            <Ionicons name="bulb-outline" size={20} color="#9ca3af" />
-            <TextInput
-              value={topic}
-              onChangeText={setTopic}
-              placeholder="e.g. A day at the beach..."
-              className="flex-1 ml-3 text-gray-900"
-              placeholderTextColor="#9ca3af"
-              multiline
-            />
+    <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="p-5">
+          {/* Header */}
+          <Text className="text-owl-500 text-base">Create</Text>
+          <Text className="text-owl-800 text-2xl font-bold mt-1 mb-4">Reading Material</Text>
+
+          {/* Topic Input Card */}
+          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
+            <Text className="font-bold text-owl-800 mb-3">What do you want to read?</Text>
+            
+            <View className="bg-owl-100 rounded-xl px-4 py-3 flex-row items-start">
+              <Ionicons name="bulb" size={20} color="#ffc800" style={{ marginTop: 2 }} />
+              <TextInput
+                value={topic}
+                onChangeText={setTopic}
+                placeholder="e.g. A day at the beach with friends..."
+                className="flex-1 ml-3 text-owl-800 text-base"
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={2}
+                style={{ minHeight: 50 }}
+              />
+            </View>
+
+            {/* Topic Suggestions */}
+            <Text className="text-sm text-owl-500 mt-4 mb-2 font-medium">Quick ideas:</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {topicSuggestions.map((suggestion) => (
+                <TouchableOpacity
+                  key={suggestion.label}
+                  onPress={() => setTopic(suggestion.topic)}
+                  activeOpacity={0.7}
+                  className="flex-row items-center bg-secondary-100 rounded-xl px-3 py-2"
+                >
+                  <Ionicons name={suggestion.icon as any} size={16} color="#1cb0f6" />
+                  <Text className="text-sm font-medium ml-1.5 text-secondary-700">
+                    {suggestion.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
-          {/* Topic Suggestions */}
-          <Text className="text-sm text-gray-500 mt-4 mb-2">
-            Or try one of these:
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {topicSuggestions.map((suggestion) => (
-              <TouchableOpacity
-                key={suggestion.label}
-                onPress={() => setTopic(suggestion.topic)}
-                className="flex-row items-center bg-gray-100 px-3 py-2 rounded-lg"
-              >
-                <Ionicons
-                  name={suggestion.icon as any}
-                  size={16}
-                  color="#6b7280"
-                />
-                <Text className="text-sm text-gray-700 ml-2">
-                  {suggestion.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          {/* Language Selection */}
+          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
+            <Text className="font-bold text-owl-800 mb-3">Target Language</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View className="flex-row gap-2">
+                {(languages || [{ code: "Spanish", name: "Spanish" }]).map((lang: any) => {
+                  const isSelected = language === lang.code;
+                  return (
+                    <TouchableOpacity
+                      key={lang.code}
+                      onPress={() => setLanguage(lang.code)}
+                      activeOpacity={0.8}
+                      className={`px-4 py-2.5 rounded-xl ${
+                        isSelected ? "bg-secondary-500" : "bg-owl-100"
+                      }`}
+                    >
+                      <Text className={`font-medium ${
+                        isSelected ? "text-white" : "text-owl-700"
+                      }`}>
+                        {lang.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+            <View className="bg-secondary-100 rounded-xl p-3 mt-3 flex-row items-center">
+              <Ionicons name="library" size={18} color="#1cb0f6" />
+              <Text className="text-sm text-secondary-700 ml-2">
+                <Text className="font-bold">{knownWords}</Text> known words in {language}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        {/* Language Selection */}
-        <View className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
-          <Text className="text-lg font-semibold text-gray-900 mb-3">
-            Target Language
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {/* Difficulty Selection */}
+          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
+            <Text className="font-bold text-owl-800 mb-3">Difficulty Level</Text>
             <View className="flex-row gap-2">
-              {(languages || [{ code: "Spanish", name: "Spanish", nativeName: "Español" }]).map(
-                (lang: any) => (
+              {difficultyOptions.map((opt) => {
+                const isSelected = difficulty === opt.value;
+                return (
                   <TouchableOpacity
-                    key={lang.code}
-                    onPress={() => setLanguage(lang.code)}
-                    className={`px-4 py-2 rounded-lg border ${
-                      language === lang.code
-                        ? "bg-primary-50 border-primary-500"
-                        : "bg-white border-gray-300"
+                    key={opt.value}
+                    onPress={() => setDifficulty(opt.value)}
+                    activeOpacity={0.8}
+                    className={`flex-1 py-3 rounded-xl items-center ${
+                      isSelected ? opt.bg : "bg-owl-100"
                     }`}
                   >
-                    <Text
-                      className={
-                        language === lang.code
-                          ? "text-primary-700 font-medium"
-                          : "text-gray-700"
-                      }
-                    >
-                      {lang.name}
+                    <Text className={`font-bold text-sm ${
+                      isSelected ? "text-white" : "text-owl-700"
+                    }`}>
+                      {opt.label}
                     </Text>
                   </TouchableOpacity>
-                )
-              )}
+                );
+              })}
             </View>
-          </ScrollView>
-          <View className="bg-primary-50 rounded-lg p-3 mt-3">
-            <Text className="text-sm text-primary-700">
-              <Ionicons name="book-outline" size={14} /> You have{" "}
-              <Text className="font-semibold">{knownWords}</Text> known words in{" "}
-              {language}
-            </Text>
           </View>
-        </View>
 
-        {/* Difficulty */}
-        <View className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
-          <Text className="text-lg font-semibold text-gray-900 mb-3">
-            Difficulty Level
-          </Text>
-          <View className="gap-2">
-            {difficultyOptions.map((opt) => (
-              <TouchableOpacity
-                key={opt.value}
-                onPress={() => setDifficulty(opt.value)}
-                className={`p-3 rounded-lg border ${
-                  difficulty === opt.value
-                    ? "bg-primary-50 border-primary-500"
-                    : "bg-white border-gray-200"
-                }`}
-              >
-                <Text
-                  className={`font-medium ${
-                    difficulty === opt.value
-                      ? "text-primary-700"
-                      : "text-gray-900"
-                  }`}
-                >
-                  {opt.label}
-                </Text>
-                <Text className="text-sm text-gray-500">{opt.description}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Style */}
-        <View className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
-          <Text className="text-lg font-semibold text-gray-900 mb-3">
-            Writing Style
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {styleOptions.map((opt) => (
-              <TouchableOpacity
-                key={opt.value}
-                onPress={() => setStyle(opt.value)}
-                className={`px-4 py-2 rounded-lg border ${
-                  style === opt.value
-                    ? "bg-primary-50 border-primary-500"
-                    : "bg-white border-gray-200"
-                }`}
-              >
-                <Text
-                  className={
-                    style === opt.value
-                      ? "text-primary-700 font-medium"
-                      : "text-gray-700"
-                  }
-                >
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Advanced Options Toggle */}
-        <TouchableOpacity
-          onPress={() => setShowAdvanced(!showAdvanced)}
-          className="flex-row items-center justify-between bg-white rounded-xl p-4 mb-4 border border-gray-200"
-        >
-          <Text className="font-medium text-gray-900">Advanced Options</Text>
-          <Ionicons
-            name={showAdvanced ? "chevron-up" : "chevron-down"}
-            size={20}
-            color="#6b7280"
-          />
-        </TouchableOpacity>
-
-        {showAdvanced && (
-          <View className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
-            {/* Word Count */}
-            <View className="mb-4">
-              <Text className="font-medium text-gray-900 mb-2">
-                Word Count: {wordCount}
-              </Text>
-              <View className="flex-row gap-2">
-                {[100, 150, 200, 300, 400].map((count) => (
+          {/* Writing Style */}
+          <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
+            <Text className="font-bold text-owl-800 mb-3">Writing Style</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {styleOptions.map((opt) => {
+                const isSelected = style === opt.value;
+                return (
                   <TouchableOpacity
-                    key={count}
-                    onPress={() => setWordCount(count)}
-                    className={`px-3 py-1 rounded-lg ${
-                      wordCount === count
-                        ? "bg-primary-100"
-                        : "bg-gray-100"
+                    key={opt.value}
+                    onPress={() => setStyle(opt.value)}
+                    activeOpacity={0.8}
+                    className={`px-4 py-2.5 rounded-xl ${
+                      isSelected ? "bg-primary-500" : "bg-owl-100"
                     }`}
                   >
-                    <Text
-                      className={
-                        wordCount === count
-                          ? "text-primary-700"
-                          : "text-gray-600"
-                      }
-                    >
-                      {count}
+                    <Text className={`font-medium ${
+                      isSelected ? "text-white" : "text-owl-700"
+                    }`}>
+                      {opt.label}
                     </Text>
                   </TouchableOpacity>
-                ))}
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Advanced Options Toggle */}
+          <TouchableOpacity
+            onPress={() => setShowAdvanced(!showAdvanced)}
+            activeOpacity={0.8}
+            className="bg-white rounded-xl p-4 mb-4 flex-row items-center justify-between"
+            style={cardShadow}
+          >
+            <View className="flex-row items-center">
+              <Ionicons name="settings-outline" size={20} color="#777" />
+              <Text className="font-bold text-owl-700 ml-3">Advanced Options</Text>
+            </View>
+            <Ionicons
+              name={showAdvanced ? "chevron-up" : "chevron-down"}
+              size={24}
+              color="#777"
+            />
+          </TouchableOpacity>
+
+          {showAdvanced && (
+            <View className="bg-white rounded-xl p-4 mb-4" style={cardShadow}>
+              {/* Word Count */}
+              <View className="mb-5">
+                <Text className="font-bold text-owl-800 mb-3">
+                  Word Count: <Text className="text-secondary-600">{wordCount}</Text>
+                </Text>
+                <View className="flex-row gap-2">
+                  {[100, 150, 200, 300, 400].map((count) => {
+                    const isSelected = wordCount === count;
+                    return (
+                      <TouchableOpacity
+                        key={count}
+                        onPress={() => setWordCount(count)}
+                        activeOpacity={0.8}
+                        className={`px-3 py-2 rounded-xl ${
+                          isSelected ? "bg-secondary-500" : "bg-owl-100"
+                        }`}
+                      >
+                        <Text className={`font-medium ${
+                          isSelected ? "text-white" : "text-owl-600"
+                        }`}>
+                          {count}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Known Words Ratio */}
+              <View className="mb-5">
+                <Text className="font-bold text-owl-800 mb-3">
+                  Known Words: <Text className="text-primary-600">{knownWordsRatio}%</Text>
+                </Text>
+                <View className="flex-row gap-2">
+                  {[50, 60, 70, 80, 90].map((ratio) => {
+                    const isSelected = knownWordsRatio === ratio;
+                    return (
+                      <TouchableOpacity
+                        key={ratio}
+                        onPress={() => setKnownWordsRatio(ratio)}
+                        activeOpacity={0.8}
+                        className={`flex-1 py-2.5 rounded-xl items-center ${
+                          isSelected ? "bg-primary-500" : "bg-owl-100"
+                        }`}
+                      >
+                        <Text className={`font-bold ${
+                          isSelected ? "text-white" : "text-owl-600"
+                        }`}>
+                          {ratio}%
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Include toggles */}
+              <View className="gap-4">
+                <TouchableOpacity
+                  onPress={() => setIncludeLearningWords(!includeLearningWords)}
+                  className="flex-row items-center"
+                >
+                  <View
+                    className={`w-6 h-6 rounded-lg border-2 mr-3 items-center justify-center ${
+                      includeLearningWords
+                        ? "bg-primary-500 border-primary-500"
+                        : "border-owl-300 bg-white"
+                    }`}
+                  >
+                    {includeLearningWords && (
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    )}
+                  </View>
+                  <Text className="text-owl-700 font-medium">Include learning words</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setIncludeLearnedWords(!includeLearnedWords)}
+                  className="flex-row items-center"
+                >
+                  <View
+                    className={`w-6 h-6 rounded-lg border-2 mr-3 items-center justify-center ${
+                      includeLearnedWords
+                        ? "bg-primary-500 border-primary-500"
+                        : "border-owl-300 bg-white"
+                    }`}
+                  >
+                    {includeLearnedWords && (
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    )}
+                  </View>
+                  <Text className="text-owl-700 font-medium">Include learned words</Text>
+                </TouchableOpacity>
               </View>
             </View>
+          )}
 
-            {/* Known Words Ratio */}
-            <View className="mb-4">
-              <Text className="font-medium text-gray-900 mb-2">
-                Known Words Ratio: {knownWordsRatio}%
-              </Text>
-              <View className="flex-row gap-2">
-                {[50, 60, 70, 80, 90].map((ratio) => (
-                  <TouchableOpacity
-                    key={ratio}
-                    onPress={() => setKnownWordsRatio(ratio)}
-                    className={`px-3 py-1 rounded-lg ${
-                      knownWordsRatio === ratio
-                        ? "bg-primary-100"
-                        : "bg-gray-100"
-                    }`}
-                  >
-                    <Text
-                      className={
-                        knownWordsRatio === ratio
-                          ? "text-primary-700"
-                          : "text-gray-600"
-                      }
-                    >
-                      {ratio}%
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+          {/* Generate Button */}
+          <TouchableOpacity
+            onPress={handleGenerate}
+            disabled={!topic.trim() || generateMutation.isPending}
+            activeOpacity={0.8}
+            className={`rounded-xl py-4 border-b-4 ${
+              !topic.trim() || generateMutation.isPending
+                ? "bg-owl-200 border-owl-300"
+                : "bg-primary-500 border-primary-700"
+            }`}
+          >
+            {generateMutation.isPending ? (
+              <View className="flex-row items-center justify-center">
+                <ActivityIndicator color="white" size="small" />
+                <Text className="text-white text-center font-bold text-lg ml-2">
+                  Creating...
+                </Text>
               </View>
-            </View>
-
-            {/* Include toggles */}
-            <View className="gap-3">
-              <TouchableOpacity
-                onPress={() => setIncludeLearningWords(!includeLearningWords)}
-                className="flex-row items-center"
-              >
-                <View
-                  className={`w-5 h-5 rounded border mr-3 items-center justify-center ${
-                    includeLearningWords
-                      ? "bg-primary-600 border-primary-600"
-                      : "border-gray-300"
-                  }`}
-                >
-                  {includeLearningWords && (
-                    <Ionicons name="checkmark" size={14} color="white" />
-                  )}
-                </View>
-                <Text className="text-gray-700">Include learning words</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setIncludeLearnedWords(!includeLearnedWords)}
-                className="flex-row items-center"
-              >
-                <View
-                  className={`w-5 h-5 rounded border mr-3 items-center justify-center ${
-                    includeLearnedWords
-                      ? "bg-primary-600 border-primary-600"
-                      : "border-gray-300"
-                  }`}
-                >
-                  {includeLearnedWords && (
-                    <Ionicons name="checkmark" size={14} color="white" />
-                  )}
-                </View>
-                <Text className="text-gray-700">Include learned words</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Generate Button */}
-        <TouchableOpacity
-          onPress={handleGenerate}
-          disabled={!topic.trim() || generateMutation.isPending}
-          className={`flex-row items-center justify-center py-4 rounded-xl mb-6 ${
-            !topic.trim() || generateMutation.isPending
-              ? "bg-primary-300"
-              : "bg-primary-600"
-          }`}
-        >
-          {generateMutation.isPending ? (
-            <>
-              <ActivityIndicator color="white" className="mr-2" />
-              <Text className="text-white font-semibold text-lg">
-                Generating...
-              </Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name="sparkles" size={20} color="white" />
-              <Text className="text-white font-semibold text-lg ml-2">
+            ) : (
+              <Text className={`text-center font-bold text-lg ${
+                !topic.trim() ? "text-owl-400" : "text-white"
+              }`}>
                 Generate Reading Material
               </Text>
-            </>
-          )}
-        </TouchableOpacity>
+            )}
+          </TouchableOpacity>
 
-        {generateMutation.isError && (
-          <View className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-            <Text className="text-red-700">
-              Failed to generate text. Please try again.
-            </Text>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+          {generateMutation.isError && (
+            <View className="bg-danger-100 border-l-4 border-danger-500 rounded-xl p-4 mt-4 flex-row items-center">
+              <Ionicons name="alert-circle" size={20} color="#ff4b4b" />
+              <Text className="text-danger-700 ml-2">
+                Failed to generate text. Please try again.
+              </Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

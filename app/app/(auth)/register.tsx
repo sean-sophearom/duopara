@@ -6,18 +6,21 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
+  StatusBar,
   ScrollView,
 } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useAuthStore } from "../../src/store/authStore";
+import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { GradientButton } from "../../src/components/ui";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const { register, isLoading, error, clearError } = useAuthStore();
   const router = useRouter();
@@ -46,137 +49,126 @@ export default function RegisterScreen() {
   const displayError = localError || error;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <View className="flex-1 justify-center px-6 py-12">
-            {/* Logo/Brand */}
+          <View className="px-6 py-8">
+            {/* Logo */}
             <View className="items-center mb-10">
-              <Text className="text-4xl font-bold text-primary-600">
-                Duopara
-              </Text>
-              <Text className="text-gray-600 mt-2 text-center">
-                Start your language learning journey
-              </Text>
+              <View className="w-20 h-20 rounded-2xl bg-secondary-500 items-center justify-center mb-4">
+                <Text className="text-4xl">🚀</Text>
+              </View>
+              <Text className="text-3xl font-bold text-owl-800">Join Duopara</Text>
+              <Text className="text-owl-500 mt-1">Start learning today</Text>
             </View>
 
-            {/* Register Card */}
-            <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-              <Text className="text-2xl font-semibold text-center mb-6 text-gray-900">
-                Create account
-              </Text>
+            {/* Error */}
+            {displayError && (
+              <View className="bg-danger-100 rounded-xl p-4 mb-6 flex-row items-center">
+                <Ionicons name="alert-circle" size={20} color="#ff4b4b" />
+                <Text className="text-danger-700 text-sm ml-2 flex-1">{displayError}</Text>
+                <TouchableOpacity onPress={() => { clearError(); setLocalError(null); }}>
+                  <Ionicons name="close" size={20} color="#ff4b4b" />
+                </TouchableOpacity>
+              </View>
+            )}
 
-              {/* Error Alert */}
-              {displayError && (
-                <View className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                  <Text className="text-red-700 text-sm">{displayError}</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      clearError();
-                      setLocalError(null);
-                    }}
-                    className="absolute right-2 top-2"
-                  >
-                    <Text className="text-red-500 font-bold">×</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {/* Name Input */}
-              <View className="mb-4">
-                <Text className="text-sm font-medium text-gray-700 mb-1">
-                  Name (optional)
-                </Text>
+            {/* Name Input */}
+            <View className="mb-4">
+              <Text className="text-owl-700 font-medium mb-2 ml-1">Name (optional)</Text>
+              <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3 border-2 border-owl-200">
                 <TextInput
                   value={name}
                   onChangeText={setName}
                   placeholder="Your name"
                   autoCapitalize="words"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white"
-                  placeholderTextColor="#9ca3af"
+                  className="flex-1 text-base text-owl-800"
+                  placeholderTextColor="#afafaf"
                 />
               </View>
+            </View>
 
-              {/* Email Input */}
-              <View className="mb-4">
-                <Text className="text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </Text>
+            {/* Email Input */}
+            <View className="mb-4">
+              <Text className="text-owl-700 font-medium mb-2 ml-1">Email</Text>
+              <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3 border-2 border-owl-200">
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
-                  placeholder="you@example.com"
+                  placeholder="your@email.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white"
-                  placeholderTextColor="#9ca3af"
+                  className="flex-1 text-base text-owl-800"
+                  placeholderTextColor="#afafaf"
                 />
               </View>
+            </View>
 
-              {/* Password Input */}
-              <View className="mb-4">
-                <Text className="text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </Text>
+            {/* Password Input */}
+            <View className="mb-4">
+              <Text className="text-owl-700 font-medium mb-2 ml-1">Password</Text>
+              <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3 border-2 border-owl-200">
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
                   placeholder="••••••••"
-                  secureTextEntry
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white"
-                  placeholderTextColor="#9ca3af"
+                  secureTextEntry={!showPassword}
+                  className="flex-1 text-base text-owl-800"
+                  placeholderTextColor="#afafaf"
                 />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={22}
+                    color="#777777"
+                  />
+                </TouchableOpacity>
               </View>
+            </View>
 
-              {/* Confirm Password Input */}
-              <View className="mb-6">
-                <Text className="text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
-                </Text>
+            {/* Confirm Password Input */}
+            <View className="mb-8">
+              <Text className="text-owl-700 font-medium mb-2 ml-1">Confirm Password</Text>
+              <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3 border-2 border-owl-200">
                 <TextInput
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   placeholder="••••••••"
-                  secureTextEntry
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white"
-                  placeholderTextColor="#9ca3af"
+                  secureTextEntry={!showPassword}
+                  className="flex-1 text-base text-owl-800"
+                  placeholderTextColor="#afafaf"
                 />
               </View>
+            </View>
 
-              {/* Register Button */}
-              <TouchableOpacity
-                onPress={handleRegister}
-                disabled={isLoading}
-                className={`w-full py-4 rounded-lg items-center flex-row justify-center ${
-                  isLoading ? "bg-primary-400" : "bg-primary-600"
-                }`}
-              >
-                {isLoading && (
-                  <ActivityIndicator color="white" className="mr-2" />
-                )}
-                <Text className="text-white font-semibold text-lg">
-                  {isLoading ? "Creating account..." : "Create account"}
-                </Text>
-              </TouchableOpacity>
+            {/* Register Button */}
+            <GradientButton
+              title={isLoading ? "Creating account..." : "CREATE ACCOUNT"}
+              onPress={handleRegister}
+              variant="secondary"
+              disabled={isLoading}
+              loading={isLoading}
+              fullWidth
+              size="lg"
+            />
 
-              {/* Login Link */}
-              <View className="flex-row justify-center mt-6">
-                <Text className="text-gray-600">Already have an account? </Text>
-                <Link href="/(auth)/login" asChild>
-                  <TouchableOpacity>
-                    <Text className="text-primary-600 font-medium">
-                      Sign in
-                    </Text>
-                  </TouchableOpacity>
-                </Link>
-              </View>
+            {/* Login Link */}
+            <View className="flex-row justify-center mt-8">
+              <Text className="text-owl-500">Already have an account? </Text>
+              <Link href="/(auth)/login" asChild>
+                <TouchableOpacity>
+                  <Text className="text-secondary-500 font-bold">SIGN IN</Text>
+                </TouchableOpacity>
+              </Link>
             </View>
           </View>
         </ScrollView>

@@ -14,11 +14,24 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { vocabularyApi, settingsApi } from "../../src/lib/api";
 import { useAuthStore } from "../../src/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const statusColors: Record<string, { bg: string; text: string }> = {
-  learning: { bg: "bg-yellow-100", text: "text-yellow-700" },
-  learned: { bg: "bg-blue-100", text: "text-blue-700" },
-  mastered: { bg: "bg-green-100", text: "text-green-700" },
+const cardShadow = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  elevation: 3,
+};
+
+const statusConfig: Record<string, { 
+  bg: string;
+  text: string;
+  label: string;
+}> = {
+  learning: { bg: "bg-warning-500", text: "text-white", label: "Learning" },
+  learned: { bg: "bg-secondary-500", text: "text-white", label: "Learned" },
+  mastered: { bg: "bg-primary-500", text: "text-white", label: "Mastered" },
 };
 
 export default function VocabularyScreen() {
@@ -117,155 +130,163 @@ export default function VocabularyScreen() {
   const words = data?.words || [];
   const total = data?.total || 0;
 
-  const renderItem = ({ item }: { item: any }) => (
-    <View className="bg-white rounded-xl p-4 mb-3 border border-gray-200">
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1">
-          <Text className="font-semibold text-gray-900 text-lg">
-            {item.word}
-          </Text>
-          {item.translation && (
-            <Text className="text-gray-600 mt-1">{item.translation}</Text>
-          )}
-          {item.partOfSpeech && (
-            <Text className="text-gray-400 text-sm mt-1 italic">
-              {item.partOfSpeech}
-            </Text>
-          )}
+  const renderItem = ({ item }: { item: any }) => {
+    const config = statusConfig[item.status];
+    
+    return (
+      <View className="bg-white rounded-xl p-4 mb-3" style={cardShadow}>
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1">
+            <Text className="font-bold text-owl-800 text-lg">{item.word}</Text>
+            {item.translation && (
+              <Text className="text-owl-500 mt-1 text-base">{item.translation}</Text>
+            )}
+            {item.partOfSpeech && (
+              <View className="bg-owl-100 px-2 py-0.5 rounded-full mt-2 self-start">
+                <Text className="text-owl-500 text-xs italic">{item.partOfSpeech}</Text>
+              </View>
+            )}
+          </View>
+
+          <View className="flex-row items-center gap-2">
+            <TouchableOpacity
+              onPress={() => handleStatusChange(item.id, item.status)}
+              activeOpacity={0.8}
+              className={`px-3 py-1.5 rounded-full ${config.bg}`}
+            >
+              <Text className="text-xs font-bold text-white capitalize">
+                {item.status}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleDelete(item.id, item.word)}
+              className="p-2 bg-danger-100 rounded-full"
+            >
+              <Ionicons name="trash-outline" size={16} color="#ff4b4b" />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View className="flex-row items-center gap-2">
-          <TouchableOpacity
-            onPress={() => handleStatusChange(item.id, item.status)}
-            className={`px-3 py-1.5 rounded-lg ${statusColors[item.status]?.bg}`}
-          >
-            <Text className={`text-sm font-medium ${statusColors[item.status]?.text}`}>
-              {item.status}
+        {/* Stats */}
+        <View className="flex-row items-center mt-3 gap-3 pt-3 border-t border-owl-100">
+          <View className="flex-row items-center bg-owl-50 px-2 py-1 rounded-lg">
+            <Ionicons name="eye" size={12} color="#777" />
+            <Text className="text-owl-600 text-xs ml-1 font-medium">
+              {item.timesEncountered} seen
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => handleDelete(item.id, item.word)}
-            className="p-2"
-          >
-            <Ionicons name="trash-outline" size={18} color="#ef4444" />
-          </TouchableOpacity>
+          </View>
+          <View className="flex-row items-center bg-primary-50 px-2 py-1 rounded-lg">
+            <Ionicons name="checkmark-circle" size={12} color="#58cc02" />
+            <Text className="text-primary-700 text-xs ml-1 font-medium">
+              {item.timesCorrect} correct
+            </Text>
+          </View>
+          {item.practiceStreak > 0 && (
+            <View className="flex-row items-center bg-warning-100 px-2 py-1 rounded-lg">
+              <Text className="text-warning-700 text-xs font-medium">
+                {item.practiceStreak} streak
+              </Text>
+            </View>
+          )}
         </View>
       </View>
+    );
+  };
 
-      {/* Stats */}
-      <View className="flex-row items-center mt-3 gap-4">
-        <View className="flex-row items-center">
-          <Ionicons name="eye-outline" size={14} color="#9ca3af" />
-          <Text className="text-gray-500 text-sm ml-1">
-            {item.timesEncountered}
-          </Text>
-        </View>
-        <View className="flex-row items-center">
-          <Ionicons name="checkmark-circle-outline" size={14} color="#9ca3af" />
-          <Text className="text-gray-500 text-sm ml-1">
-            {item.timesCorrect}
-          </Text>
-        </View>
-        {item.practiceStreak > 0 && (
-          <View className="flex-row items-center">
-            <Ionicons name="flame-outline" size={14} color="#f59e0b" />
-            <Text className="text-gray-500 text-sm ml-1">
-              {item.practiceStreak}
-            </Text>
+  return (
+    <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
+      {/* Header */}
+      <View className="px-5 pt-4 pb-4">
+        <Text className="text-owl-500 text-base">Your</Text>
+        <Text className="text-owl-800 text-2xl font-bold mt-1">Vocabulary</Text>
+        
+        {/* Stats Row */}
+        {stats && (
+          <View className="flex-row gap-2 mt-4">
+            <View className="flex-1 bg-white rounded-xl p-3 items-center" style={cardShadow}>
+              <Text className="text-owl-800 font-bold text-xl">{stats.total || 0}</Text>
+              <Text className="text-owl-500 text-xs">Total</Text>
+            </View>
+            <View className="flex-1 bg-white rounded-xl p-3 items-center" style={cardShadow}>
+              <Text className="text-warning-500 font-bold text-xl">{stats.learning || 0}</Text>
+              <Text className="text-owl-500 text-xs">Learning</Text>
+            </View>
+            <View className="flex-1 bg-white rounded-xl p-3 items-center" style={cardShadow}>
+              <Text className="text-secondary-500 font-bold text-xl">{stats.learned || 0}</Text>
+              <Text className="text-owl-500 text-xs">Learned</Text>
+            </View>
+            <View className="flex-1 bg-white rounded-xl p-3 items-center" style={cardShadow}>
+              <Text className="text-primary-500 font-bold text-xl">{stats.mastered || 0}</Text>
+              <Text className="text-owl-500 text-xs">Mastered</Text>
+            </View>
           </View>
         )}
       </View>
-    </View>
-  );
-
-  return (
-    <View className="flex-1 bg-gray-50">
-      {/* Stats Summary */}
-      {stats && (
-        <View className="flex-row p-4 bg-white border-b border-gray-200 gap-4">
-          <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-gray-900">
-              {stats.total || 0}
-            </Text>
-            <Text className="text-xs text-gray-500">Total</Text>
-          </View>
-          <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-yellow-600">
-              {stats.learning || 0}
-            </Text>
-            <Text className="text-xs text-gray-500">Learning</Text>
-          </View>
-          <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-blue-600">
-              {stats.learned || 0}
-            </Text>
-            <Text className="text-xs text-gray-500">Learned</Text>
-          </View>
-          <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-green-600">
-              {stats.mastered || 0}
-            </Text>
-            <Text className="text-xs text-gray-500">Mastered</Text>
-          </View>
-        </View>
-      )}
 
       {/* Search and Filters */}
-      <View className="p-4 bg-white border-b border-gray-200">
-        <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-2 mb-3">
-          <Ionicons name="search" size={20} color="#9ca3af" />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search words..."
-            className="flex-1 ml-2 text-gray-900"
-            placeholderTextColor="#9ca3af"
-          />
-          {search && (
-            <TouchableOpacity onPress={() => setSearch("")}>
-              <Ionicons name="close-circle" size={20} color="#9ca3af" />
-            </TouchableOpacity>
-          )}
-        </View>
+      <View className="px-5 mb-4">
+        <View className="bg-white rounded-xl p-4" style={cardShadow}>
+          <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3 mb-3">
+            <Ionicons name="search" size={20} color="#777" />
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search your vocabulary..."
+              className="flex-1 ml-3 text-owl-800 text-base"
+              placeholderTextColor="#afafaf"
+            />
+            {search && (
+              <TouchableOpacity onPress={() => setSearch("")}>
+                <Ionicons name="close-circle" size={20} color="#afafaf" />
+              </TouchableOpacity>
+            )}
+          </View>
 
-        <View className="flex-row gap-2">
-          {["", "learning", "learned", "mastered"].map((status) => (
-            <TouchableOpacity
-              key={status}
-              onPress={() =>
-                setStatusFilter(statusFilter === status ? "" : status)
-              }
-              className={`px-3 py-1.5 rounded-lg ${
-                statusFilter === status
-                  ? "bg-primary-100 border border-primary-500"
-                  : "bg-gray-100"
-              }`}
-            >
-              <Text
-                className={
-                  statusFilter === status ? "text-primary-700" : "text-gray-600"
-                }
-              >
-                {status || "All"}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <View className="flex-row gap-2">
+            {[
+              { key: "", label: "All" },
+              { key: "learning", label: "Learning" },
+              { key: "learned", label: "Learned" },
+              { key: "mastered", label: "Mastered" },
+            ].map((item) => {
+              const isSelected = statusFilter === item.key;
+              return (
+                <TouchableOpacity
+                  key={item.key}
+                  onPress={() => setStatusFilter(statusFilter === item.key ? "" : item.key)}
+                  activeOpacity={0.8}
+                  className={`flex-1 py-2 rounded-xl items-center ${
+                    isSelected ? "bg-secondary-500" : "bg-owl-100"
+                  }`}
+                >
+                  <Text className={`text-xs font-medium ${
+                    isSelected ? "text-white" : "text-owl-600"
+                  }`}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       </View>
 
       {/* Word List */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#0ea5e9" />
+          <View className="bg-white rounded-xl p-6 items-center" style={cardShadow}>
+            <ActivityIndicator size="large" color="#58cc02" />
+            <Text className="text-owl-500 mt-3">Loading vocabulary...</Text>
+          </View>
         </View>
       ) : words.length === 0 ? (
         <View className="flex-1 items-center justify-center p-8">
-          <Ionicons name="library-outline" size={48} color="#9ca3af" />
-          <Text className="text-gray-500 text-lg mt-4 text-center">
-            No words found
-          </Text>
-          <Text className="text-gray-400 text-center mt-2">
-            Start reading to build your vocabulary
+          <View className="w-24 h-24 rounded-full bg-secondary-100 items-center justify-center mb-4">
+            <Ionicons name="book" size={48} color="#1cb0f6" />
+          </View>
+          <Text className="text-owl-800 text-xl font-bold mt-2">No words found</Text>
+          <Text className="text-owl-500 text-center mt-2 max-w-xs">
+            Start reading to build your vocabulary, or add words manually!
           </Text>
         </View>
       ) : (
@@ -273,9 +294,14 @@ export default function VocabularyScreen() {
           data={words}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              colors={["#58cc02"]}
+              tintColor="#58cc02"
+            />
           }
           onEndReached={() => {
             if (words.length < total) {
@@ -283,13 +309,15 @@ export default function VocabularyScreen() {
             }
           }}
           onEndReachedThreshold={0.5}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
       {/* Add Button */}
       <TouchableOpacity
         onPress={() => setShowAddModal(true)}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-primary-600 rounded-full items-center justify-center shadow-lg"
+        activeOpacity={0.8}
+        className="absolute bottom-24 right-5 w-14 h-14 rounded-xl bg-primary-500 items-center justify-center border-b-4 border-primary-700"
       >
         <Ionicons name="add" size={28} color="white" />
       </TouchableOpacity>
@@ -298,43 +326,46 @@ export default function VocabularyScreen() {
       <Modal visible={showAddModal} transparent animationType="slide">
         <View className="flex-1 justify-end bg-black/50">
           <View className="bg-white rounded-t-3xl p-6">
+            <View className="w-12 h-1 bg-owl-200 rounded-full self-center mb-4" />
+            
             <View className="flex-row items-center justify-between mb-6">
-              <Text className="text-xl font-semibold text-gray-900">
-                Add Word
-              </Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                <Ionicons name="close" size={24} color="#6b7280" />
+              <Text className="text-xl font-bold text-owl-800">Add New Word</Text>
+              <TouchableOpacity 
+                onPress={() => setShowAddModal(false)}
+                className="w-8 h-8 rounded-full bg-owl-100 items-center justify-center"
+              >
+                <Ionicons name="close" size={20} color="#777" />
               </TouchableOpacity>
             </View>
 
             <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-1">
-                Word
-              </Text>
-              <TextInput
-                value={newWord.word}
-                onChangeText={(text) =>
-                  setNewWord({ ...newWord, word: text })
-                }
-                placeholder="Enter word"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900"
-                placeholderTextColor="#9ca3af"
-              />
+              <Text className="text-sm font-bold text-owl-600 mb-2 ml-1">Word</Text>
+              <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3">
+                <Ionicons name="text" size={20} color="#777" />
+                <TextInput
+                  value={newWord.word}
+                  onChangeText={(text) => setNewWord({ ...newWord, word: text })}
+                  placeholder="Enter word"
+                  className="flex-1 ml-3 text-owl-800 text-base"
+                  placeholderTextColor="#afafaf"
+                />
+              </View>
             </View>
 
             <View className="mb-6">
-              <Text className="text-sm font-medium text-gray-700 mb-1">
+              <Text className="text-sm font-bold text-owl-600 mb-2 ml-1">
                 Translation (optional)
               </Text>
-              <TextInput
-                value={newWord.translation}
-                onChangeText={(text) =>
-                  setNewWord({ ...newWord, translation: text })
-                }
-                placeholder="Enter translation"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900"
-                placeholderTextColor="#9ca3af"
-              />
+              <View className="flex-row items-center bg-owl-100 rounded-xl px-4 py-3">
+                <Ionicons name="language" size={20} color="#777" />
+                <TextInput
+                  value={newWord.translation}
+                  onChangeText={(text) => setNewWord({ ...newWord, translation: text })}
+                  placeholder="Enter translation"
+                  className="flex-1 ml-3 text-owl-800 text-base"
+                  placeholderTextColor="#afafaf"
+                />
+              </View>
             </View>
 
             <TouchableOpacity
@@ -346,19 +377,22 @@ export default function VocabularyScreen() {
                 })
               }
               disabled={!newWord.word.trim() || addMutation.isPending}
-              className={`w-full py-4 rounded-xl items-center ${
+              activeOpacity={0.8}
+              className={`rounded-xl py-4 border-b-4 ${
                 !newWord.word.trim() || addMutation.isPending
-                  ? "bg-primary-300"
-                  : "bg-primary-600"
+                  ? "bg-owl-200 border-owl-300"
+                  : "bg-secondary-500 border-secondary-700"
               }`}
             >
-              <Text className="text-white font-semibold text-lg">
+              <Text className={`text-center font-bold text-lg ${
+                !newWord.word.trim() || addMutation.isPending ? "text-owl-400" : "text-white"
+              }`}>
                 {addMutation.isPending ? "Adding..." : "Add Word"}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
