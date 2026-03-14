@@ -94,7 +94,7 @@ export default function GenerateScreen() {
     <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 70 }}
         showsVerticalScrollIndicator={false}
       >
         <View className="p-6">
@@ -109,7 +109,7 @@ export default function GenerateScreen() {
             <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-3">
               💭 What's your story about?
             </Text>
-            <View className="bg-owl-200 rounded-xl px-4 py-4">
+            <View className="bg-owl-200 rounded-xl px-4 py-1">
               <TextInput
                 value={topic}
                 onChangeText={setTopic}
@@ -117,8 +117,6 @@ export default function GenerateScreen() {
                 className="text-owl-800 text-base"
                 placeholderTextColor="#555555"
                 multiline
-                numberOfLines={2}
-                style={{ minHeight: 50, fontFamily: "Nunito_400Regular" }}
               />
             </View>
 
@@ -211,24 +209,25 @@ export default function GenerateScreen() {
             <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-3">
               ✍️ Writing Style
             </Text>
-            <View className="flex-row flex-wrap gap-2">
+            <View className="flex-row flex-wrap">
               {styleOptions.map((opt) => {
                 const isSelected = style === opt.value;
                 return (
-                  <TouchableOpacity
-                    key={opt.value}
-                    onPress={() => setStyle(opt.value)}
-                    activeOpacity={0.7}
-                    className={`px-5 py-3 rounded-xl ${
-                      isSelected ? "bg-primary-500" : "bg-owl-200"
-                    }`}
-                  >
-                    <Text style={{ fontFamily: "Nunito_600SemiBold" }} className={`${
-                      isSelected ? "text-white" : "text-owl-700"
-                    }`}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
+                  <View className="w-1/2 p-1" key={opt.value}>
+                    <TouchableOpacity
+                      onPress={() => setStyle(opt.value)}
+                      activeOpacity={0.7}
+                      className={`px-5 py-3 rounded-xl ${
+                        isSelected ? "bg-primary-500" : "bg-owl-200"
+                      }`}
+                    >
+                      <Text style={{ fontFamily: "Nunito_600SemiBold" }} className={`${
+                        isSelected ? "text-white" : "text-owl-700"
+                      }`}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 );
               })}
             </View>

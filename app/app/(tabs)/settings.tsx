@@ -95,7 +95,7 @@ export default function SettingsScreen() {
     <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
       <ScrollView 
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 90 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -211,7 +211,7 @@ export default function SettingsScreen() {
           {/* Default Difficulty */}
           <View className="bg-owl-100 rounded-2xl p-5 mb-5">
             <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-4">🎯 Difficulty Level</Text>
-            <View className="flex-row gap-2">
+            <View className="flex-col sm:flex-row gap-2">
               {difficultyOptions.map((opt) => {
                 const isSelected = defaultDifficulty === opt.value;
                 return (

@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Platform, Text } from "react-native";
+import { View, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeColors } from "../../src/lib/theme";
 
 interface TabIconProps {
@@ -31,18 +32,13 @@ function TabIcon({ name, color, focused, size, badge }: TabIconProps) {
           </View>
         )}
       </View>
-      {focused && (
-        <View
-          className="rounded-full mt-1"
-          style={{ width: 5, height: 5, backgroundColor: color }}
-        />
-      )}
     </View>
   );
 }
 
 export default function TabsLayout() {
   const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -61,17 +57,16 @@ export default function TabsLayout() {
           bottom: 0,
           left: 0,
           right: 0,
-          height: Platform.OS === "ios" ? 88 : 68,
+          height: 56 + insets.bottom,
           backgroundColor: colors.owl100,
           borderTopWidth: 1,
           borderTopColor: colors.owl200,
-          paddingBottom: Platform.OS === "ios" ? 28 : 8,
-          paddingTop: 10,
+          paddingTop: 4,
           elevation: 0,
           shadowOpacity: 0,
         },
         tabBarItemStyle: {
-          paddingTop: 4,
+          paddingTop: 2,
         },
       }}
     >

@@ -13,8 +13,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { textsApi, translateApi, vocabularyApi, generateApi } from "../../src/lib/api";
 import { useAuthStore } from "../../src/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Speech from "expo-speech";
+import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { GradientButton } from "../../src/components/ui";
@@ -70,6 +71,7 @@ export default function ReadScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const themeColors = useThemeColors();
+  const insets = useSafeAreaInsets();
 
   // State
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -295,6 +297,7 @@ export default function ReadScreen() {
 
   // Translation handlers
   const handleWordPress = async (word: string, sentence: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const clean = cleanWord(word);
     if (!clean || clean.length < 2) return;
 
@@ -326,6 +329,7 @@ export default function ReadScreen() {
   };
 
   const handleSentencePress = async (sentence: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedSentence(sentence);
     setShowSentenceModal(true);
     setIsLoadingSentence(true);
@@ -372,13 +376,13 @@ export default function ReadScreen() {
     const clean = cleanWord(word);
 
     if (markedWords.has(clean) && highlightLearned) {
-      return "bg-green-900 text-green-300";
+      return "text-green-700 bg-green-100";
     }
     if (markedLearningWords.has(clean) && highlightLearning) {
-      return "bg-yellow-900 text-yellow-300";
+      return "text-yellow-700 bg-yellow-100";
     }
     if (newWordsSet.has(clean) && highlightNew) {
-      return "text-primary-500 font-medium";
+      return "text-blue-500 font-medium";
     }
     return "text-owl-800";
   };
@@ -388,41 +392,42 @@ export default function ReadScreen() {
     if (!text?.content) return null;
     const sentences = splitSentences(text.content);
 
-    return sentences.map((sentence, sIdx) => (
-      <Pressable
-        key={sIdx}
-        onLongPress={() => handleSentencePress(sentence)}
-        delayLongPress={400}
-      >
-        <Text
-          className={`text-lg leading-8 mb-2 rounded px-1 ${
-            speakingIdx === sIdx ? "bg-primary-200" : ""
-          }`}
-        >
-          {sentence.split(/(\s+)/).map((part, wIdx) => {
-            if (/^\s+$/.test(part)) {
-              return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
-            }
+    return (
+      <Text className="text-lg leading-8" style={{ fontFamily: "serif" }}>
+        {sentences.map((sentence, sIdx) => (
+          <Text
+            key={sIdx}
+            className={`rounded px-1 text-lg ${speakingIdx === sIdx ? "bg-primary-200" : ""}`}
+          >
+            {sentence.split(/(\s+)/).map((part, wIdx) => {
+              if (/^\s+$/.test(part)) {
+                return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
+              }
 
-            const clean = cleanWord(part);
-            if (!clean || clean.length < 2) {
-              return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
-            }
+              // const clean = cleanWord(part);
+              // if (!clean || clean.length < 2) {
+              //   return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
+              // }
 
-            return (
-              <Text
-                key={`${sIdx}-${wIdx}`}
-                onPress={() => handleWordPress(part, sentence)}
-                className={`rounded px-0.5 ${getWordStyle(part)}`}
-              >
-                {part}
-              </Text>
-            );
-          })}
-          {" "}
-        </Text>
-      </Pressable>
-    ));
+              return (
+                <View className="px-0.5 -mx-0.5" key={`${sIdx}-${wIdx}`}>
+                  <Text
+                    key={`${sIdx}-${wIdx}`}
+                    onPress={() => handleWordPress(part, sentence)}
+                    onLongPress={() => handleSentencePress(sentence)}
+                    style={{ fontFamily: "serif" }}
+                    className={`rounded-md px-px ${getWordStyle(part)}`}
+                  >
+                    {part}
+                  </Text>
+                </View>
+              );
+            })}
+            {" "}
+          </Text>
+        ))}
+      </Text>
+    );
   };
 
   // Render parallel content
@@ -463,31 +468,29 @@ export default function ReadScreen() {
             >
               <Ionicons name="volume-medium" size={14} color="#a855f7" />
             </TouchableOpacity>
-            <Pressable
-              onLongPress={() => handleSentencePress(sentence)}
-              className="flex-1"
-            >
-              <Text className="text-base leading-7 text-owl-800">
-                {sentence.split(/(\s+)/).map((part, wIdx) => {
-                  if (/^\s+$/.test(part)) {
-                    return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
-                  }
-                  const clean = cleanWord(part);
-                  if (!clean || clean.length < 2) {
-                    return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
-                  }
-                  return (
-                    <Text
-                      key={`${sIdx}-${wIdx}`}
-                      onPress={() => handleWordPress(part, sentence)}
-                      className={`rounded px-0.5 ${getWordStyle(part)}`}
-                    >
-                      {part}
-                    </Text>
-                  );
-                })}
-              </Text>
-            </Pressable>
+            <Text className="flex-1 text-base leading-7 text-owl-800" style={{ fontFamily: "serif" }}>
+              {sentence.split(/(\s+)/).map((part, wIdx) => {
+                if (/^\s+$/.test(part)) {
+                  return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
+                }
+
+                // const clean = cleanWord(part);
+                // if (!clean || clean.length < 2) {
+                //   return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
+                // }
+
+                return (
+                  <Text
+                    key={`${sIdx}-${wIdx}`}
+                    onPress={() => handleWordPress(part, sentence)}
+                    onLongPress={() => handleSentencePress(sentence)}
+                    className={`rounded-md px-px ${getWordStyle(part)}`}
+                  >
+                    {part}
+                  </Text>
+                );
+              })}
+            </Text>
           </View>
           <View className="ml-10 mt-2 pl-3 border-l-2 border-primary-400">
             {trans == null ? (
@@ -804,7 +807,7 @@ export default function ReadScreen() {
             onPress={() => setShowWordModal(false)}
           >
             <Pressable>
-              <View className="rounded-t-3xl p-6 max-h-[70%] bg-owl-100">
+              <View className="rounded-t-3xl p-6 max-h-[70%] bg-owl-100" style={{ paddingBottom: Math.max(insets.bottom, 24) }}>
                 <View className="w-12 h-1 bg-owl-300 rounded-full self-center mb-4" />
                 
                 <View className="flex-row items-center justify-between mb-4">
@@ -954,7 +957,7 @@ export default function ReadScreen() {
             onPress={() => setShowSentenceModal(false)}
           >
             <Pressable>
-              <View className="rounded-t-3xl p-6 max-h-[70%] bg-owl-100">
+              <View className="rounded-t-3xl p-6 max-h-[70%] bg-owl-100" style={{ paddingBottom: Math.max(insets.bottom, 24) }}>
                 <View className="w-12 h-1 bg-owl-300 rounded-full self-center mb-4" />
                 
                 <View className="flex-row items-center justify-between mb-4">

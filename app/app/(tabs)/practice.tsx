@@ -104,7 +104,7 @@ export default function PracticeScreen() {
     <SafeAreaView className="flex-1 bg-owl-50" edges={["top"]}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 70 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
