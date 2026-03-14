@@ -20,6 +20,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { GradientButton } from "../../src/components/ui";
 import { useThemeColors } from "../../src/lib/theme";
+import { useThemeStore } from "../../src/store/themeStore";
+import ReadingContent from "../../src/components/ReadingContent";
 
 // Utility
 export function splitSentences(text: string): string[] {
@@ -102,6 +104,10 @@ export default function ReadScreen() {
   const [highlightLearned, setHighlightLearned] = useState(true);
   const [highlightLearning, setHighlightLearning] = useState(true);
   const [highlightNew, setHighlightNew] = useState(true);
+
+  // DOM component sizing
+  const [contentHeight, setContentHeight] = useState(400);
+  const colorScheme = useThemeStore((s) => s.colorScheme);
 
   // Refs
   const wordsLookedUpRef = useRef<Set<string>>(new Set());
@@ -371,138 +377,7 @@ export default function ReadScreen() {
     }
   };
 
-  // Word styling
-  const getWordStyle = (word: string) => {
-    const clean = cleanWord(word);
 
-    if (markedWords.has(clean) && highlightLearned) {
-      return "text-green-700 bg-green-100";
-    }
-    if (markedLearningWords.has(clean) && highlightLearning) {
-      return "text-yellow-700 bg-yellow-100";
-    }
-    if (newWordsSet.has(clean) && highlightNew) {
-      return "text-blue-500 font-medium";
-    }
-    return "text-owl-800";
-  };
-
-  // Render normal content
-  const renderContent = () => {
-    if (!text?.content) return null;
-    const sentences = splitSentences(text.content);
-
-    return (
-      <Text className="text-lg leading-8" style={{ fontFamily: "serif" }}>
-        {sentences.map((sentence, sIdx) => (
-          <Text
-            key={sIdx}
-            className={`rounded px-1 text-lg ${speakingIdx === sIdx ? "bg-primary-200" : ""}`}
-          >
-            {sentence.split(/(\s+)/).map((part, wIdx) => {
-              if (/^\s+$/.test(part)) {
-                return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
-              }
-
-              // const clean = cleanWord(part);
-              // if (!clean || clean.length < 2) {
-              //   return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
-              // }
-
-              return (
-                <View className="px-0.5 -mx-0.5" key={`${sIdx}-${wIdx}`}>
-                  <Text
-                    key={`${sIdx}-${wIdx}`}
-                    onPress={() => handleWordPress(part, sentence)}
-                    onLongPress={() => handleSentencePress(sentence)}
-                    style={{ fontFamily: "serif" }}
-                    className={`rounded-md px-px ${getWordStyle(part)}`}
-                  >
-                    {part}
-                  </Text>
-                </View>
-              );
-            })}
-            {" "}
-          </Text>
-        ))}
-      </Text>
-    );
-  };
-
-  // Render parallel content
-  const renderParallelContent = () => {
-    if (!text?.content) return null;
-
-    if (isTranslatingAll) {
-      return (
-        <View className="items-center py-12">
-          <View className="w-16 h-16 rounded-2xl bg-owl-200 items-center justify-center mb-4">
-            <ActivityIndicator size="large" color="#a855f7" />
-          </View>
-          <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-700">Translating text...</Text>
-          <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">This will be cached for future visits.</Text>
-        </View>
-      );
-    }
-
-    const sentences = splitSentences(text.content);
-
-    return sentences.map((sentence, sIdx) => {
-      const trans = parallelTranslations[sIdx];
-      const displayTranslation = useLiteralTranslation
-        ? trans?.literalTranslation || trans?.translation
-        : trans?.translation;
-
-      return (
-        <View
-          key={sIdx}
-          className={`py-3 border-b border-owl-200 ${
-            speakingIdx === sIdx ? "bg-primary-200 rounded-xl -mx-2 px-2" : ""
-          }`}
-        >
-          <View className="flex-row items-start gap-2">
-            <TouchableOpacity
-              onPress={() => speak(sentence)}
-              className="mt-1 w-8 h-8 rounded-lg bg-owl-200 items-center justify-center"
-            >
-              <Ionicons name="volume-medium" size={14} color="#a855f7" />
-            </TouchableOpacity>
-            <Text className="flex-1 text-base leading-7 text-owl-800" style={{ fontFamily: "serif" }}>
-              {sentence.split(/(\s+)/).map((part, wIdx) => {
-                if (/^\s+$/.test(part)) {
-                  return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
-                }
-
-                // const clean = cleanWord(part);
-                // if (!clean || clean.length < 2) {
-                //   return <Text key={`${sIdx}-${wIdx}`}>{part}</Text>;
-                // }
-
-                return (
-                  <Text
-                    key={`${sIdx}-${wIdx}`}
-                    onPress={() => handleWordPress(part, sentence)}
-                    onLongPress={() => handleSentencePress(sentence)}
-                    className={`rounded-md px-px ${getWordStyle(part)}`}
-                  >
-                    {part}
-                  </Text>
-                );
-              })}
-            </Text>
-          </View>
-          <View className="ml-10 mt-2 pl-3 border-l-2 border-primary-400">
-            {trans == null ? (
-              <ActivityIndicator size="small" color="#a855f7" />
-            ) : (
-              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 italic">{displayTranslation}</Text>
-            )}
-          </View>
-        </View>
-      );
-    });
-  };
 
   if (isLoadingText) {
     return (
@@ -613,7 +488,7 @@ export default function ReadScreen() {
                     className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-500"
                   >
                     <Ionicons name="play" size={14} color="white" />
-                    <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-sm">Read All</Text>
+                    <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-white text-sm">Read</Text>
                   </TouchableOpacity>
                 )}
 
@@ -698,8 +573,43 @@ export default function ReadScreen() {
 
           {/* Content */}
           <View className="px-6 py-4">
-            <View className="rounded-2xl p-4 bg-owl-100">
-              {showParallelView ? renderParallelContent() : renderContent()}
+            <View className="rounded-2xl overflow-hidden bg-owl-100">
+              {text?.content ? (
+                <ReadingContent
+                  content={text.content}
+                  mode={showParallelView ? 'parallel' : 'normal'}
+                  parallelTranslations={parallelTranslations}
+                  isTranslatingAll={isTranslatingAll}
+                  useLiteralTranslation={useLiteralTranslation}
+                  speakingIdx={speakingIdx}
+                  markedWords={Array.from(markedWords)}
+                  markedLearningWords={Array.from(markedLearningWords)}
+                  newWords={Array.from(newWordsSet) as string[]}
+                  knownWords={Array.from(knownWordsSet) as string[]}
+                  highlightLearned={highlightLearned}
+                  highlightLearning={highlightLearning}
+                  highlightNew={highlightNew}
+                  colorScheme={colorScheme}
+                  onWordPress={async (word: string, sentence: string) => {
+                    handleWordPress(word, sentence);
+                  }}
+                  onSentencePress={async (sentence: string) => {
+                    handleSentencePress(sentence);
+                  }}
+                  onSpeakSentence={async (sentence: string) => {
+                    speak(sentence);
+                  }}
+                  onLayout={async ({ height }: { width: number; height: number }) => {
+                    if (height > 0 && Math.abs(height - contentHeight) > 2) {
+                      setContentHeight(height);
+                    }
+                  }}
+                  dom={{
+                    scrollEnabled: false,
+                    style: { height: contentHeight + 32 },
+                  }}
+                />
+              ) : null}
             </View>
           </View>
 
