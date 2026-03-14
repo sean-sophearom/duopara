@@ -39,3 +39,8 @@ yarn-error.log*
 # Misc
 *.tgz
 .cache/
+
+
+
+.nx/cache
+.nx/workspace-data

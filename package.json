@@ -7,15 +7,16 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "npm run dev --workspace=@duopara/backend",
-    "dev:frontend": "npm run dev --workspace=@duopara/frontend",
-    "build": "npm run build --workspace=@duopara/shared && npm run build --workspace=@duopara/backend && npm run build --workspace=@duopara/frontend",
+    "dev": "nx run-many -t dev --projects=@duopara/backend,@duopara/frontend --output-style=stream",
+    "dev:backend": "nx run @duopara/backend:dev",
+    "dev:frontend": "nx run @duopara/frontend:dev",
+    "build": "nx run-many -t build --projects=@duopara/backend,@duopara/frontend",
+    "build:shared": "nx run @duopara/shared:build",
     "db:push": "npm run db:push --workspace=@duopara/backend",
     "db:generate": "npm run db:generate --workspace=@duopara/backend",
     "db:studio": "npm run db:studio --workspace=@duopara/backend"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "nx": "22.5.4"
   }
 }
