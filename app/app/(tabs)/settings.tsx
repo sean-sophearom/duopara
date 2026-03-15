@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   Alert,
+  Switch,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/store/authStore";
@@ -44,6 +46,31 @@ export default function SettingsScreen() {
   const [defaultDifficulty, setDefaultDifficulty] = useState(
     user?.settings?.defaultDifficulty || "intermediate"
   );
+
+  // Local reading-highlight preferences (stored in AsyncStorage)
+  const [highlightLearned, setHighlightLearned] = useState(true);
+  const [highlightLearning, setHighlightLearning] = useState(true);
+  const [highlightNew, setHighlightNew] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const hl = await AsyncStorage.getItem("duopara.highlightLearned");
+      if (hl !== null) setHighlightLearned(hl !== "false");
+      const hlr = await AsyncStorage.getItem("duopara.highlightLearning");
+      if (hlr !== null) setHighlightLearning(hlr !== "false");
+      const hn = await AsyncStorage.getItem("duopara.highlightNew");
+      if (hn !== null) setHighlightNew(hn !== "false");
+    })();
+  }, []);
+
+  const setHighlight = async (
+    key: "duopara.highlightLearned" | "duopara.highlightLearning" | "duopara.highlightNew",
+    setter: (v: boolean) => void,
+    value: boolean,
+  ) => {
+    setter(value);
+    await AsyncStorage.setItem(key, String(value));
+  };
 
   const { data: languages } = useQuery({
     queryKey: ["languages"],
@@ -266,6 +293,32 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
+          </View>
+
+          {/* Reading Highlights */}
+          <View className="bg-owl-100 rounded-2xl p-5 mb-5">
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-lg mb-1">🎨 Reading Highlights</Text>
+            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-base text-owl-500 mb-4">Choose which words are highlighted while reading</Text>
+            {(
+              [
+                { label: "New words", sublabel: "Words you haven't seen before", color: "text-blue-500", value: highlightNew, key: "duopara.highlightNew" as const, setter: setHighlightNew },
+                { label: "Learning words", sublabel: "Words you're actively studying", color: "text-yellow-600", value: highlightLearning, key: "duopara.highlightLearning" as const, setter: setHighlightLearning },
+                { label: "Learned words", sublabel: "Words you've marked as known", color: "text-green-600", value: highlightLearned, key: "duopara.highlightLearned" as const, setter: setHighlightLearned },
+              ] as const
+            ).map((item) => (
+              <View key={item.key} className="flex-row items-center justify-between py-3 border-b border-owl-200 last:border-b-0">
+                <View className="flex-1 mr-3">
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className={`text-base ${item.color}`}>{item.label}</Text>
+                  <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 mt-0.5">{item.sublabel}</Text>
+                </View>
+                <Switch
+                  value={item.value}
+                  onValueChange={(v) => setHighlight(item.key, item.setter, v)}
+                  trackColor={{ false: "#e2e8f0", true: "#58cc02" }}
+                  thumbColor="white"
+                />
+              </View>
+            ))}
           </View>
 
           {/* Save Button */}
