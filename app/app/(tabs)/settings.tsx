@@ -4,9 +4,10 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Switch,
 } from "react-native";
+import Toast from "react-native-toast-message";
+import ConfirmDialog from "../../src/components/ui/ConfirmDialog";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +34,8 @@ export default function SettingsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
+
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const [targetLanguage, setTargetLanguage] = useState(
     user?.settings?.targetLanguage || "Spanish"
@@ -82,10 +85,20 @@ export default function SettingsScreen() {
     onSuccess: (response) => {
       updateUser({ settings: response.data.settings });
       queryClient.invalidateQueries();
-      Alert.alert("Success", "Settings updated successfully");
+      Toast.show({
+        type: "success",
+        text1: "Settings saved",
+        text2: "Your preferences have been updated",
+        visibilityTime: 3000,
+      });
     },
     onError: () => {
-      Alert.alert("Error", "Failed to update settings");
+      Toast.show({
+        type: "error",
+        text1: "Save failed",
+        text2: "Could not update settings. Please try again.",
+        visibilityTime: 3000,
+      });
     },
   });
 
@@ -99,17 +112,13 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-          router.replace("/(auth)/login");
-        },
-      },
-    ]);
+    setShowLogoutDialog(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutDialog(false);
+    await logout();
+    router.replace("/(auth)/login");
   };
 
   const hasChanges =
@@ -314,7 +323,7 @@ export default function SettingsScreen() {
                 <Switch
                   value={item.value}
                   onValueChange={(v) => setHighlight(item.key, item.setter, v)}
-                  trackColor={{ false: "#e2e8f0", true: "#58cc02" }}
+                  trackColor={{ false: "#e2e8f0", true: "#2563eb" }}
                   thumbColor="white"
                 />
               </View>
@@ -346,6 +355,16 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={showLogoutDialog}
+        title="Log out?"
+        message="You will be returned to the login screen."
+        confirmText="Log out"
+        confirmStyle="destructive"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutDialog(false)}
+      />
     </SafeAreaView>
   );
 }

@@ -37,7 +37,7 @@ export function AnimatedInput({
 
   const borderIdle = colors.owl300;
   const bgIdle = colors.owl200;
-  const bgFocused = colors.colorScheme === 'dark' ? '#1a2e1a' : '#e8f5e9';
+  const bgFocused = colors.colorScheme === 'dark' ? '#152040' : '#e8f0fe';
   const labelIdle = colors.owl500;
   const iconIdle = colors.owl400;
 
@@ -66,7 +66,7 @@ export function AnimatedInput({
       : interpolateColor(
           focusProgress.value,
           [0, 1],
-          [borderIdle, "#58cc02"]
+          [borderIdle, "#2563eb"]
         ),
     backgroundColor: interpolateColor(
       focusProgress.value,
@@ -85,7 +85,7 @@ export function AnimatedInput({
       : interpolateColor(
           focusProgress.value,
           [0, 1],
-          [labelIdle, "#58cc02"]
+          [labelIdle, "#2563eb"]
         ),
   }));
 
@@ -97,7 +97,7 @@ export function AnimatedInput({
       >
         {icon && (
           <View className="mr-3">
-            <Ionicons name={icon} size={22} color={isFocused ? "#58cc02" : iconIdle} />
+            <Ionicons name={icon} size={22} color={isFocused ? "#2563eb" : iconIdle} />
           </View>
         )}
         <View className="flex-1 relative">

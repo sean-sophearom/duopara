@@ -1,13 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Modal,
-  Pressable,
-  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { GradientButton } from "../../src/components/ui";
 import { useThemeColors } from "../../src/lib/theme";
+import BottomSheet, { BottomSheetModal, BottomSheetScrollView, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 
 // Utility
 export function splitSentences(text: string): string[] {
@@ -84,8 +82,10 @@ export default function ReadScreen() {
   const [markedWords, setMarkedWords] = useState<Set<string>>(new Set());
   const [markedLearningWords, setMarkedLearningWords] = useState<Set<string>>(new Set());
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [showWordModal, setShowWordModal] = useState(false);
-  const [showSentenceModal, setShowSentenceModal] = useState(false);
+  const wordModalRef = useRef<BottomSheetModal>(null);
+  const sentenceModalRef = useRef<BottomSheetModal>(null);
+  const wordSnapPoints = useMemo(() => ["50%", "75%"], []);
+  const sentenceSnapPoints = useMemo(() => ["50%", "75%"], []);
 
   // Parallel translation state
   const [showParallelView, setShowParallelView] = useState(false);
@@ -313,7 +313,7 @@ export default function ReadScreen() {
 
     setSelectedWord(clean);
     setSelectedSentence(sentence);
-    setShowWordModal(true);
+    wordModalRef.current?.present();
     setIsLoadingWord(true);
     setWordInfo(null);
 
@@ -341,7 +341,7 @@ export default function ReadScreen() {
   const handleSentencePress = async (sentence: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedSentence(sentence);
-    setShowSentenceModal(true);
+    sentenceModalRef.current?.present();
     setIsLoadingSentence(true);
     setSentenceInfo(null);
 
@@ -386,13 +386,13 @@ export default function ReadScreen() {
     const clean = cleanWord(word);
 
     if (markedWords.has(clean) && highlightLearned) {
-      return "text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900";
+      return "text-primary-600 bg-primary-100";
     }
     if (markedLearningWords.has(clean) && highlightLearning) {
-      return "text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900";
+      return "text-warning-600 bg-warning-100";
     }
     if (newWordsSet.has(clean) && highlightNew) {
-      return "text-blue-500 font-medium";
+      return "text-secondary-600 font-medium";
     }
     return "text-owl-800";
   };
@@ -445,7 +445,7 @@ export default function ReadScreen() {
       return (
         <View className="items-center py-12">
           <View className="w-16 h-16 rounded-2xl bg-owl-200 items-center justify-center mb-4">
-            <ActivityIndicator size="large" color="#a855f7" />
+            <ActivityIndicator size="large" color="#8b5cf6" />
           </View>
           <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-700">Translating text...</Text>
           <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-sm mt-1">This will be cached for future visits.</Text>
@@ -473,7 +473,7 @@ export default function ReadScreen() {
               onPress={() => speak(sentence)}
               className="mt-1 w-8 h-8 rounded-lg bg-owl-200 items-center justify-center"
             >
-              <Ionicons name="volume-medium" size={14} color="#a855f7" />
+              <Ionicons name="volume-medium" size={14} color="#8b5cf6" />
             </TouchableOpacity>
             <Text className="flex-1 text-base leading-7 text-owl-800" style={{ fontFamily: "serif" }}>
               {sentence.split(/(\s+)/).map((part, wIdx) => {
@@ -503,7 +503,7 @@ export default function ReadScreen() {
           </View>
           <View className="ml-10 mt-2 pl-3 border-l-2 border-primary-400">
             {trans == null ? (
-              <ActivityIndicator size="small" color="#a855f7" />
+              <ActivityIndicator size="small" color="#8b5cf6" />
             ) : (
               <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-500 italic">{displayTranslation}</Text>
             )}
@@ -517,7 +517,7 @@ export default function ReadScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-owl-50">
         <View className="w-20 h-20 rounded-2xl bg-owl-200 items-center justify-center mb-4">
-          <ActivityIndicator size="large" color="#58cc02" />
+          <ActivityIndicator size="large" color="#2563eb" />
         </View>
         <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-2">Loading your text...</Text>
       </View>
@@ -762,15 +762,15 @@ export default function ReadScreen() {
           <View className="mx-6 mb-4">
             <View className="bg-owl-100 rounded-2xl p-4">
               <View className="flex-row items-center gap-3">
-                <View className="flex-1 bg-primary-200 rounded-xl p-3 items-center">
-                  <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-primary-500 text-xl">
+                <View className="flex-1 bg-secondary-200 rounded-xl p-3 items-center">
+                  <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-secondary-500 text-xl">
                     {text.newWordsIntroduced?.length || 0}
                   </Text>
-                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-primary-600 text-xs">New words</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-secondary-600 text-xs">New words</Text>
                 </View>
-                <View className="flex-1 bg-green-900 rounded-xl p-3 items-center">
-                  <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-green-400 text-xl">{markedWords.size}</Text>
-                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-green-500 text-xs">Marked</Text>
+                <View className="flex-1 bg-primary-200 rounded-xl p-3 items-center">
+                  <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-primary-500 text-xl">{markedWords.size}</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-primary-600 text-xs">Marked</Text>
                 </View>
                 <View className="flex-1 bg-owl-200 rounded-xl p-3 items-center">
                   <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-owl-700 text-xl">{wordsLookedUpRef.current.size}</Text>
@@ -785,290 +785,269 @@ export default function ReadScreen() {
             <View className="bg-owl-100 rounded-2xl p-4">
               <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-700 mb-3">Word colors:</Text>
               <View className="flex-row flex-wrap gap-3">
+                <View className="flex-row items-center bg-secondary-200 px-3 py-1.5 rounded-full">
+                  <View className="w-3 h-3 rounded-full bg-secondary-400 mr-2" />
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-secondary-500">New word</Text>
+                </View>
+                <View className="flex-row items-center bg-warning-200 px-3 py-1.5 rounded-full">
+                  <View className="w-3 h-3 rounded-full bg-warning-400 mr-2" />
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-warning-500">Learning</Text>
+                </View>
                 <View className="flex-row items-center bg-primary-200 px-3 py-1.5 rounded-full">
                   <View className="w-3 h-3 rounded-full bg-primary-400 mr-2" />
-                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-primary-500">New word</Text>
-                </View>
-                <View className="flex-row items-center bg-yellow-900 px-3 py-1.5 rounded-full">
-                  <View className="w-3 h-3 rounded-full bg-yellow-400 mr-2" />
-                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-yellow-300">Learning</Text>
-                </View>
-                <View className="flex-row items-center bg-green-900 px-3 py-1.5 rounded-full">
-                  <View className="w-3 h-3 rounded-full bg-green-500 mr-2" />
-                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-green-300">Learned</Text>
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-primary-500">Learned</Text>
                 </View>
               </View>
             </View>
           </View>
         </ScrollView>
 
-        {/* Word Modal */}
-        <Modal
-          visible={showWordModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowWordModal(false)}
+        {/* Word Bottom Sheet */}
+        <BottomSheetModal
+          ref={wordModalRef}
+          snapPoints={wordSnapPoints}
+          enableDynamicSizing={false}
+          enablePanDownToClose
+          backdropComponent={(props) => (
+            <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.5} />
+          )}
+          handleIndicatorStyle={{ backgroundColor: "#ccc", width: 48 }}
+          backgroundStyle={{ backgroundColor: themeColors.owl100, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
         >
-          <Pressable
-            className="flex-1 justify-end bg-black/50"
-            onPress={() => setShowWordModal(false)}
-          >
-            <Pressable>
-              <View
-                className="rounded-t-3xl overflow-hidden bg-owl-100"
-                style={{ maxHeight: Dimensions.get("window").height * 0.75 }}
-              >
-                {/* Fixed header — not inside the ScrollView */}
-                <View className="px-6 pt-6 pb-4">
-                  <View className="w-12 h-1 bg-owl-300 rounded-full self-center mb-4" />
-
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-3">
-                      <View className="px-4 py-2 rounded-xl bg-secondary-500">
-                        <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-xl text-white">{selectedWord}</Text>
-                      </View>
-                      <TouchableOpacity
-                        onPress={() => selectedWord && speak(selectedWord)}
-                        className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center"
-                      >
-                        <Ionicons name="volume-medium" size={20} color={themeColors.owl700} />
-                      </TouchableOpacity>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => setShowWordModal(false)}
-                      className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
-                    >
-                      <Ionicons name="close" size={20} color={themeColors.owl500} />
-                    </TouchableOpacity>
-                  </View>
+          <View className="px-6 pb-4">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-3">
+                <View className="px-4 py-2 rounded-xl bg-secondary-500">
+                  <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-xl text-white">{selectedWord}</Text>
                 </View>
+                <TouchableOpacity
+                  onPress={() => selectedWord && speak(selectedWord)}
+                  className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center"
+                >
+                  <Ionicons name="volume-medium" size={20} color={themeColors.owl700} />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={() => wordModalRef.current?.dismiss()}
+                className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
+              >
+                <Ionicons name="close" size={20} color={themeColors.owl500} />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-                {isLoadingWord ? (
-                  <View className="px-6 pb-8 items-center">
-                    <View className="w-16 h-16 rounded-2xl items-center justify-center mb-4 bg-secondary-500">
-                      <ActivityIndicator size="large" color="white" />
-                    </View>
-                    <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-500">Translating...</Text>
-                  </View>
-                ) : wordInfo ? (
-                  <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{
-                      paddingHorizontal: 24,
-                      paddingBottom: Math.max(insets.bottom, 24),
-                    }}
-                  >
-                    <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-3xl text-primary-500">
-                      {wordInfo.translation}
+          {isLoadingWord ? (
+            <View className="px-6 pb-8 items-center">
+              <View className="w-16 h-16 rounded-2xl items-center justify-center mb-4 bg-secondary-500">
+                <ActivityIndicator size="large" color="white" />
+              </View>
+              <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-500">Translating...</Text>
+            </View>
+          ) : wordInfo ? (
+            <BottomSheetScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingHorizontal: 24,
+                paddingBottom: Math.max(insets.bottom, 24),
+              }}
+            >
+              <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-3xl text-primary-500">
+                {wordInfo.translation}
+              </Text>
+              {wordInfo.alternativeTranslations &&
+                wordInfo.alternativeTranslations.length > 0 && (
+                  <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-1">
+                    Also: {wordInfo.alternativeTranslations.join(", ")}
+                  </Text>
+                )}
+
+              {wordInfo.partOfSpeech && (
+                <View className="flex-row items-center mt-3 gap-2">
+                  <View className="bg-owl-200 px-3 py-1.5 rounded-full">
+                    <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600 italic">
+                      {wordInfo.partOfSpeech}
                     </Text>
-                    {wordInfo.alternativeTranslations &&
-                      wordInfo.alternativeTranslations.length > 0 && (
-                        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-1">
-                          Also: {wordInfo.alternativeTranslations.join(", ")}
-                        </Text>
-                      )}
-
-                    {wordInfo.partOfSpeech && (
-                      <View className="flex-row items-center mt-3 gap-2">
-                        <View className="bg-owl-200 px-3 py-1.5 rounded-full">
-                          <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600 italic">
-                            {wordInfo.partOfSpeech}
-                          </Text>
-                        </View>
-                        {wordInfo.gender && (
-                          <View className="bg-owl-200 px-3 py-1.5 rounded-full">
-                            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600">{wordInfo.gender}</Text>
-                          </View>
-                        )}
-                      </View>
-                    )}
-
-                    {wordInfo.baseForm &&
-                      wordInfo.baseForm.toLowerCase() !== selectedWord?.toLowerCase() && (
-                        <View className="p-3 rounded-xl mt-3 bg-secondary-200">
-                          <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-secondary-600">
-                            Base form: <Text style={{ fontFamily: "Nunito_700Bold" }}>{wordInfo.baseForm}</Text>
-                          </Text>
-                        </View>
-                      )}
-
-                    {wordInfo.conjugation && Object.keys(wordInfo.conjugation).length > 0 && (
-                      <View className="p-3 rounded-xl mt-3 bg-warning-200">
-                        <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-warning-600 text-sm">
-                          {[
-                            wordInfo.conjugation.tense,
-                            wordInfo.conjugation.person,
-                            wordInfo.conjugation.mood,
-                          ]
-                            .filter(Boolean)
-                            .join(" • ")}
-                        </Text>
-                      </View>
-                    )}
-
-                    {wordInfo.contextualNote && (
-                      <View className="p-3 rounded-xl mt-3 bg-owl-200">
-                        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-600 text-sm">{wordInfo.contextualNote}</Text>
-                      </View>
-                    )}
-
-                    {selectedSentence && (
-                      <View className="bg-owl-200 p-3 rounded-xl mt-3">
-                        <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-500 mb-1">Context:</Text>
-                        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-700 italic">"{selectedSentence}"</Text>
-                      </View>
-                    )}
-
-                    <View className="flex-row gap-3 mt-6">
-                      <TouchableOpacity
-                        onPress={() => selectedWord && markLearningMutation.mutate(selectedWord)}
-                        disabled={
-                          markedLearningWords.has(selectedWord || "") ||
-                          markedWords.has(selectedWord || "")
-                        }
-                        className={`flex-1 rounded-xl py-3 items-center ${
-                          markedLearningWords.has(selectedWord || "") ? "bg-warning-200" : "bg-owl-200"
-                        }`}
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          style={{ fontFamily: "Nunito_700Bold" }}
-                          className={markedLearningWords.has(selectedWord || "") ? "text-warning-600" : "text-owl-700"}
-                        >
-                          {markedLearningWords.has(selectedWord || "") ? "📚 Learning" : "Mark Learning"}
-                        </Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={() => selectedWord && markLearnedMutation.mutate(selectedWord)}
-                        disabled={markedWords.has(selectedWord || "")}
-                        className={`flex-1 rounded-xl py-3 items-center ${
-                          markedWords.has(selectedWord || "") ? "bg-green-900" : "bg-primary-500"
-                        }`}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={{ fontFamily: "Nunito_700Bold" }} className={`${
-                          markedWords.has(selectedWord || "") ? "text-green-300" : "text-white"
-                        }`}>
-                          {markedWords.has(selectedWord || "") ? "✅ Learned" : "Mark Learned"}
-                        </Text>
-                      </TouchableOpacity>
+                  </View>
+                  {wordInfo.gender && (
+                    <View className="bg-owl-200 px-3 py-1.5 rounded-full">
+                      <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600">{wordInfo.gender}</Text>
                     </View>
-                  </ScrollView>
-                ) : (
-                  <View className="px-6 pb-8 items-center">
-                    <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500">Failed to translate. Try again.</Text>
+                  )}
+                </View>
+              )}
+
+              {wordInfo.baseForm &&
+                wordInfo.baseForm.toLowerCase() !== selectedWord?.toLowerCase() && (
+                  <View className="p-3 rounded-xl mt-3 bg-secondary-200">
+                    <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-secondary-600">
+                      Base form: <Text style={{ fontFamily: "Nunito_700Bold" }}>{wordInfo.baseForm}</Text>
+                    </Text>
                   </View>
                 )}
-              </View>
-            </Pressable>
-          </Pressable>
-        </Modal>
 
-        {/* Sentence Modal */}
-        <Modal
-          visible={showSentenceModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowSentenceModal(false)}
-        >
-          <Pressable
-            className="flex-1 justify-end bg-black/50"
-            onPress={() => setShowSentenceModal(false)}
-          >
-            <Pressable>
-              <View
-                className="rounded-t-3xl overflow-hidden bg-owl-100"
-                style={{ maxHeight: Dimensions.get("window").height * 0.75 }}
-              >
-                {/* Fixed header — not inside the ScrollView */}
-                <View className="px-6 pt-6 pb-4">
-                  <View className="w-12 h-1 bg-owl-300 rounded-full self-center mb-4" />
-
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-3">
-                      <View className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center">
-                        <Text className="text-xl">📝</Text>
-                      </View>
-                      <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-xl text-owl-900">Sentence</Text>
-                      <TouchableOpacity
-                        onPress={() => selectedSentence && speak(selectedSentence)}
-                        className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center"
-                      >
-                        <Ionicons name="volume-medium" size={20} color={themeColors.owl700} />
-                      </TouchableOpacity>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => setShowSentenceModal(false)}
-                      className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
-                    >
-                      <Ionicons name="close" size={20} color={themeColors.owl500} />
-                    </TouchableOpacity>
-                  </View>
+              {wordInfo.conjugation && Object.keys(wordInfo.conjugation).length > 0 && (
+                <View className="p-3 rounded-xl mt-3 bg-warning-200">
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-warning-600 text-sm">
+                    {[
+                      wordInfo.conjugation.tense,
+                      wordInfo.conjugation.person,
+                      wordInfo.conjugation.mood,
+                    ]
+                      .filter(Boolean)
+                      .join(" • ")}
+                  </Text>
                 </View>
+              )}
 
-                {isLoadingSentence ? (
-                  <View className="px-6 pb-8 items-center">
-                    <View className="w-16 h-16 rounded-2xl items-center justify-center mb-4 bg-secondary-500">
-                      <ActivityIndicator size="large" color="white" />
-                    </View>
-                    <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-500">Translating...</Text>
-                  </View>
-                ) : sentenceInfo ? (
-                  <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{
-                      paddingHorizontal: 24,
-                      paddingBottom: Math.max(insets.bottom, 24),
-                    }}
-                    className="overflow-y-auto"
+              {wordInfo.contextualNote && (
+                <View className="p-3 rounded-xl mt-3 bg-owl-200">
+                  <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-600 text-sm">{wordInfo.contextualNote}</Text>
+                </View>
+              )}
+
+              {selectedSentence && (
+                <View className="bg-owl-200 p-3 rounded-xl mt-3">
+                  <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-500 mb-1">Context:</Text>
+                  <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-700 italic">"{selectedSentence}"</Text>
+                </View>
+              )}
+
+              <View className="flex-row gap-3 mt-6">
+                <TouchableOpacity
+                  onPress={() => selectedWord && markLearningMutation.mutate(selectedWord)}
+                  disabled={
+                    markedLearningWords.has(selectedWord || "") ||
+                    markedWords.has(selectedWord || "")
+                  }
+                  className={`flex-1 rounded-xl py-3 items-center ${
+                    markedLearningWords.has(selectedWord || "") ? "bg-warning-200" : "bg-owl-200"
+                  }`}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={{ fontFamily: "Nunito_700Bold" }}
+                    className={markedLearningWords.has(selectedWord || "") ? "text-warning-600" : "text-owl-700"}
                   >
-                    <View className="bg-owl-200 p-4 rounded-xl mb-4">
-                      <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-700 italic text-base leading-6">{selectedSentence}</Text>
-                    </View>
+                    {markedLearningWords.has(selectedWord || "") ? "📚 Learning" : "Mark Learning"}
+                  </Text>
+                </TouchableOpacity>
 
-                    <View className="p-4 rounded-xl mb-4 bg-secondary-200">
-                      <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-lg text-secondary-600">
-                        {sentenceInfo.translation}
+                <TouchableOpacity
+                  onPress={() => selectedWord && markLearnedMutation.mutate(selectedWord)}
+                  disabled={markedWords.has(selectedWord || "")}
+                  className={`flex-1 rounded-xl py-3 items-center ${
+                    markedWords.has(selectedWord || "") ? "bg-primary-200" : "bg-primary-500"
+                  }`}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className={`${
+                    markedWords.has(selectedWord || "") ? "text-primary-600" : "text-white"
+                  }`}>
+                    {markedWords.has(selectedWord || "") ? "✅ Learned" : "Mark Learned"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </BottomSheetScrollView>
+          ) : (
+            <View className="px-6 pb-8 items-center">
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500">Failed to translate. Try again.</Text>
+            </View>
+          )}
+        </BottomSheetModal>
+
+        {/* Sentence Bottom Sheet */}
+        <BottomSheetModal
+          ref={sentenceModalRef}
+          snapPoints={sentenceSnapPoints}
+          enableDynamicSizing={false}
+          enablePanDownToClose
+          backdropComponent={(props) => (
+            <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.5} />
+          )}
+          handleIndicatorStyle={{ backgroundColor: "#ccc", width: 48 }}
+          backgroundStyle={{ backgroundColor: themeColors.owl100, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
+        >
+          <View className="px-6 pb-4">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center">
+                  <Text className="text-xl">📝</Text>
+                </View>
+                <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-xl text-owl-900">Sentence</Text>
+                <TouchableOpacity
+                  onPress={() => selectedSentence && speak(selectedSentence)}
+                  className="w-10 h-10 rounded-xl bg-owl-200 items-center justify-center"
+                >
+                  <Ionicons name="volume-medium" size={20} color={themeColors.owl700} />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={() => sentenceModalRef.current?.dismiss()}
+                className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
+              >
+                <Ionicons name="close" size={20} color={themeColors.owl500} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {isLoadingSentence ? (
+            <View className="px-6 pb-8 items-center">
+              <View className="w-16 h-16 rounded-2xl items-center justify-center mb-4 bg-secondary-500">
+                <ActivityIndicator size="large" color="white" />
+              </View>
+              <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-500">Translating...</Text>
+            </View>
+          ) : sentenceInfo ? (
+            <BottomSheetScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingHorizontal: 24,
+                paddingBottom: Math.max(insets.bottom, 24),
+              }}
+            >
+              <View className="bg-owl-200 p-4 rounded-xl mb-4">
+                <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-700 italic text-base leading-6">{selectedSentence}</Text>
+              </View>
+
+              <View className="p-4 rounded-xl mb-4 bg-secondary-200">
+                <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-lg text-secondary-600">
+                  {sentenceInfo.translation}
+                </Text>
+              </View>
+
+              {sentenceInfo.literalTranslation && (
+                <View className="bg-owl-200 p-4 rounded-xl mb-4">
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-sm text-owl-700 mb-1">
+                    Word-for-word
+                  </Text>
+                  <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-600">
+                    {sentenceInfo.literalTranslation}
+                  </Text>
+                </View>
+              )}
+
+              {sentenceInfo.grammarNotes && sentenceInfo.grammarNotes.length > 0 && (
+                <View className="p-4 rounded-xl bg-secondary-200">
+                  <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-sm text-secondary-600 mb-2">
+                    Grammar Notes 📚
+                  </Text>
+                  {sentenceInfo.grammarNotes.map((note, idx) => (
+                    <View key={idx} className="mb-2 bg-owl-100 p-2 rounded-lg">
+                      <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-secondary-500">
+                        <Text style={{ fontFamily: "Nunito_700Bold" }}>{note.element}:</Text>{" "}
+                        {note.explanation}
                       </Text>
                     </View>
-
-                    {sentenceInfo.literalTranslation && (
-                      <View className="bg-owl-200 p-4 rounded-xl mb-4">
-                        <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-sm text-owl-700 mb-1">
-                          Word-for-word
-                        </Text>
-                        <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-owl-600">
-                          {sentenceInfo.literalTranslation}
-                        </Text>
-                      </View>
-                    )}
-
-                    {sentenceInfo.grammarNotes && sentenceInfo.grammarNotes.length > 0 && (
-                      <View className="p-4 rounded-xl bg-secondary-200">
-                        <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-sm text-secondary-600 mb-2">
-                          Grammar Notes 📚
-                        </Text>
-                        {sentenceInfo.grammarNotes.map((note, idx) => (
-                          <View key={idx} className="mb-2 bg-owl-100 p-2 rounded-lg">
-                            <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-sm text-secondary-500">
-                              <Text style={{ fontFamily: "Nunito_700Bold" }}>{note.element}:</Text>{" "}
-                              {note.explanation}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-                  </ScrollView>
-                ) : (
-                  <View className="px-6 pb-8 items-center">
-                    <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500">Failed to translate. Try again.</Text>
-                  </View>
-                )}
-              </View>
-            </Pressable>
-          </Pressable>
-        </Modal>
+                  ))}
+                </View>
+              )}
+            </BottomSheetScrollView>
+          ) : (
+            <View className="px-6 pb-8 items-center">
+              <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500">Failed to translate. Try again.</Text>
+            </View>
+          )}
+        </BottomSheetModal>
       </SafeAreaView>
     </>
   );

@@ -210,7 +210,7 @@ export default function PracticeSessionScreen() {
         <Stack.Screen options={{ title: 'Loading...', headerShown: false }} />
         <View className="items-center">
           <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-primary-200">
-            <ActivityIndicator size="large" color="#58cc02" />
+            <ActivityIndicator size="large" color="#2563eb" />
           </View>
           <Text style={{ fontFamily: 'Nunito_700Bold' }} className="text-xl text-owl-800">
             Preparing Practice
@@ -240,9 +240,9 @@ export default function PracticeSessionScreen() {
                 {isGreat ? (
                   <Ionicons name="trophy" size={48} color="#ffc800" />
                 ) : isGood ? (
-                  <Ionicons name="thumbs-up" size={48} color="#58cc02" />
+                  <Ionicons name="thumbs-up" size={48} color="#2563eb" />
                 ) : (
-                  <Ionicons name="school" size={48} color="#1cb0f6" />
+                  <Ionicons name="school" size={48} color="#8b5cf6" />
                 )}
               </View>
 
@@ -317,7 +317,7 @@ export default function PracticeSessionScreen() {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-owl-50">
         <View className="h-16 w-16 items-center justify-center rounded-full bg-owl-100">
-          <ActivityIndicator size="small" color="#58cc02" />
+          <ActivityIndicator size="small" color="#2563eb" />
         </View>
         <Text style={{ fontFamily: 'Nunito_400Regular' }} className="mt-4 text-owl-500">
           Loading question...

@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
   StatusBar,
 } from "react-native";
@@ -13,8 +12,9 @@ import { useAuthStore } from "../../src/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GradientButton } from "../../src/components/ui";
-
 import { useThemeColors } from "../../src/lib/theme";
+
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -36,11 +36,15 @@ export default function LoginScreen() {
   return (
     <SafeAreaView className="flex-1 bg-owl-50">
       <StatusBar barStyle={colors.statusBar} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+      
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        enableOnAndroid={true}
+        extraScrollHeight={Platform.OS === "ios" ? 20 : 0} // Adds a little breathing room above the keyboard
       >
-        <View className="flex-1 justify-center px-6">
+        <View className="px-6 py-8">
           {/* Logo */}
           <View className="items-center mb-12">
             <View className="w-20 h-20 rounded-2xl bg-primary-500 items-center justify-center mb-4">
@@ -91,6 +95,12 @@ export default function LoginScreen() {
                 className="flex-1 text-base text-owl-800"
                 placeholderTextColor={colors.owl400}
                 style={{ fontFamily: "Nunito_400Regular" }}
+                textContentType="password"
+                autoComplete="password" 
+                importantForAutofill="yes"
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
@@ -113,7 +123,7 @@ export default function LoginScreen() {
           />
 
           {/* Register Link */}
-          <View className="flex-row justify-center mt-8">
+          <View className="flex-row justify-center mt-8 mb-8">
             <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500">Don't have an account? </Text>
             <Link href="/(auth)/register" asChild>
               <TouchableOpacity>
@@ -122,7 +132,7 @@ export default function LoginScreen() {
             </Link>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

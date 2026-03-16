@@ -6,15 +6,16 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  Alert,
   RefreshControl,
 } from "react-native";
+import ConfirmDialog from "../../src/components/ui/ConfirmDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { textsApi, settingsApi } from "../../src/lib/api";
 import { useAuthStore } from "../../src/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useThemeColors } from "../../src/lib/theme";
 
 const difficultyConfig = {
   beginner: { bg: "bg-primary-500", label: "Beginner" },
@@ -28,6 +29,8 @@ export default function HistoryScreen() {
   const [search, setSearch] = useState("");
   const [languageFilter, setLanguageFilter] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
+  const colors = useThemeColors();
 
   const { data: languages } = useQuery({
     queryKey: ["languages"],
@@ -54,14 +57,14 @@ export default function HistoryScreen() {
   });
 
   const handleDelete = (id: string, title: string) => {
-    Alert.alert("Delete Text", `Are you sure you want to delete "${title}"?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteMutation.mutate(id),
-      },
-    ]);
+    setPendingDelete({ id, title });
+  };
+
+  const confirmDelete = () => {
+    if (pendingDelete) {
+      deleteMutation.mutate(pendingDelete.id);
+      setPendingDelete(null);
+    }
   };
 
   const onRefresh = useCallback(async () => {
@@ -141,18 +144,18 @@ export default function HistoryScreen() {
       <View className="px-6 mb-5">
         <View className="bg-owl-100 rounded-2xl p-5">
           <View className="flex-row items-center bg-owl-200 rounded-xl px-4 py-3 mb-4">
-            <Ionicons name="search" size={20} color="#888888" />
+            <Ionicons name="search" size={20} color={colors.owl400} />
             <TextInput
               value={search}
               onChangeText={setSearch}
               placeholder="Search your texts..."
               className="flex-1 ml-3 text-owl-800 text-base"
-              placeholderTextColor="#555555"
+              placeholderTextColor={colors.owl400}
               style={{ fontFamily: "Nunito_400Regular" }}
             />
             {search ? (
               <TouchableOpacity onPress={() => setSearch("")}>
-                <Ionicons name="close-circle" size={20} color="#555555" />
+                <Ionicons name="close-circle" size={20} color={colors.owl500} />
               </TouchableOpacity>
             ) : null}
           </View>
@@ -196,7 +199,7 @@ export default function HistoryScreen() {
       {/* Texts List */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#58cc02" />
+          <ActivityIndicator size="large" color="#2563eb" />
           <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-4">Loading texts...</Text>
         </View>
       ) : texts.length === 0 ? (
@@ -224,13 +227,23 @@ export default function HistoryScreen() {
             <RefreshControl 
               refreshing={refreshing} 
               onRefresh={onRefresh}
-              colors={["#58cc02"]}
-              tintColor="#58cc02"
+              colors={["#2563eb"]}
+              tintColor="#2563eb"
             />
           }
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <ConfirmDialog
+        visible={pendingDelete !== null}
+        title="Delete text?"
+        message={pendingDelete ? `"${pendingDelete.title}" will be permanently deleted.` : undefined}
+        confirmText="Delete"
+        confirmStyle="destructive"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </SafeAreaView>
   );
 }

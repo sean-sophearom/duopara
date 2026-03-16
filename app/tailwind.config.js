@@ -14,31 +14,31 @@ module.exports = {
         extrabold: ['Nunito_800ExtraBold'],
       },
       colors: {
-        // Duolingo-inspired Green (Primary)
+        // Blue (Primary)
         primary: {
           50: 'var(--primary-50)',
           100: 'var(--primary-100)',
           200: 'var(--primary-200)',
           300: 'var(--primary-300)',
-          400: '#58cc02',
-          500: '#58cc02',
-          600: '#6dd616',
-          700: '#82e02e',
-          800: '#a3ea6b',
-          900: '#d4f5b0',
+          400: '#3b82f6',
+          500: '#2563eb',
+          600: '#60a5fa',
+          700: '#93c5fd',
+          800: '#bfdbfe',
+          900: '#dbeafe',
         },
-        // Blue (Secondary/Info)
+        // Purple (Secondary)
         secondary: {
           50: 'var(--secondary-50)',
           100: 'var(--secondary-100)',
           200: 'var(--secondary-200)',
           300: 'var(--secondary-300)',
-          400: '#1cb0f6',
-          500: '#1cb0f6',
-          600: '#40bff8',
-          700: '#6dd0fa',
-          800: '#9ae0fc',
-          900: '#d0f0fe',
+          400: '#7c3aed',
+          500: '#8b5cf6',
+          600: '#a78bfa',
+          700: '#c4b5fd',
+          800: '#ddd6fe',
+          900: '#ede9fe',
         },
         // Golden Yellow (Streak/Warning)
         warning: {

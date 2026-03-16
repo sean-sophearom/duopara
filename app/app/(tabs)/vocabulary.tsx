@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -6,15 +6,16 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  Alert,
   RefreshControl,
-  Modal,
 } from "react-native";
+import ConfirmDialog from "../../src/components/ui/ConfirmDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { vocabularyApi, settingsApi } from "../../src/lib/api";
 import { useAuthStore } from "../../src/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
+import { useThemeColors } from "../../src/lib/theme";
 
 const statusConfig: Record<string, { 
   bg: string;
@@ -36,9 +37,12 @@ export default function VocabularyScreen() {
     user?.settings?.targetLanguage || ""
   );
   const [page, setPage] = useState(0);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const addModalRef = useRef<BottomSheetModal>(null);
+  const addSnapPoints = useMemo(() => ["55%"], []);
+  const themeColors = useThemeColors();
   const [newWord, setNewWord] = useState({ word: "", translation: "" });
   const [refreshing, setRefreshing] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; word: string } | null>(null);
 
   const limit = 30;
 
@@ -75,7 +79,7 @@ export default function VocabularyScreen() {
     }) => vocabularyApi.add(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vocabulary"] });
-      setShowAddModal(false);
+      addModalRef.current?.dismiss();
       setNewWord({ word: "", translation: "" });
     },
   });
@@ -102,14 +106,14 @@ export default function VocabularyScreen() {
   }, []);
 
   const handleDelete = (id: string, word: string) => {
-    Alert.alert("Delete Word", `Are you sure you want to delete "${word}"?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteMutation.mutate(id),
-      },
-    ]);
+    setPendingDelete({ id, word });
+  };
+
+  const confirmDelete = () => {
+    if (pendingDelete) {
+      deleteMutation.mutate(pendingDelete.id);
+      setPendingDelete(null);
+    }
   };
 
   const handleStatusChange = (id: string, currentStatus: string) => {
@@ -162,13 +166,13 @@ export default function VocabularyScreen() {
         {/* Stats */}
         <View className="flex-row items-center mt-4 gap-3 pt-3 border-t border-owl-200">
           <View className="flex-row items-center bg-owl-200 px-2.5 py-1 rounded-lg">
-            <Ionicons name="eye" size={12} color="#888888" />
+            <Ionicons name="eye" size={12} color={themeColors.owl400} />
               <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-600 text-sm ml-1">
               {item.timesEncountered} seen
             </Text>
           </View>
           <View className="flex-row items-center bg-primary-100 px-2.5 py-1 rounded-lg">
-            <Ionicons name="checkmark-circle" size={12} color="#58cc02" />
+            <Ionicons name="checkmark-circle" size={12} color="#2563eb" />
             <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-primary-600 text-sm ml-1">
               {item.timesCorrect} correct
             </Text>
@@ -219,18 +223,18 @@ export default function VocabularyScreen() {
       <View className="px-6 mb-5">
         <View className="bg-owl-100 rounded-2xl p-5">
           <View className="flex-row items-center bg-owl-200 rounded-xl px-4 py-3 mb-4">
-            <Ionicons name="search" size={20} color="#888888" />
+            <Ionicons name="search" size={20} color={themeColors.owl400} />
             <TextInput
               value={search}
               onChangeText={setSearch}
               placeholder="Search your vocabulary..."
               className="flex-1 ml-3 text-owl-800 text-base"
-              placeholderTextColor="#555555"
+              placeholderTextColor={themeColors.owl400}
               style={{ fontFamily: "Nunito_400Regular" }}
             />
             {search ? (
               <TouchableOpacity onPress={() => setSearch("")}>
-                <Ionicons name="close-circle" size={20} color="#555555" />
+                <Ionicons name="close-circle" size={20} color={themeColors.owl500} />
               </TouchableOpacity>
             ) : null}
           </View>
@@ -267,12 +271,12 @@ export default function VocabularyScreen() {
       {/* Word List */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#58cc02" />
+          <ActivityIndicator size="large" color="#2563eb" />
           <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-4">Loading vocabulary...</Text>
         </View>
       ) : words.length === 0 ? (
         <View className="flex-1 items-center justify-center p-8">
-          <Ionicons name="book" size={48} color="#1cb0f6" />
+          <Ionicons name="book" size={48} color="#8b5cf6" />
           <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-800 text-2xl mt-4">🔤 No words yet!</Text>
           <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 text-center mt-2 max-w-xs text-lg">
             Start reading stories to discover new words!
@@ -288,8 +292,8 @@ export default function VocabularyScreen() {
             <RefreshControl 
               refreshing={refreshing} 
               onRefresh={onRefresh}
-              colors={["#58cc02"]}
-              tintColor="#58cc02"
+              colors={["#2563eb"]}
+              tintColor="#2563eb"
             />
           }
           onEndReached={() => {
@@ -304,86 +308,102 @@ export default function VocabularyScreen() {
 
       {/* Add Button */}
       <TouchableOpacity
-        onPress={() => setShowAddModal(true)}
+        onPress={() => addModalRef.current?.present()}
         activeOpacity={0.7}
         className="absolute bottom-24 right-6 w-14 h-14 rounded-2xl bg-primary-500 items-center justify-center"
       >
         <Ionicons name="add" size={28} color="white" />
       </TouchableOpacity>
 
-      {/* Add Modal */}
-      <Modal visible={showAddModal} transparent animationType="slide">
-        <View className="flex-1 justify-end bg-black/60">
-          <View className="bg-owl-100 rounded-t-3xl p-6">
-            <View className="w-12 h-1 bg-owl-300 rounded-full self-center mb-5" />
-            
-            <View className="flex-row items-center justify-between mb-6">
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-owl-900">Add New Word</Text>
-              <TouchableOpacity 
-                onPress={() => setShowAddModal(false)}
-                className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
-              >
-                <Ionicons name="close" size={20} color="#888888" />
-              </TouchableOpacity>
-            </View>
-
-            <View className="mb-5">
-              <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600 mb-2 ml-1">Word</Text>
-              <View className="flex-row items-center bg-owl-200 rounded-xl px-4 py-4">
-                <Ionicons name="text" size={20} color="#888888" />
-                <TextInput
-                  value={newWord.word}
-                  onChangeText={(text) => setNewWord({ ...newWord, word: text })}
-                  placeholder="Enter word"
-                  className="flex-1 ml-3 text-owl-800 text-base"
-                  placeholderTextColor="#555555"
-                  style={{ fontFamily: "Nunito_400Regular" }}
-                />
-              </View>
-            </View>
-
-            <View className="mb-6">
-              <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600 mb-2 ml-1">
-                Translation (optional)
-              </Text>
-              <View className="flex-row items-center bg-owl-200 rounded-xl px-4 py-4">
-                <Ionicons name="language" size={20} color="#888888" />
-                <TextInput
-                  value={newWord.translation}
-                  onChangeText={(text) => setNewWord({ ...newWord, translation: text })}
-                  placeholder="Enter translation"
-                  className="flex-1 ml-3 text-owl-800 text-base"
-                  placeholderTextColor="#555555"
-                  style={{ fontFamily: "Nunito_400Regular" }}
-                />
-              </View>
-            </View>
-
-            <TouchableOpacity
-              onPress={() =>
-                addMutation.mutate({
-                  word: newWord.word,
-                  language: languageFilter || user?.settings?.targetLanguage || "Spanish",
-                  translation: newWord.translation || undefined,
-                })
-              }
-              disabled={!newWord.word.trim() || addMutation.isPending}
-              activeOpacity={0.7}
-              className={`rounded-2xl py-4 ${
-                !newWord.word.trim() || addMutation.isPending
-                  ? "bg-owl-200"
-                  : "bg-secondary-500"
-              }`}
+      {/* Add Bottom Sheet */}
+      <BottomSheetModal
+        ref={addModalRef}
+        snapPoints={addSnapPoints}
+        enableDynamicSizing={false}
+        enablePanDownToClose
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.5} />
+        )}
+        handleIndicatorStyle={{ backgroundColor: "#ccc", width: 48 }}
+        backgroundStyle={{ backgroundColor: themeColors.owl100, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
+      >
+        <BottomSheetView style={{ paddingHorizontal: 24, paddingBottom: 24 }}>
+          <View className="flex-row items-center justify-between mb-6">
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-xl text-owl-900">Add New Word</Text>
+            <TouchableOpacity 
+              onPress={() => addModalRef.current?.dismiss()}
+              className="w-8 h-8 rounded-full bg-owl-200 items-center justify-center"
             >
-              <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-center text-lg ${
-                !newWord.word.trim() || addMutation.isPending ? "text-owl-400" : "text-white"
-              }`}>
-                {addMutation.isPending ? "Adding..." : "Add Word"}
-              </Text>
+              <Ionicons name="close" size={20} color="#888888" />
             </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
+
+          <View className="mb-5">
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600 mb-2 ml-1">Word</Text>
+            <View className="flex-row items-center bg-owl-200 rounded-xl px-4 py-4">
+              <Ionicons name="text" size={20} color={themeColors.owl400} />
+              <TextInput
+                value={newWord.word}
+                onChangeText={(text) => setNewWord({ ...newWord, word: text })}
+                placeholder="Enter word"
+                className="flex-1 ml-3 text-owl-800 text-base"
+                placeholderTextColor={themeColors.owl400}
+                style={{ fontFamily: "Nunito_400Regular" }}
+              />
+            </View>
+          </View>
+
+          <View className="mb-6">
+            <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-sm text-owl-600 mb-2 ml-1">
+              Translation (optional)
+            </Text>
+            <View className="flex-row items-center bg-owl-200 rounded-xl px-4 py-4">
+              <Ionicons name="language" size={20} color={themeColors.owl400} />
+              <TextInput
+                value={newWord.translation}
+                onChangeText={(text) => setNewWord({ ...newWord, translation: text })}
+                placeholder="Enter translation"
+                className="flex-1 ml-3 text-owl-800 text-base"
+                placeholderTextColor={themeColors.owl400}
+                style={{ fontFamily: "Nunito_400Regular" }}
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity
+            onPress={() =>
+              addMutation.mutate({
+                word: newWord.word,
+                language: languageFilter || user?.settings?.targetLanguage || "Spanish",
+                translation: newWord.translation || undefined,
+              })
+            }
+            disabled={!newWord.word.trim() || addMutation.isPending}
+            activeOpacity={0.7}
+            className={`rounded-2xl py-4 ${
+              !newWord.word.trim() || addMutation.isPending
+                ? "bg-owl-200"
+                : "bg-secondary-500"
+            }`}
+          >
+            <Text style={{ fontFamily: "Nunito_700Bold" }} className={`text-center text-lg ${
+              !newWord.word.trim() || addMutation.isPending ? "text-owl-400" : "text-white"
+            }`}>
+              {addMutation.isPending ? "Adding..." : "Add Word"}
+            </Text>
+          </TouchableOpacity>
+        </BottomSheetView>
+      </BottomSheetModal>
+
+      <ConfirmDialog
+        visible={pendingDelete !== null}
+        title="Delete word?"
+        message={pendingDelete ? `"${pendingDelete.word}" will be removed from your vocabulary.` : undefined}
+        confirmText="Delete"
+        confirmStyle="destructive"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </SafeAreaView>
   );
 }

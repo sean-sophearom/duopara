@@ -74,7 +74,7 @@ export default function DashboardScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 70 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#58cc02" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
         }
         showsVerticalScrollIndicator={false}
       >
@@ -155,7 +155,7 @@ export default function DashboardScreen() {
                       {dueData?.dueCount} words ready for review
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={22} color="#1cb0f6" />
+                  <Ionicons name="chevron-forward" size={22} color="#8b5cf6" />
                 </View>
               </TouchableOpacity>
             </Link>
@@ -244,7 +244,7 @@ export default function DashboardScreen() {
                   <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-primary-500 text-base mr-1">
                     See all
                   </Text>
-                  <Ionicons name="chevron-forward" size={18} color="#58cc02" />
+                  <Ionicons name="chevron-forward" size={18} color="#2563eb" />
                 </TouchableOpacity>
               </Link>
             </View>

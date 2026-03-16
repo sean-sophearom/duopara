@@ -6,6 +6,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { useThemeColors } from "../../lib/theme";
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -23,7 +24,7 @@ interface ChipProps {
 const variantStyles = {
   default: {
     selected: {
-      bg: ["#2a94ff", "#1a75ff"] as const,
+      bg: ["#2563eb", "#1d4ed8"] as const,
       text: "text-white",
       iconColor: "#ffffff",
     },
@@ -35,26 +36,26 @@ const variantStyles = {
   },
   primary: {
     selected: {
-      bg: ["#2a94ff", "#145deb"] as const,
+      bg: ["#2563eb", "#1d4ed8"] as const,
       text: "text-white",
       iconColor: "#ffffff",
     },
     unselected: {
       bg: ["#252525", "#1a1a1a"] as const,
       text: "text-primary-600",
-      iconColor: "#2a94ff",
+      iconColor: "#2563eb",
     },
   },
   secondary: {
     selected: {
-      bg: ["#a855f7", "#9333ea"] as const,
+      bg: ["#8b5cf6", "#7c3aed"] as const,
       text: "text-white",
       iconColor: "#ffffff",
     },
     unselected: {
       bg: ["#252525", "#1a1a1a"] as const,
       text: "text-secondary-600",
-      iconColor: "#a855f7",
+      iconColor: "#8b5cf6",
     },
   },
   accent: {
@@ -123,6 +124,7 @@ export function Chip({
   disabled = false,
   count,
 }: ChipProps) {
+  const themeColors = useThemeColors();
   const scale = useSharedValue(1);
 
   const handlePressIn = () => {
@@ -141,6 +143,10 @@ export function Chip({
   const currentStyle = selected ? style.selected : style.unselected;
   const sizeStyle = sizeStyles[size];
 
+  const gradientColors = selected
+    ? currentStyle.bg
+    : [themeColors.owl200, themeColors.owl100] as readonly [string, string];
+
   return (
     <AnimatedTouchable
       onPress={onPress}
@@ -151,7 +157,7 @@ export function Chip({
       style={[animatedStyle, disabled && { opacity: 0.5 }]}
     >
       <LinearGradient
-        colors={currentStyle.bg}
+        colors={[...gradientColors]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         className={`rounded-full flex-row items-center ${sizeStyle.padding}`}

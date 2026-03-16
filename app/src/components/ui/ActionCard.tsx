@@ -58,8 +58,8 @@ interface NotificationCardProps {
 }
 
 const notificationStyles = {
-  info: { bg: "bg-secondary-100", border: "border-secondary-400", icon: "#1cb0f6", text: "text-secondary-600" },
-  success: { bg: "bg-primary-100", border: "border-primary-400", icon: "#58cc02", text: "text-primary-600" },
+  info: { bg: "bg-secondary-100", border: "border-secondary-400", icon: "#8b5cf6", text: "text-secondary-600" },
+  success: { bg: "bg-primary-100", border: "border-primary-400", icon: "#2563eb", text: "text-primary-600" },
   warning: { bg: "bg-warning-100", border: "border-warning-400", icon: "#ffc800", text: "text-warning-600" },
   danger: { bg: "bg-danger-100", border: "border-danger-400", icon: "#ff4b4b", text: "text-danger-600" },
 };

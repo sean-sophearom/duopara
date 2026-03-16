@@ -180,7 +180,7 @@ export default function PracticeScreen() {
             </View>
 
             <View className="bg-owl-200 rounded-xl p-3 mt-4 flex-row items-center justify-center">
-              <Ionicons name="library" size={16} color="#58cc02" />
+              <Ionicons name="library" size={16} color="#2563eb" />
               <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-owl-600 ml-2 text-sm">
                 {availableWordCount} words available
               </Text>

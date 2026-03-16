@@ -13,6 +13,7 @@ import { generateApi, settingsApi, vocabularyApi } from "../../src/lib/api";
 import { useAuthStore } from "../../src/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useThemeColors } from "../../src/lib/theme";
 
 const topicSuggestions = [
   { icon: "cafe", label: "Café", topic: "Ordering coffee and pastries at a local café" },
@@ -53,6 +54,7 @@ export default function GenerateScreen() {
   const [includeLearningWords, setIncludeLearningWords] = useState(true);
   const [includeLearnedWords, setIncludeLearnedWords] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const colors = useThemeColors();
 
   const { data: languages } = useQuery({
     queryKey: ["languages"],
@@ -115,7 +117,7 @@ export default function GenerateScreen() {
                 onChangeText={setTopic}
                 placeholder="e.g. A day at the beach with friends..."
                 className="text-owl-800 text-base"
-                placeholderTextColor="#555555"
+                placeholderTextColor={colors.owl400}
                 multiline
               />
             </View>
@@ -131,7 +133,7 @@ export default function GenerateScreen() {
                   activeOpacity={0.7}
                   className="flex-row items-center bg-owl-200 rounded-xl px-3 py-2"
                 >
-                  <Ionicons name={suggestion.icon as any} size={16} color="#888888" />
+                  <Ionicons name={suggestion.icon as any} size={16} color={colors.owl400} />
                   <Text style={{ fontFamily: "Nunito_600SemiBold" }} className="text-base ml-1.5 text-owl-700">
                     {suggestion.label}
                   </Text>
@@ -169,7 +171,7 @@ export default function GenerateScreen() {
               </View>
             </ScrollView>
             <View className="bg-owl-200 rounded-xl p-3 mt-4 flex-row items-center">
-              <Ionicons name="library" size={16} color="#888888" />
+              <Ionicons name="library" size={16} color={colors.owl400} />
               <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-base text-owl-600 ml-2">
                 <Text style={{ fontFamily: "Nunito_700Bold" }}>{knownWords}</Text> known words in {language}
               </Text>
@@ -240,7 +242,7 @@ export default function GenerateScreen() {
             className="bg-owl-100 rounded-2xl p-5 mb-5 flex-row items-center justify-between"
           >
             <View className="flex-row items-center">
-              <Ionicons name="settings-outline" size={20} color="#888888" />
+              <Ionicons name="settings-outline" size={20} color={colors.owl400} />
               <Text style={{ fontFamily: "Nunito_700Bold" }} className="text-owl-700 ml-3">
                 ⚙️ Advanced Options
               </Text>
@@ -248,7 +250,7 @@ export default function GenerateScreen() {
             <Ionicons
               name={showAdvanced ? "chevron-up" : "chevron-down"}
               size={24}
-              color="#555555"
+              color={colors.owl500}
             />
           </TouchableOpacity>
 
