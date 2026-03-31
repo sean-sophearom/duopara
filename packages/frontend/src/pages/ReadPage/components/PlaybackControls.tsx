@@ -1,22 +1,70 @@
-import { Play, Square } from "lucide-react";
+import { Play, Square, Volume2 } from "lucide-react";
+import { formatVoiceName } from "../utils";
 
 interface PlaybackControlsProps {
   isSpeaking: boolean;
   speechRate: number;
+  voices: SpeechSynthesisVoice[];
+  fallbackVoices: SpeechSynthesisVoice[];
+  selectedVoice: SpeechSynthesisVoice | null;
   onSpeakAll: () => void;
   onStop: () => void;
   onRateChange: (rate: number) => void;
+  onVoiceChange: (voice: SpeechSynthesisVoice) => void;
 }
 
 export function PlaybackControls({
   isSpeaking,
   speechRate,
+  voices,
+  fallbackVoices,
+  selectedVoice,
   onSpeakAll,
   onStop,
   onRateChange,
+  onVoiceChange,
 }: PlaybackControlsProps) {
+  const handleVoiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const voiceURI = e.target.value;
+    const allVoices = [...voices, ...fallbackVoices];
+    const voice = allVoices.find((v) => v.voiceURI === voiceURI);
+    if (voice) {
+      onVoiceChange(voice);
+    }
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-3 mb-4">
+      {/* Voice selection */}
+      <div className="flex items-center gap-2">
+        <Volume2 className="w-4 h-4 text-gray-500" />
+        <select
+          value={selectedVoice?.voiceURI || ""}
+          onChange={handleVoiceChange}
+          className="text-sm bg-gray-100 border-0 rounded-lg px-2 py-1.5 pr-8 focus:ring-2 focus:ring-primary-500 cursor-pointer max-w-[200px]"
+          title="Select voice"
+        >
+          {voices.length > 0 && (
+            <optgroup label="Matching language">
+              {voices.map((voice) => (
+                <option key={voice.voiceURI} value={voice.voiceURI}>
+                  {formatVoiceName(voice)}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {fallbackVoices.length > 0 && (
+            <optgroup label="Other languages">
+              {fallbackVoices.map((voice) => (
+                <option key={voice.voiceURI} value={voice.voiceURI}>
+                  {formatVoiceName(voice)}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+      </div>
+
       {/* Speed control */}
       <div className="flex items-center gap-1 bg-gray-100 rounded-lg px-1 py-1">
         <button

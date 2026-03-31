@@ -92,6 +92,10 @@ export default function ReadPage() {
     speakAll,
     speakSentence,
     stopSpeaking,
+    voices,
+    fallbackVoices,
+    selectedVoice,
+    setSelectedVoice,
   } = useSpeech(text?.content, text?.language || "Spanish");
 
   const {
@@ -356,9 +360,13 @@ export default function ReadPage() {
       <PlaybackControls
         isSpeaking={isSpeaking}
         speechRate={speechRate}
+        voices={voices}
+        fallbackVoices={fallbackVoices}
+        selectedVoice={selectedVoice}
         onSpeakAll={speakAll}
         onStop={stopSpeaking}
         onRateChange={setSpeechRate}
+        onVoiceChange={setSelectedVoice}
       />
 
       <div className="flex gap-6">

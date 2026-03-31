@@ -39,6 +39,7 @@ settingsRouter.get('/languages', async (_req: AuthRequest, res) => {
   // Supported languages for generation
   const languages = [
     { code: 'Spanish', name: 'Spanish', nativeName: 'Español' },
+    { code: 'Vietnamese', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
     // { code: 'Khmer', name: 'Khmer', nativeName: 'ខ្មែរ' },
     // { code: 'French', name: 'French', nativeName: 'Français' },
     // { code: 'German', name: 'German', nativeName: 'Deutsch' },

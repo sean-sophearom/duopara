@@ -38,6 +38,7 @@ const LANGUAGE_CODES: Record<string, string> = {
   Japanese: "ja-JP",
   Korean: "ko-KR",
   Chinese: "zh-CN",
+  Vietnamese: "vi-VN",
 };
 
 // Types
