@@ -35,6 +35,7 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         reading: ['Georgia', 'serif'],
+        reading_vi: ["Noto Serif", 'serif'],
       }
     },
   },

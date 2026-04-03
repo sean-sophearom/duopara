@@ -34,6 +34,10 @@ body {
   @apply font-reading text-lg leading-relaxed;
 }
 
+.reading-text[lang="vi"] {
+  @apply font-reading_vi;
+}
+
 .reading-text .word {
   @apply cursor-pointer rounded px-0.5 transition-colors duration-150;
 }
