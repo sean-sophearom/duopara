@@ -5,10 +5,12 @@ import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/routeUtils.js';
 import {
   createParallelTranslationAgent,
+  createEnhancedTranslationAgent,
   getModelForTask,
-  parallelTextTranslationSchema
+  parallelTextTranslationSchema,
+  enhancedTranslationSchema
 } from '../lib/llm/index.js';
-import { parallelTranslationPrompt } from '../lib/llm/prompts.js';
+import { parallelTranslationPrompt, enhancedTranslationPrompt } from '../lib/llm/prompts.js';
 import { MAX_QUERY_LIMIT } from '../lib/constants.js';
 import { splitSentences } from '../lib/textUtils.js';
 
@@ -200,3 +202,51 @@ textsRouter.post('/:id/translate', asyncHandler(async (req: AuthRequest, res) =>
 
     res.json({ sentences: result.sentences, cached: false });
 }, 'Translation failed'));
+
+// Enhanced (alignment) translation — cached per text+language
+textsRouter.post('/:id/enhanced-translate', asyncHandler(async (req: AuthRequest, res) => {
+  const { id } = req.params;
+  const { targetLanguage } = z.object({ targetLanguage: z.string().min(1) }).parse(req.body);
+
+  const text = await prisma.generatedText.findFirst({
+    where: { id, userId: req.userId }
+  });
+
+  if (!text) {
+    return res.status(404).json({ error: 'Text not found' });
+  }
+
+  // Return cached result if it was translated into the same language
+  if (text.enhancedTranslation) {
+    const cached = JSON.parse(text.enhancedTranslation);
+    if (cached.targetLanguage === targetLanguage) {
+      return res.json({ sentences: cached.sentences, cached: true });
+    }
+  }
+
+  const sentences: string[] = splitSentences(text.content);
+  const numberedList = sentences.map((s, i) => `${i + 1}. ${s}`).join('\n');
+
+  const prompt = enhancedTranslationPrompt(text.language, targetLanguage, numberedList);
+  const agent = createEnhancedTranslationAgent(text.language, targetLanguage);
+  const config = getModelForTask('translation');
+
+  const completion = await agent.generate(prompt, {
+    modelSettings: {
+      temperature: config.temperature ?? 0.2,
+      maxOutputTokens: Math.max(2500, sentences.length * 200)
+    },
+    structuredOutput: { schema: enhancedTranslationSchema }
+  });
+
+  const result = completion.object ?? { sentences: [] };
+
+  await prisma.generatedText.update({
+    where: { id },
+    data: {
+      enhancedTranslation: JSON.stringify({ targetLanguage, sentences: result.sentences })
+    }
+  });
+
+  res.json({ sentences: result.sentences, cached: false });
+}, 'Enhanced translation failed'));

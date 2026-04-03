@@ -82,6 +82,8 @@ model GeneratedText {
   
   // Cached parallel translation: JSON { targetLanguage, sentences: [{translation, literalTranslation}] }
   parallelTranslation String?
+  // Cached enhanced translation: JSON { targetLanguage, sentences: [{pairs: [{source, target}]}] }
+  enhancedTranslation String?
 
   createdAt       DateTime @default(now())
   

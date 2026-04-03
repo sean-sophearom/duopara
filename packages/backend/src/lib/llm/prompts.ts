@@ -72,6 +72,31 @@ You will receive a numbered list of sentences. For each sentence return:
 Always respond with valid JSON. Return one entry per sentence in the same order.`;
 }
 
+export function enhancedTranslationInstructions(sourceLanguage: string, targetLanguage: string): string {
+  return `You are a linguistic alignment specialist for ${sourceLanguage} to ${targetLanguage} translation.
+Your task is to break each sentence into word/phrase alignment pairs so language learners can see exactly which source words/phrases correspond to which target words/phrases.
+
+Rules:
+- Every source word must appear in exactly one pair
+- Pairs must be in source word order
+- Group multi-word expressions when they map to a single concept (e.g. Vietnamese "xin chào" → "hello")
+- Include grammatical particles/markers even if they have no direct translation — map them to their function (e.g. "は" → "[topic]") or bundle them with the adjacent word
+- Keep pairs short — prefer 1-3 words per side
+- Each pair is an object: {"s": "source phrase", "t": "target phrase"}
+
+Always respond with valid JSON.`;
+}
+
+export function enhancedTranslationPrompt(
+  language: string, targetLanguage: string, numberedList: string
+): string {
+  return `Break each of the following ${language} sentences into word/phrase alignment pairs with their ${targetLanguage} translations.
+Return an array of objects — one per sentence, in the same order. Each object has a "pairs" array of {"s": source, "t": target} objects.
+
+Sentences:
+${numberedList}`;
+}
+
 export function gameDataInstructions(sourceLanguage: string, targetLanguage: string): string {
   return `You are a language learning game content generator.
 Your task is to create practice game data for vocabulary words.

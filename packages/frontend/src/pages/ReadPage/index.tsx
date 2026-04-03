@@ -18,8 +18,8 @@ import {
   ReadingStats,
   TranslationControls,
 } from "./components";
-import { cleanWord } from "./utils";
-import type { WordInfo, SentenceInfo, HoveredWord, ParallelTranslation, ReadingText } from "./types";
+import { cleanWord, getLanguageCode } from "./utils";
+import type { WordInfo, SentenceInfo, HoveredWord, ParallelTranslation, EnhancedTranslation, ReadingText } from "./types";
 
 export default function ReadPage() {
   const { textId } = useParams<{ textId: string }>();
@@ -40,6 +40,14 @@ export default function ReadPage() {
   const [showParallelTranslation, setShowParallelTranslation] = useState(false);
   const [parallelTranslations, setParallelTranslations] = useState<Array<ParallelTranslation | null>>([]);
   const [isTranslatingAll, setIsTranslatingAll] = useState(false);
+
+  // Enhanced translation state
+  const [enhancedTranslations, setEnhancedTranslations] = useState<Array<EnhancedTranslation | null>>([]);
+  const [isLoadingEnhanced, setIsLoadingEnhanced] = useState(false);
+
+  // Translation mode: natural | literal | enhanced
+  type TranslationMode = "natural" | "literal" | "enhanced";
+  const [translationMode, setTranslationMode] = useState<TranslationMode>("natural");
 
   // Hover state
   const [hoveredWord, setHoveredWord] = useState<HoveredWord | null>(null);
@@ -102,8 +110,6 @@ export default function ReadPage() {
     highlightLearned,
     highlightLearning,
     highlightNew,
-    useLiteralTranslation,
-    setUseLiteralTranslation,
   } = useHighlightPreferences();
 
   // Popup position update
@@ -219,6 +225,28 @@ export default function ReadPage() {
       setIsTranslatingAll(false);
     }
   }, [text?.content, textId, nativeLanguage, parallelTranslations.length]);
+
+  const fetchEnhancedTranslation = useCallback(async () => {
+    if (!text?.content || !textId) return;
+    if (enhancedTranslations.length > 0) return; // already fetched
+
+    setIsLoadingEnhanced(true);
+    try {
+      const response = await textsApi.enhancedTranslate(textId, nativeLanguage);
+      setEnhancedTranslations(response.data.sentences);
+    } catch (error) {
+      console.error("Enhanced translation error:", error);
+    } finally {
+      setIsLoadingEnhanced(false);
+    }
+  }, [text?.content, textId, nativeLanguage, enhancedTranslations.length]);
+
+  const handleSetTranslationMode = useCallback((mode: TranslationMode) => {
+    setTranslationMode(mode);
+    if (mode === "enhanced") {
+      fetchEnhancedTranslation();
+    }
+  }, [fetchEnhancedTranslation]);
 
   // Event handlers
   const handleWordClick = (word: string, sentence: string) => {
@@ -348,10 +376,11 @@ export default function ReadPage() {
             hasTranslations={parallelTranslations.length > 0}
             isTranslating={isTranslatingAll}
             showParallelTranslation={showParallelTranslation}
-            useLiteralTranslation={useLiteralTranslation}
+            translationMode={translationMode}
+            isLoadingEnhanced={isLoadingEnhanced}
             onTranslateAll={translateAll}
             onToggleParallelView={() => setShowParallelTranslation((v) => !v)}
-            onToggleLiteral={setUseLiteralTranslation}
+            onSetMode={handleSetTranslationMode}
           />
         </div>
       </div>
@@ -400,13 +429,14 @@ export default function ReadPage() {
           </div>
 
           {/* Text content */}
-          <div className="card p-4 lg:p-8 reading-text" style={{ fontSize: "1.2rem", lineHeight: "2" }}>
+          <div className="card p-4 lg:p-8 reading-text" lang={getLanguageCode(text.language).split("-")[0]} style={{ fontSize: "1.2rem", lineHeight: "2" }}>
             {showParallelTranslation ? (
               <ParallelView
                 content={text.content}
                 translations={parallelTranslations}
+                enhancedTranslations={enhancedTranslations}
                 isTranslating={isTranslatingAll}
-                useLiteralTranslation={useLiteralTranslation}
+                translationMode={translationMode}
                 speakingIdx={speakingIdx}
                 selectedSentence={selectedSentence}
                 selectedWord={selectedWord}

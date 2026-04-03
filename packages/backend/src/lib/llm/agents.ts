@@ -14,6 +14,7 @@ import {
   grammarAnalysisInstructions,
   fullAnalysisInstructions,
   parallelTranslationInstructions,
+  enhancedTranslationInstructions,
   gameDataInstructions,
 } from './prompts.js';
 
@@ -74,6 +75,16 @@ export function createParallelTranslationAgent(sourceLanguage: string, targetLan
     name: 'Parallel Text Translation Agent',
     model: config.model,
     instructions: parallelTranslationInstructions(sourceLanguage, targetLanguage),
+  });
+}
+
+export function createEnhancedTranslationAgent(sourceLanguage: string, targetLanguage: string): Agent {
+  const config = getModelForTask('translation');
+  return new Agent({
+    id: 'enhanced-translator',
+    name: 'Enhanced Translation Agent',
+    model: config.model,
+    instructions: enhancedTranslationInstructions(sourceLanguage, targetLanguage),
   });
 }
 

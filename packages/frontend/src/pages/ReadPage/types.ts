@@ -27,6 +27,15 @@ export interface ParallelTranslation {
   literalTranslation?: string;
 }
 
+export interface AlignmentPair {
+  s: string;
+  t: string;
+}
+
+export interface EnhancedTranslation {
+  pairs: AlignmentPair[];
+}
+
 export interface ReadingText {
   id: string;
   title: string;

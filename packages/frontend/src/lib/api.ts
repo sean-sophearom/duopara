@@ -87,6 +87,8 @@ export const textsApi = {
   delete: (id: string) => api.delete(`/texts/${id}`),
   translateAll: (id: string, targetLanguage: string) =>
     api.post(`/texts/${id}/translate`, { targetLanguage }),
+  enhancedTranslate: (id: string, targetLanguage: string) =>
+    api.post(`/texts/${id}/enhanced-translate`, { targetLanguage }),
 };
 
 export const translateApi = {

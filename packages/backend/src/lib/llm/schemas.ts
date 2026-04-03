@@ -97,6 +97,21 @@ export const parallelTextTranslationSchema = z.object({
 export type ParallelTextTranslation = z.infer<typeof parallelTextTranslationSchema>;
 
 // ============================================
+// Enhanced (Alignment) Translation Schema
+// ============================================
+
+export const enhancedTranslationSchema = z.object({
+  sentences: z.array(z.object({
+    pairs: z.array(z.object({
+      s: z.string().describe('Source phrase'),
+      t: z.string().describe('Target phrase')
+    })).describe('Ordered alignment pairs mapping source phrases to target phrases')
+  })).describe('One entry per sentence, in the same order as the input')
+});
+
+export type EnhancedTranslation = z.infer<typeof enhancedTranslationSchema>;
+
+// ============================================
 // Practice Game Data Schemas
 // ============================================
 

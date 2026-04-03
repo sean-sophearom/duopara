@@ -1,50 +1,55 @@
 import { Languages, Eye, EyeOff, Loader2 } from "lucide-react";
 
+type TranslationMode = "natural" | "literal" | "enhanced";
+
 interface TranslationControlsProps {
   hasTranslations: boolean;
   isTranslating: boolean;
   showParallelTranslation: boolean;
-  useLiteralTranslation: boolean;
+  translationMode: TranslationMode;
+  isLoadingEnhanced: boolean;
   onTranslateAll: () => void;
   onToggleParallelView: () => void;
-  onToggleLiteral: (literal: boolean) => void;
+  onSetMode: (mode: TranslationMode) => void;
 }
 
 export function TranslationControls({
   hasTranslations,
   isTranslating,
   showParallelTranslation,
-  useLiteralTranslation,
+  translationMode,
+  isLoadingEnhanced,
   onTranslateAll,
   onToggleParallelView,
-  onToggleLiteral,
+  onSetMode,
 }: TranslationControlsProps) {
   if (hasTranslations) {
     return (
       <>
-        {/* Literal / Natural pill — only when panel is open */}
+        {/* Natural / Literal / Enhanced pill — only when panel is open */}
         {showParallelTranslation && (
           <div className="flex items-center rounded-lg overflow-hidden border border-gray-200 text-sm font-medium">
-            <button
-              onClick={() => onToggleLiteral(false)}
-              className={`px-3 py-1.5 transition-colors ${
-                !useLiteralTranslation
-                  ? "bg-primary-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              Natural
-            </button>
-            <button
-              onClick={() => onToggleLiteral(true)}
-              className={`px-3 py-1.5 transition-colors ${
-                useLiteralTranslation
-                  ? "bg-primary-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              Literal
-            </button>
+            {(["natural", "literal", "enhanced"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => onSetMode(mode)}
+                disabled={mode === "enhanced" && isLoadingEnhanced}
+                className={`px-3 py-1.5 transition-colors capitalize ${
+                  translationMode === mode
+                    ? "bg-primary-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-50"
+                } ${mode === "enhanced" && isLoadingEnhanced ? "opacity-60" : ""}`}
+              >
+                {mode === "enhanced" && isLoadingEnhanced ? (
+                  <span className="flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Enhanced
+                  </span>
+                ) : (
+                  mode
+                )}
+              </button>
+            ))}
           </div>
         )}
         <button
