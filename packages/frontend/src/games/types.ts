@@ -72,8 +72,8 @@ export interface SessionStats {
 }
 
 export interface GameConfig {
-  optionCount?: number;  // For multiple choice games (3-8)
-  pairCount?: number;    // For matching grid (3-6)
+  optionCount?: number;
+  pairCount?: number;
 }
 
 export interface GameInfo {
@@ -98,8 +98,8 @@ export const GAME_INFO: Record<GameType, GameInfo> = {
     minWords: 1,
     defaultConfig: { optionCount: 4 },
     configOptions: {
-      optionCount: { min: 3, max: 6, default: 4, label: 'Number of choices' }
-    }
+      optionCount: { min: 3, max: 6, default: 4, label: 'Number of choices' },
+    },
   },
   translation: {
     type: 'translation',
@@ -109,8 +109,8 @@ export const GAME_INFO: Record<GameType, GameInfo> = {
     minWords: 1,
     defaultConfig: { optionCount: 4 },
     configOptions: {
-      optionCount: { min: 3, max: 6, default: 4, label: 'Number of choices' }
-    }
+      optionCount: { min: 3, max: 6, default: 4, label: 'Number of choices' },
+    },
   },
   reverse: {
     type: 'reverse',
@@ -120,8 +120,8 @@ export const GAME_INFO: Record<GameType, GameInfo> = {
     minWords: 1,
     defaultConfig: { optionCount: 4 },
     configOptions: {
-      optionCount: { min: 3, max: 6, default: 4, label: 'Number of choices' }
-    }
+      optionCount: { min: 3, max: 6, default: 4, label: 'Number of choices' },
+    },
   },
   fillblank: {
     type: 'fillblank',
@@ -131,8 +131,8 @@ export const GAME_INFO: Record<GameType, GameInfo> = {
     minWords: 1,
     defaultConfig: { optionCount: 4 },
     configOptions: {
-      optionCount: { min: 3, max: 6, default: 4, label: 'Number of choices' }
-    }
+      optionCount: { min: 3, max: 6, default: 4, label: 'Number of choices' },
+    },
   },
   matching: {
     type: 'matching',
@@ -142,8 +142,8 @@ export const GAME_INFO: Record<GameType, GameInfo> = {
     minWords: 3,
     defaultConfig: { pairCount: 4 },
     configOptions: {
-      pairCount: { min: 3, max: 5, default: 4, label: 'Grid size' }
-    }
+      pairCount: { min: 3, max: 5, default: 4, label: 'Grid size' },
+    },
   },
   truefalse: {
     type: 'truefalse',
@@ -151,11 +151,10 @@ export const GAME_INFO: Record<GameType, GameInfo> = {
     description: 'Swipe right if the translation is correct, left if wrong',
     icon: '👈👉',
     minWords: 1,
-    defaultConfig: {}
-  }
+    defaultConfig: {},
+  },
 };
 
-// Props for individual game components
 export interface GameProps {
   words: PracticeWord[];
   sourceLanguage: string;

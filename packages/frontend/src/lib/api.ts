@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-//@ts-expect-error
 const VITE_BASE_PATH = import.meta.env.VITE_BASE_PATH || '/';
-// If VITE_BASE_PATH is set and not just "/", we need to adjust the baseURL for API calls
 const apiBaseURL = VITE_BASE_PATH !== '/' ? `${VITE_BASE_PATH}/api` : '/api';
 
 export const api = axios.create({
@@ -13,19 +11,16 @@ export const api = axios.create({
   },
 });
 
-// Response interceptor for handling errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - could trigger logout here
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
     return Promise.reject(error);
   }
 );
 
-// API functions for each endpoint
 export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
@@ -116,30 +111,26 @@ export const settingsApi = {
 };
 
 export const practiceApi = {
-  // Get words for practice session
   getWords: (data: {
     language: string;
     statuses: ('learning' | 'learned' | 'mastered')[];
     limit?: number;
     prioritizeSpacedRepetition?: boolean;
   }) => api.post('/practice/words', data),
-  
-  // Get game data for a single word
+
   getGameData: (data: {
     word: string;
     sourceLanguage: string;
     targetLanguage: string;
     translation?: string;
   }) => api.post('/practice/game-data', data),
-  
-  // Batch get game data for multiple words
+
   getGameDataBatch: (data: {
     words: Array<{ word: string; translation: string }>;
     sourceLanguage: string;
     targetLanguage: string;
   }) => api.post('/practice/game-data/batch', data),
-  
-  // Start a new practice session
+
   startSession: (data: {
     gameType: 'definition' | 'translation' | 'reverse' | 'fillblank' | 'matching' | 'truefalse';
     sourceLanguage: string;
@@ -150,8 +141,7 @@ export const practiceApi = {
       pairCount?: number;
     };
   }) => api.post('/practice/session/start', data),
-  
-  // Submit a practice attempt
+
   submitAttempt: (data: {
     sessionId: string;
     vocabularyWordId: string;
@@ -161,16 +151,13 @@ export const practiceApi = {
     userAnswer: string;
     correctAnswer: string;
   }) => api.post('/practice/attempt', data),
-  
-  // Complete a practice session
-  completeSession: (sessionId: string) => 
+
+  completeSession: (sessionId: string) =>
     api.post('/practice/session/complete', { sessionId }),
-  
-  // Get practice statistics
+
   getStats: (params?: { language?: string; days?: number }) =>
     api.get('/practice/stats', { params }),
-  
-  // Get count of words due for review
+
   getDueCount: (language?: string) =>
     api.get('/practice/due', { params: { language } }),
 };

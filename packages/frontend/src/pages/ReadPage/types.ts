@@ -42,7 +42,7 @@ export interface ReadingText {
   topic: string;
   content: string;
   language: string;
-  difficulty: "beginner" | "intermediate" | "advanced";
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
   wordCount: number;
   knownWordsUsed?: string[];
   newWordsIntroduced?: string[];
