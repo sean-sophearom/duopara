@@ -58,8 +58,12 @@ export const vocabularyApi = {
 };
 
 export const generateApi = {
+  randomTopic: (language: string, difficulty: string) =>
+    api.get<{ topic: string }>('/generate/random-topic', { params: { language, difficulty } }),
   create: (data: {
-    topic: string;
+    topic?: string;
+    customText?: string;
+    title?: string;
     language: string;
     difficulty?: string;
     knownWordsRatio?: number;

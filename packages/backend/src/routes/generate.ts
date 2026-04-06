@@ -20,7 +20,9 @@ export const generateRouter = Router();
 generateRouter.use(authenticate);
 
 const generateSchema = z.object({
-  topic: z.string().min(1).max(MAX_TOPIC_LENGTH),
+  topic: z.string().min(1).max(MAX_TOPIC_LENGTH).optional(),
+  customText: z.string().min(1).max(50000).optional(),
+  title: z.string().max(200).optional(),
   language: validLanguage(),
   difficulty: z.enum(DIFFICULTIES).default('intermediate'),
   knownWordsRatio: z.number().min(0).max(100).default(80),
@@ -28,6 +30,8 @@ const generateSchema = z.object({
   style: z.enum(CONTENT_STYLES).default('story'),
   includeLearningWords: z.boolean().default(true),
   includeLearnedWords: z.boolean().default(true)
+}).refine(data => data.topic || data.customText, {
+  message: 'Either topic or customText must be provided'
 });
 
 const regenerateSchema = z.object({
@@ -99,6 +103,25 @@ async function generateText(language: string, difficulty: string, prompt: string
   });
 }
 
+// Suggest a random topic
+const randomTopicSchema = z.object({
+  language: validLanguage(),
+  difficulty: z.enum(DIFFICULTIES).default('intermediate'),
+});
+
+generateRouter.get('/random-topic', asyncHandler(async (req: AuthRequest, res) => {
+  const { language, difficulty } = randomTopicSchema.parse(req.query);
+  const agent = createTextGenerationAgent(language, difficulty);
+  const config = getModelForTask('text-generation');
+  const result = await agent.generate(
+    `Suggest a single creative, specific, and interesting topic for a language-learning reading text in ${language} at ${difficulty} level. ` +
+    `Reply with ONLY the topic phrase (5-15 words), no intro, no punctuation at the end. Examples: "A detective solving a mystery in Barcelona", "Learning to cook ramen with a Japanese grandmother".`,
+    { modelSettings: { temperature: 1.0, maxOutputTokens: 60 } }
+  );
+  const topic = result.text?.trim().replace(/[.!?"']+$/, '') || 'A day in the life of a local';
+  res.json({ topic });
+}, 'Failed to generate random topic'));
+
 // Generate new text
 generateRouter.post('/', asyncHandler(async (req: AuthRequest, res) => {
   const params = generateSchema.parse(req.body);
@@ -110,16 +133,27 @@ generateRouter.post('/', asyncHandler(async (req: AuthRequest, res) => {
   if (statusIn.length === 0) statusIn.push('learned', 'mastered');
 
   const knownWordsList = await fetchKnownWords(req.userId!, params.language, statusIn);
-  const prompt = textGenerationPrompt({ ...params, knownWords: knownWordsList });
-  const result = await generateText(params.language, params.difficulty, prompt);
 
-  const title = result.object?.title || params.topic;
-  const content = result.object?.content || '';
+  let title: string;
+  let content: string;
+
+  if (params.customText) {
+    content = params.customText;
+    const firstSentence = content.split(/[.!?\n]/)[0].trim().slice(0, 100);
+    title = params.title || params.topic || firstSentence || 'Custom Text';
+  } else {
+    const prompt = textGenerationPrompt({ ...params, topic: params.topic!, knownWords: knownWordsList });
+    const result = await generateText(params.language, params.difficulty, prompt);
+    title = result.object?.title || params.topic!;
+    content = result.object?.content || '';
+  }
+
+  const topic = params.topic || title;
   const analysis = analyzeWords(content, params.language, knownWordsList);
 
   const { text, session } = await saveTextAndSession(
     req.userId!, 
-    { topic: params.topic, language: params.language, difficulty: params.difficulty, knownWordsRatio: params.knownWordsRatio, title, content },
+    { topic, language: params.language, difficulty: params.difficulty, knownWordsRatio: params.knownWordsRatio, title, content },
     analysis
   );
 

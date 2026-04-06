@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMutation, useQuery } from '@tanstack/vue-query';
@@ -8,6 +8,7 @@ import {
   Sparkles, Loader2, BookOpen, Lightbulb,
   Coffee, Plane, ShoppingBag, Utensils,
   Heart, Briefcase, GraduationCap, Newspaper,
+  ClipboardPaste, Wand2, Shuffle,
 } from 'lucide-vue-next';
 
 const topicSuggestions = [
@@ -41,12 +42,23 @@ const defaultLanguage = authStore.user?.settings?.targetLanguage || 'Spanish';
 const defaultRatio = authStore.user?.settings?.knownWordsRatio || 80;
 const defaultDifficulty = authStore.user?.settings?.defaultDifficulty || 'intermediate';
 
+// Mode: 'generate' | 'import'
+const mode = ref<'generate' | 'import'>('generate');
+
+// Generate mode fields
 const topic = ref('');
+const style = ref('story');
+const wordCount = ref(200);
+
+// Import mode fields
+const customText = ref('');
+const customTitle = ref('');
+const customTopic = ref('');
+
+// Shared fields
 const language = ref(defaultLanguage);
 const difficulty = ref(defaultDifficulty);
 const knownWordsRatio = ref(defaultRatio);
-const wordCount = ref(200);
-const style = ref('story');
 const includeLearningWords = ref(true);
 const includeLearnedWords = ref(true);
 
@@ -67,24 +79,57 @@ const generateMutation = useMutation({
   },
 });
 
+const randomTopicMutation = useMutation({
+  mutationFn: () => generateApi.randomTopic(language.value, difficulty.value),
+  onSuccess: (response) => {
+    topic.value = response.data.topic;
+  },
+});
+
 function handleGenerate() {
-  if (!topic.value.trim()) return;
-  generateMutation.mutate({
-    topic: topic.value.trim(),
-    language: language.value,
-    difficulty: difficulty.value,
-    knownWordsRatio: knownWordsRatio.value,
-    wordCount: wordCount.value,
-    style: style.value,
-    includeLearningWords: includeLearningWords.value,
-    includeLearnedWords: includeLearnedWords.value,
-  });
+  if (mode.value === 'import') {
+    if (!customText.value.trim()) return;
+    generateMutation.mutate({
+      customText: customText.value.trim(),
+      title: customTitle.value.trim() || undefined,
+      topic: customTopic.value.trim() || undefined,
+      language: language.value,
+      difficulty: difficulty.value,
+      knownWordsRatio: knownWordsRatio.value,
+      includeLearningWords: includeLearningWords.value,
+      includeLearnedWords: includeLearnedWords.value,
+    });
+  } else {
+    if (!topic.value.trim()) return;
+    generateMutation.mutate({
+      topic: topic.value.trim(),
+      language: language.value,
+      difficulty: difficulty.value,
+      knownWordsRatio: knownWordsRatio.value,
+      wordCount: wordCount.value,
+      style: style.value,
+      includeLearningWords: includeLearningWords.value,
+      includeLearnedWords: includeLearnedWords.value,
+    });
+  }
 }
+
+const isSubmitDisabled = computed(() => {
+  if (generateMutation.isPending.value) return true;
+  if (!includeLearnedWords.value && !includeLearningWords.value) return true;
+  if (mode.value === 'import') return !customText.value.trim();
+  return !topic.value.trim();
+});
 
 const knownWords = computed(() =>
   (includeLearnedWords.value ? (vocabStats.value?.learned || 0) + (vocabStats.value?.mastered || 0) : 0)
   + (includeLearningWords.value ? (vocabStats.value?.learning || 0) : 0)
 );
+
+const importWordCount = computed(() => {
+  if (!customText.value) return 0;
+  return customText.value.trim().split(/\s+/).filter(Boolean).length;
+});
 </script>
 
 <template>
@@ -94,40 +139,126 @@ const knownWords = computed(() =>
       <p class="text-gray-600 mt-1">Create personalized content based on your vocabulary level</p>
     </div>
 
+    <!-- Mode toggle -->
+    <div class="flex gap-2 mb-8 p-1 bg-gray-100 rounded-xl w-fit">
+      <button
+        type="button"
+        @click="mode = 'generate'"
+        :class="[
+          'flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all',
+          mode === 'generate'
+            ? 'bg-white text-primary-700 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900'
+        ]"
+      >
+        <Wand2 class="w-4 h-4" />
+        AI Generate
+      </button>
+      <button
+        type="button"
+        @click="mode = 'import'"
+        :class="[
+          'flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all',
+          mode === 'import'
+            ? 'bg-white text-primary-700 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900'
+        ]"
+      >
+        <ClipboardPaste class="w-4 h-4" />
+        Paste Your Text
+      </button>
+    </div>
+
     <form @submit.prevent="handleGenerate" class="space-y-8">
-      <!-- Topic input -->
-      <div class="card p-6">
-        <label class="block text-lg font-semibold text-gray-900 mb-3">
-          What would you like to read about?
-        </label>
-        <div class="relative">
-          <Lightbulb class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            v-model="topic"
-            placeholder="e.g. A day at the beach, Cooking traditional food, Space exploration..."
-            class="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
-            required
-          />
-        </div>
-        <div class="mt-4">
-          <p class="text-sm text-gray-500 mb-2">Or try one of these:</p>
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="suggestion in topicSuggestions"
-              :key="suggestion.label"
+
+      <!-- AI Generate mode: topic input -->
+      <template v-if="mode === 'generate'">
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-3">
+            <label class="block text-lg font-semibold text-gray-900">What would you like to read about?</label>
+            <!-- <button
               type="button"
-              @click="topic = suggestion.topic"
-              class="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+              @click="randomTopicMutation.mutate()"
+              :disabled="randomTopicMutation.isPending.value"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors disabled:opacity-50"
             >
-              <component :is="suggestion.icon" class="w-4 h-4" />
-              {{ suggestion.label }}
-            </button>
+              <Shuffle v-if="!randomTopicMutation.isPending.value" class="w-4 h-4" />
+              <Loader2 v-else class="w-4 h-4 animate-spin" />
+              Surprise me
+            </button> -->
+          </div>
+          <div class="relative">
+            <Lightbulb class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              v-model="topic"
+              placeholder="e.g. A day at the beach, Cooking traditional food, Space exploration..."
+              class="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+              required
+            />
+          </div>
+          <div class="mt-4">
+            <p class="text-sm text-gray-500 mb-2">Or try one of these:</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="suggestion in topicSuggestions"
+                :key="suggestion.label"
+                type="button"
+                @click="topic = suggestion.topic"
+                class="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+              >
+                <component :is="suggestion.icon" class="w-4 h-4" />
+                {{ suggestion.label }}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
 
-      <!-- Language and difficulty -->
+      <!-- Paste mode: custom text + optional metadata -->
+      <template v-else>
+        <div class="card p-6 space-y-5">
+          <div>
+            <label class="block text-lg font-semibold text-gray-900 mb-1">Paste your text</label>
+            <p class="text-sm text-gray-500 mb-3">Song lyrics, an article, a poem or anything you want to study.</p>
+            <textarea
+              v-model="customText"
+              rows="10"
+              placeholder="Paste your text here..."
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all resize-y font-mono text-sm"
+              required
+            />
+            <p class="text-xs text-gray-400 mt-1 text-right">{{ importWordCount }} words</p>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Title <span class="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                v-model="customTitle"
+                placeholder="Auto-detected from first sentence"
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Topic / Tag <span class="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                v-model="customTopic"
+                placeholder="e.g. Song lyrics, Poem, Article"
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+              />
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Language and difficulty (shared) -->
       <div class="grid md:grid-cols-2 gap-6">
         <div class="card p-6">
           <label class="block text-lg font-semibold text-gray-900 mb-3">Target Language</label>
@@ -135,7 +266,7 @@ const knownWords = computed(() =>
             <option v-for="lang in languages" :key="lang.code" :value="lang.code">
               {{ lang.name }} ({{ lang.nativeName }})
             </option>
-            <option v-if="!languages" value="Spanish">Spanish (Español)</option>
+            <option v-if="!languages" value="Spanish">Spanish (EspaÃ±ol)</option>
           </select>
           <div class="mt-4 p-3 bg-primary-50 rounded-lg">
             <p class="text-sm text-primary-700">
@@ -208,7 +339,7 @@ const knownWords = computed(() =>
             </div>
           </div>
 
-          <div>
+          <div v-if="mode === 'generate'">
             <label class="block text-sm font-medium text-gray-700 mb-2">Approximate Length</label>
             <select v-model.number="wordCount" class="input">
               <option :value="100">Short (~100 words)</option>
@@ -219,7 +350,7 @@ const knownWords = computed(() =>
           </div>
         </div>
 
-        <div class="mt-6">
+        <div v-if="mode === 'generate'" class="mt-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">Writing Style</label>
           <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-2">
             <label
@@ -240,15 +371,19 @@ const knownWords = computed(() =>
         </div>
       </div>
 
-      <!-- Generate button -->
+      <!-- Submit button -->
       <button
         type="submit"
-        :disabled="generateMutation.isPending.value || !topic.trim() || (!includeLearnedWords && !includeLearningWords)"
+        :disabled="isSubmitDisabled"
         class="btn btn-primary w-full py-4 text-lg"
       >
         <template v-if="generateMutation.isPending.value">
           <Loader2 class="w-6 h-6 animate-spin mr-2" />
-          Generating your text...
+          {{ mode === 'import' ? 'Processing your text...' : 'Generating your text...' }}
+        </template>
+        <template v-else-if="mode === 'import'">
+          <ClipboardPaste class="w-6 h-6 mr-2" />
+          Import Text
         </template>
         <template v-else>
           <Sparkles class="w-6 h-6 mr-2" />
@@ -257,7 +392,7 @@ const knownWords = computed(() =>
       </button>
 
       <div v-if="generateMutation.isError.value" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        Failed to generate text. Please try again.
+        {{ mode === 'import' ? 'Failed to import text. Please try again.' : 'Failed to generate text. Please try again.' }}
       </div>
     </form>
   </div>
