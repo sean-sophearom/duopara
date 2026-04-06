@@ -8,7 +8,8 @@ import {
   Sparkles, Loader2, BookOpen, Lightbulb,
   Coffee, Plane, ShoppingBag, Utensils,
   Heart, Briefcase, GraduationCap, Newspaper,
-  ClipboardPaste, Wand2, Shuffle,
+  ClipboardPaste, Wand2, 
+  // Shuffle,
 } from 'lucide-vue-next';
 
 const topicSuggestions = [
@@ -79,12 +80,12 @@ const generateMutation = useMutation({
   },
 });
 
-const randomTopicMutation = useMutation({
-  mutationFn: () => generateApi.randomTopic(language.value, difficulty.value),
-  onSuccess: (response) => {
-    topic.value = response.data.topic;
-  },
-});
+// const randomTopicMutation = useMutation({
+//   mutationFn: () => generateApi.randomTopic(language.value, difficulty.value),
+//   onSuccess: (response) => {
+//     topic.value = response.data.topic;
+//   },
+// });
 
 function handleGenerate() {
   if (mode.value === 'import') {
