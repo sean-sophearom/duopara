@@ -25,6 +25,7 @@ const router = createRouter({
         { path: 'read/:textId', component: () => import('./pages/ReadPage/ReadPage.vue') },
         { path: 'history', component: () => import('./pages/HistoryPage.vue') },
         { path: 'vocabulary', component: () => import('./pages/VocabularyPage.vue') },
+        { path: 'vocabulary/packs', component: () => import('./pages/VocabularyPacksPage.vue') },
         { path: 'practice', component: () => import('./pages/PracticePage.vue') },
         { path: 'settings', component: () => import('./pages/SettingsPage.vue') },
       ],

@@ -36,6 +36,10 @@ export const vocabularyApi = {
     api.get('/vocabulary/stats', { params: { language } }),
   getKnown: (language: string) =>
     api.get('/vocabulary/known', { params: { language } }),
+  getPresets: (language?: string) =>
+    api.get('/vocabulary/presets', { params: { language } }),
+  addPreset: (packId: string, status: 'learning' | 'learned' | 'mastered' = 'learning') =>
+    api.post(`/vocabulary/presets/${packId}/add`, { status }),
   add: (data: { word: string; language: string; translation?: string; partOfSpeech?: string; status?: string }) =>
     api.post('/vocabulary', data),
   update: (id: string, data: { status?: string; translation?: string }) =>

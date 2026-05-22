@@ -6,6 +6,7 @@ import { prisma } from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/routeUtils.js';
 import { MAX_IMPORT_FILE_SIZE, MAX_IMPORT_WORDS, MAX_QUERY_LIMIT } from '../lib/constants.js';
+import { getPresetPack, getPresetPacks } from '../lib/vocabularyPresets.js';
 
 export const vocabularyRouter = Router();
 vocabularyRouter.use(authenticate);
@@ -124,6 +125,10 @@ const markWordSchema = z.object({
   language: z.string().min(1),
 });
 
+const addPresetSchema = z.object({
+  status: z.enum(['learning', 'learned', 'mastered']).optional()
+});
+
 function markWordStatus(status: string) {
   return asyncHandler(async (req: AuthRequest, res) => {
     const { word, language } = markWordSchema.parse(req.body);
@@ -138,6 +143,71 @@ function markWordStatus(status: string) {
 
 vocabularyRouter.post('/mark-learned', markWordStatus('learned'));
 vocabularyRouter.post('/mark-learning', markWordStatus('learning'));
+
+// Preset vocabulary packs
+vocabularyRouter.get('/presets', asyncHandler(async (req: AuthRequest, res) => {
+  const language = typeof req.query.language === 'string' ? req.query.language : undefined;
+  const packs = getPresetPacks(language).map((pack) => ({
+    ...pack,
+    wordCount: pack.words.length,
+  }));
+  res.json({ packs });
+}, 'Failed to get vocabulary presets'));
+
+vocabularyRouter.post('/presets/:packId/add', asyncHandler(async (req: AuthRequest, res) => {
+  const { packId } = req.params;
+  const { status = 'learning' } = addPresetSchema.parse(req.body);
+  const pack = getPresetPack(packId);
+
+  if (!pack) return res.status(404).json({ error: 'Preset pack not found' });
+
+  const existing = await prisma.vocabularyWord.findMany({
+    where: {
+      userId: req.userId!,
+      language: pack.language,
+      word: { in: pack.words.map((word) => word.word.toLowerCase()) },
+    },
+    select: { word: true },
+  });
+  const existingWords = new Set(existing.map((word) => word.word));
+
+  const results = await prisma.$transaction(
+    pack.words.map((presetWord) =>
+      prisma.vocabularyWord.upsert({
+        where: {
+          userId_word_language: {
+            userId: req.userId!,
+            word: presetWord.word.toLowerCase(),
+            language: pack.language,
+          },
+        },
+        create: {
+          userId: req.userId!,
+          word: presetWord.word.toLowerCase(),
+          language: pack.language,
+          translation: presetWord.translation,
+          partOfSpeech: presetWord.partOfSpeech,
+          baseForm: presetWord.baseForm,
+          status,
+        },
+        update: {
+          translation: presetWord.translation,
+          partOfSpeech: presetWord.partOfSpeech,
+          baseForm: presetWord.baseForm,
+        },
+      })
+    )
+  );
+
+  res.status(201).json({
+    success: true,
+    packId: pack.id,
+    language: pack.language,
+    added: results.filter((word) => !existingWords.has(word.word)).length,
+    updated: results.filter((word) => existingWords.has(word.word)).length,
+    total: results.length,
+  });
+}, 'Failed to add vocabulary preset'));
 
 // Delete a word
 vocabularyRouter.delete('/:id', asyncHandler(async (req: AuthRequest, res) => {

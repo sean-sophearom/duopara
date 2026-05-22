@@ -1,0 +1,104 @@
+services:
+  dev-init:
+    image: duopara-dev
+    build: .
+    volumes:
+      - .:/workspace
+      - duopara_live_node_modules:/workspace/node_modules
+      - duopara_live_backend_node_modules:/workspace/packages/backend/node_modules
+      - duopara_live_frontend_node_modules:/workspace/packages/frontend/node_modules
+      - duopara_live_frontend_react_node_modules:/workspace/packages/frontend-react/node_modules
+      - duopara_live_shared_node_modules:/workspace/packages/shared/node_modules
+      - duopara_live_db:/data
+    working_dir: /workspace
+    entrypoint: sh
+    command: -c "set -e; lock_hash=$$(sha256sum package-lock.json | awk '{print $$1}'); if [ ! -f node_modules/.duopara-lock-sha ] || [ \"$$(cat node_modules/.duopara-lock-sha)\" != \"$$lock_hash\" ]; then npm ci --ignore-scripts && printf '%s' \"$$lock_hash\" > node_modules/.duopara-lock-sha; fi; npm run db:generate && npm run db:push"
+    environment:
+      DATABASE_URL: file:/data/dev.db
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      NPM_CONFIG_IGNORE_SCRIPTS: "true"
+      PORT: 3009
+
+  backend:
+    image: duopara-dev
+    build: .
+    volumes:
+      - .:/workspace
+      - duopara_live_node_modules:/workspace/node_modules
+      - duopara_live_backend_node_modules:/workspace/packages/backend/node_modules
+      - duopara_live_frontend_node_modules:/workspace/packages/frontend/node_modules
+      - duopara_live_frontend_react_node_modules:/workspace/packages/frontend-react/node_modules
+      - duopara_live_shared_node_modules:/workspace/packages/shared/node_modules
+      - duopara_live_db:/data
+    environment:
+      DATABASE_URL: file:/data/dev.db
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      NPM_CONFIG_IGNORE_SCRIPTS: "true"
+      PORT: 3009
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3009:3009"
+    command: npm run dev --workspace=@duopara/backend
+    depends_on:
+      dev-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3009/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  frontend:
+    image: duopara-dev
+    build: .
+    volumes:
+      - .:/workspace
+      - duopara_live_node_modules:/workspace/node_modules
+      - duopara_live_backend_node_modules:/workspace/packages/backend/node_modules
+      - duopara_live_frontend_node_modules:/workspace/packages/frontend/node_modules
+      - duopara_live_frontend_react_node_modules:/workspace/packages/frontend-react/node_modules
+      - duopara_live_shared_node_modules:/workspace/packages/shared/node_modules
+    environment:
+      VITE_API_URL: http://backend:3009
+      VITE_PORT: 5173
+      NPM_CONFIG_IGNORE_SCRIPTS: "true"
+    ports:
+      - "5173:5173"
+    command: npm run dev --workspace=@duopara/frontend -- --host 0.0.0.0
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  frontend-react:
+    image: duopara-dev
+    build: .
+    volumes:
+      - .:/workspace
+      - duopara_live_node_modules:/workspace/node_modules
+      - duopara_live_backend_node_modules:/workspace/packages/backend/node_modules
+      - duopara_live_frontend_node_modules:/workspace/packages/frontend/node_modules
+      - duopara_live_frontend_react_node_modules:/workspace/packages/frontend-react/node_modules
+      - duopara_live_shared_node_modules:/workspace/packages/shared/node_modules
+    environment:
+      VITE_API_URL: http://backend:3009
+      VITE_PORT: 5174
+      NPM_CONFIG_IGNORE_SCRIPTS: "true"
+    ports:
+      - "5174:5174"
+    command: npm run dev --workspace=@duopara/frontend-react -- --host 0.0.0.0
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles:
+      - react
+
+volumes:
+  duopara_live_node_modules:
+  duopara_live_backend_node_modules:
+  duopara_live_frontend_node_modules:
+  duopara_live_frontend_react_node_modules:
+  duopara_live_shared_node_modules:
+  duopara_live_db:

@@ -15,6 +15,8 @@ RUN npm install \
   && npm run db:generate \
   && npm cache clean --force
 
+RUN date +%s > .duopara-image-version
+
 COPY docker/entrypoint.sh /usr/local/bin/duopara-entrypoint
 RUN chmod +x /usr/local/bin/duopara-entrypoint
 

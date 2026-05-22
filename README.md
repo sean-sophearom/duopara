@@ -87,6 +87,20 @@ The app will be available at:
 
 ### Docker-Isolated Development
 
+For normal coding, use the live dev file. It bind-mounts this checkout for instant source reloads, masks `node_modules` with Docker volumes, keeps SQLite in a Docker volume, disables npm lifecycle scripts by default, and only refreshes dependencies when `package-lock.json` changes.
+
+Start live dev:
+```bash
+docker compose -f docker-compose.live.yml up
+```
+
+After editing source files, Vite/tsx will reload without another Docker build. If you change dependencies, update the lockfile intentionally, then rerun the same command and `dev-init` will refresh the Docker `node_modules` volume.
+
+To reset only the live dev dependencies and database:
+```bash
+docker compose -f docker-compose.live.yml down -v
+```
+
 Use this when you want `npm install` and other package experiments to stay away from the host machine. The project is copied into a Docker volume named `duopara_workspace`, so changes made inside the container do not modify this checkout.
 
 Build the isolated image:

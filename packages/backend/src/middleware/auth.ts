@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_EXPIRY } from '../lib/constants.js';
+import { prisma } from '../lib/prisma.js';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -17,7 +18,7 @@ function getJwtSecret(): string {
   return secret;
 }
 
-export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
+export async function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
   // Try Authorization header first, then fall back to httpOnly cookie
   let token: string | undefined;
   const authHeader = req.headers.authorization;
@@ -34,9 +35,20 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
 
   try {
     const payload = jwt.verify(token, getJwtSecret()) as JwtPayload;
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      res.clearCookie('token', { path: '/' });
+      return res.status(401).json({ error: 'User session no longer exists. Please log in again.' });
+    }
+
     req.userId = payload.userId;
     next();
   } catch (error) {
+    res.clearCookie('token', { path: '/' });
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }

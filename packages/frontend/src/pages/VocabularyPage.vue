@@ -3,9 +3,10 @@ import { ref, computed } from 'vue';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query';
 import { vocabularyApi, settingsApi } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
+import { RouterLink } from 'vue-router';
 import {
   Search, Filter, Upload, Download, Plus, Trash2, X,
-  BookMarked, Loader2, FileText,
+  BookMarked, Loader2, FileText, PackagePlus,
 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
@@ -122,6 +123,9 @@ const statusColors: Record<string, string> = {
         <p class="text-gray-600 mt-1">Manage your known words and import from external sources</p>
       </div>
       <div class="flex flex-wrap gap-2">
+        <RouterLink to="/vocabulary/packs" class="btn btn-secondary">
+          <PackagePlus class="w-4 h-4 mr-2" /> Preset Packs
+        </RouterLink>
         <button @click="showImportModal = true" class="btn btn-secondary">
           <Upload class="w-4 h-4 mr-2" /> Import
         </button>

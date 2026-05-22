@@ -13,13 +13,19 @@ import {
   Menu,
   X,
   Gamepad2,
+  PackagePlus,
 } from 'lucide-vue-next';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/generate', icon: PenTool, label: 'Generate' },
   { to: '/history', icon: History, label: 'History' },
-  { to: '/vocabulary', icon: BookMarked, label: 'Vocabulary' },
+  {
+    to: '/vocabulary',
+    icon: BookMarked,
+    label: 'Vocabulary',
+    children: [{ to: '/vocabulary/packs', icon: PackagePlus, label: 'Preset Packs' }],
+  },
   { to: '/practice', icon: Gamepad2, label: 'Practice' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
@@ -73,21 +79,38 @@ function handleLogout() {
 
         <!-- Navigation -->
         <nav class="flex-1 p-4 space-y-1">
-          <RouterLink
-            v-for="item in navItems"
-            :key="item.to"
-            :to="item.to"
-            @click="sidebarOpen = false"
-            :class="[
-              'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-              $route.path === item.to || $route.path.startsWith(item.to + '/')
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
-            ]"
-          >
-            <component :is="item.icon" class="w-5 h-5" />
-            {{ item.label }}
-          </RouterLink>
+          <div v-for="item in navItems" :key="item.to">
+            <RouterLink
+              :to="item.to"
+              @click="sidebarOpen = false"
+              :class="[
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                $route.path === item.to || $route.path.startsWith(item.to + '/')
+                  ? 'bg-primary-50 text-primary-700 font-medium'
+                  : 'text-gray-600 hover:bg-gray-100'
+              ]"
+            >
+              <component :is="item.icon" class="w-5 h-5" />
+              {{ item.label }}
+            </RouterLink>
+            <div v-if="item.children && $route.path.startsWith(item.to)" class="mt-1 ml-8 space-y-1">
+              <RouterLink
+                v-for="child in item.children"
+                :key="child.to"
+                :to="child.to"
+                @click="sidebarOpen = false"
+                :class="[
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors',
+                  $route.path === child.to
+                    ? 'bg-primary-50 text-primary-700 font-medium'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                ]"
+              >
+                <component :is="child.icon" class="w-4 h-4" />
+                {{ child.label }}
+              </RouterLink>
+            </div>
+          </div>
         </nav>
 
         <!-- User section -->
