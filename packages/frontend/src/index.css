@@ -115,9 +115,9 @@ body {
 
 /* Modal backdrop */
 .modal-backdrop {
-  @apply fixed inset-0 bg-black/50 z-40;
+  @apply fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4;
 }
 
 .modal-content {
-  @apply fixed z-50 bg-white rounded-xl shadow-xl;
+  @apply relative z-50 bg-white rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto p-6;
 }

@@ -17,6 +17,7 @@ import {
   parallelTranslationInstructions,
   enhancedTranslationInstructions,
   gameDataInstructions,
+  goalSuggestionInstructions,
 } from './prompts.js';
 
 export function createTextGenerationAgent(language: string, difficulty: string): Agent {
@@ -106,6 +107,16 @@ export function createGameDataAgent(sourceLanguage: string, targetLanguage: stri
     name: 'Game Data Generation Agent',
     model: config.model,
     instructions: gameDataInstructions(sourceLanguage, targetLanguage),
+  });
+}
+
+export function createGoalSuggestionAgent(): Agent {
+  const config = getModelForTask('text-generation');
+  return new Agent({
+    id: 'goal-suggester',
+    name: 'Goal Suggestion Agent',
+    model: config.model,
+    instructions: goalSuggestionInstructions(),
   });
 }
 

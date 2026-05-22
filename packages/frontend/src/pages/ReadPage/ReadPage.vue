@@ -2,7 +2,7 @@
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query';
-import { ChevronLeft, Loader2 } from 'lucide-vue-next';
+import { ChevronLeft, Loader2, Recycle } from 'lucide-vue-next';
 import { splitSentences } from '@duopara/shared';
 
 import { textsApi, translateApi, vocabularyApi, generateApi } from '../../lib/api';
@@ -26,6 +26,12 @@ const queryClient = useQueryClient();
 const authStore = useAuthStore();
 
 const textId = computed(() => route.params.textId as string | undefined);
+const reuseMessage = computed(() => {
+  if (route.query.reused !== '1') return '';
+  if (route.query.strategy === 'excerpt') return 'Kontexi made a focused read from a longer saved text.';
+  if (route.query.strategy === 'combined') return 'Kontexi combined related saved reads into this reading session.';
+  return 'Kontexi found a matching saved read, so no new AI text was generated.';
+});
 
 // State for word/sentence selection
 const selectedWord = ref<string | null>(null);
@@ -402,6 +408,13 @@ const sentences = computed(() => {
       <!-- Main content -->
       <div class="flex-1">
         <!-- Reading instructions -->
+        <div v-if="reuseMessage" class="card p-4 mb-4 bg-green-50 border-green-200">
+          <p class="text-sm text-green-700 flex items-start gap-2">
+            <Recycle class="w-4 h-4 mt-0.5 shrink-0" />
+            <span>{{ reuseMessage }}</span>
+          </p>
+        </div>
+
         <div class="card p-4 mb-4 bg-primary-50 border-primary-200">
           <p class="text-sm text-primary-700">
             <strong>Tip:</strong> Click any word for translation &amp; grammar info. Double-click a

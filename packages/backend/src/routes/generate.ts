@@ -8,7 +8,7 @@ import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/routeUtils.js';
 import { createTextGenerationAgent, createTextAdaptationAgent, getModelForTask, generatedTextSchema } from '../lib/llm/index.js';
 import { textGenerationPrompt, textRegenerationPrompt, textAdaptationPrompt } from '../lib/llm/prompts.js';
-import { extractWords, shuffle } from '../lib/textUtils.js';
+import { extractWords, shuffle, splitSentences } from '../lib/textUtils.js';
 import { DIFFICULTIES, CONTENT_STYLES } from '../lib/constants.js';
 import { ALLOWED_LANGUAGES, MAX_TOPIC_LENGTH, MAX_UPLOAD_DOC_SIZE, MAX_UPLOAD_TEXT_CHARS } from '../lib/constants.js';
 
@@ -32,7 +32,8 @@ const generateSchema = z.object({
   wordCount: z.number().min(50).max(1000).default(200),
   style: z.enum(CONTENT_STYLES).default('story'),
   includeLearningWords: z.boolean().default(true),
-  includeLearnedWords: z.boolean().default(true)
+  includeLearnedWords: z.boolean().default(true),
+  reuseExisting: z.boolean().default(true)
 }).refine(data => data.topic || data.customText, {
   message: 'Either topic or customText must be provided'
 });
@@ -94,6 +95,189 @@ async function saveTextAndSession(
   return { text, session };
 }
 
+function parseJsonArray(value: string): string[] {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function formatGeneratedText(text: {
+  knownWordsUsed: string;
+  newWordsIntroduced: string;
+  [key: string]: unknown;
+}) {
+  return {
+    ...text,
+    knownWordsUsed: parseJsonArray(text.knownWordsUsed),
+    newWordsIntroduced: parseJsonArray(text.newWordsIntroduced),
+  };
+}
+
+const REUSE_STOP_WORDS = new Set([
+  'a', 'an', 'and', 'are', 'about', 'at', 'for', 'from', 'how', 'in', 'into', 'is',
+  'learn', 'learning', 'of', 'on', 'or', 'practice', 'read', 'reading', 'the', 'to',
+  'with', 'words',
+]);
+
+function topicTokens(value: string) {
+  return [...new Set(
+    value
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .map((token) => token.trim())
+      .filter((token) => token.length > 2 && !REUSE_STOP_WORDS.has(token))
+  )];
+}
+
+function overlapRatio(queryTokens: string[], candidateTokens: string[]) {
+  if (!queryTokens.length) return 0;
+  const candidateSet = new Set(candidateTokens);
+  const overlap = queryTokens.filter((token) => candidateSet.has(token)).length;
+  return overlap / queryTokens.length;
+}
+
+function scoreReusableText(
+  topic: string,
+  text: { title: string; topic: string; content: string; difficulty: string },
+  requestedDifficulty: string,
+) {
+  const query = topicTokens(topic);
+  if (!query.length) return 0;
+
+  const titleTopic = `${text.title} ${text.topic}`;
+  const titleScore = overlapRatio(query, topicTokens(titleTopic));
+  const contentScore = overlapRatio(query, topicTokens(text.content.slice(0, 2500)));
+  const difficultyBoost = text.difficulty === requestedDifficulty ? 0.08 : 0;
+  const directBoost = titleTopic.toLowerCase().includes(topic.toLowerCase().trim()) ? 0.15 : 0;
+
+  return titleScore * 0.65 + contentScore * 0.35 + difficultyBoost + directBoost;
+}
+
+function excerptByWordCount(content: string, language: string, targetWordCount: number) {
+  const sentences = splitSentences(content);
+  const target = Math.max(60, targetWordCount);
+  const selected: string[] = [];
+  let count = 0;
+
+  for (const sentence of sentences) {
+    selected.push(sentence);
+    count += extractWords(sentence, language).length;
+    if (count >= target) break;
+  }
+
+  return selected.join(' ').trim();
+}
+
+async function tryReuseExistingText(
+  userId: string,
+  params: z.infer<typeof generateSchema>,
+  knownWordsList: string[],
+) {
+  if (!params.reuseExisting || params.customText || !params.topic) return null;
+
+  const existingTexts = await prisma.generatedText.findMany({
+    where: { userId, language: params.language },
+    orderBy: { createdAt: 'desc' },
+    take: 30,
+  });
+
+  const candidates = existingTexts
+    .map((text) => ({
+      text,
+      score: scoreReusableText(params.topic!, text, params.difficulty),
+    }))
+    .filter((candidate) => candidate.score >= 0.34)
+    .sort((a, b) => b.score - a.score);
+
+  if (!candidates.length) return null;
+
+  const targetWords = params.wordCount;
+  const best = candidates[0].text;
+
+  if (best.wordCount >= targetWords * 0.65 && best.wordCount <= targetWords * 1.55) {
+    const session = await prisma.readingSession.create({
+      data: { userId, textId: best.id },
+    });
+    return {
+      text: formatGeneratedText(best),
+      sessionId: session.id,
+      reused: true,
+      reuseStrategy: 'existing',
+      reusedFromTextId: best.id,
+    };
+  }
+
+  if (best.wordCount > targetWords * 1.55) {
+    const content = excerptByWordCount(best.content, params.language, targetWords);
+    if (extractWords(content, params.language).length >= 50) {
+      const analysis = analyzeWords(content, params.language, knownWordsList);
+      const title = `${best.title}: Focus Read`.slice(0, 200);
+      const { text, session } = await saveTextAndSession(
+        userId,
+        {
+          topic: params.topic,
+          language: params.language,
+          difficulty: params.difficulty,
+          knownWordsRatio: params.knownWordsRatio,
+          title,
+          content,
+        },
+        analysis,
+      );
+      return {
+        text: { ...text, knownWordsUsed: analysis.knownWordsUsed, newWordsIntroduced: analysis.newWordsIntroduced },
+        sessionId: session.id,
+        reused: true,
+        reuseStrategy: 'excerpt',
+        reusedFromTextId: best.id,
+      };
+    }
+  }
+
+  const combinedParts: string[] = [];
+  let combinedWordCount = 0;
+  for (const candidate of candidates.slice(0, 4)) {
+    if (combinedWordCount >= targetWords * 0.85) break;
+    const remaining = Math.max(60, targetWords - combinedWordCount);
+    const part = candidate.text.wordCount > remaining * 1.4
+      ? excerptByWordCount(candidate.text.content, params.language, remaining)
+      : candidate.text.content;
+    combinedParts.push(part);
+    combinedWordCount += extractWords(part, params.language).length;
+  }
+
+  if (combinedParts.length > 1 && combinedWordCount >= Math.max(80, targetWords * 0.65)) {
+    const content = combinedParts.join('\n\n');
+    const analysis = analyzeWords(content, params.language, knownWordsList);
+    const { text, session } = await saveTextAndSession(
+      userId,
+      {
+        topic: params.topic,
+        language: params.language,
+        difficulty: params.difficulty,
+        knownWordsRatio: params.knownWordsRatio,
+        title: `Reading Mix: ${params.topic}`.slice(0, 200),
+        content,
+      },
+      analysis,
+    );
+    return {
+      text: { ...text, knownWordsUsed: analysis.knownWordsUsed, newWordsIntroduced: analysis.newWordsIntroduced },
+      sessionId: session.id,
+      reused: true,
+      reuseStrategy: 'combined',
+      reusedFromTextId: candidates.map((candidate) => candidate.text.id).join(','),
+    };
+  }
+
+  return null;
+}
+
 async function generateText(language: string, difficulty: string, prompt: string) {
   const agent = createTextGenerationAgent(language, difficulty);
   const config = getModelForTask('text-generation');
@@ -136,6 +320,11 @@ generateRouter.post('/', asyncHandler(async (req: AuthRequest, res) => {
   if (statusIn.length === 0) statusIn.push('learned', 'mastered');
 
   const knownWordsList = await fetchKnownWords(req.userId!, params.language, statusIn);
+
+  const reused = await tryReuseExistingText(req.userId!, params, knownWordsList);
+  if (reused) {
+    return res.json(reused);
+  }
 
   let title: string;
   let content: string;
@@ -313,5 +502,4 @@ generateRouter.post('/upload', docUpload.single('file'), asyncHandler(async (req
     sessionId: session.id,
   });
 }, 'Failed to process uploaded file'));
-
 
