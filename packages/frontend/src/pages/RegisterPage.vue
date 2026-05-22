@@ -43,6 +43,11 @@ async function handleSubmit() {
     return;
   }
 
+  if (sameLanguage(selectedTargetLanguage.value, selectedNativeLanguage.value)) {
+    validationError.value = 'Target language and native language must be different';
+    return;
+  }
+
   try {
     await authStore.register(email.value, password.value, name.value || undefined);
 
@@ -61,6 +66,10 @@ async function handleSubmit() {
   } catch {
     // Error is handled by the store
   }
+}
+
+function sameLanguage(a: string | undefined, b: string | undefined) {
+  return a?.trim().toLowerCase() === b?.trim().toLowerCase();
 }
 
 const displayError = computed(() => validationError.value || authStore.error);

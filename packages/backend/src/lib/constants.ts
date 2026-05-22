@@ -41,7 +41,7 @@ export const ALLOWED_LANGUAGES = new Set([
   'arabic', 'bengali', 'bulgarian', 'catalan', 'chinese', 'croatian', 'czech',
   'danish', 'dutch', 'english', 'estonian', 'finnish', 'french', 'german',
   'greek', 'gujarati', 'hebrew', 'hindi', 'hungarian', 'icelandic', 'indonesian',
-  'irish', 'italian', 'japanese', 'kannada', 'korean', 'latvian', 'lithuanian',
+  'irish', 'italian', 'japanese', 'kannada', 'khmer', 'korean', 'latvian', 'lithuanian',
   'macedonian', 'malay', 'malayalam', 'maltese', 'marathi', 'norwegian',
   'persian', 'polish', 'portuguese', 'punjabi', 'romanian', 'russian',
   'serbian', 'sinhala', 'slovak', 'slovenian', 'spanish', 'swahili', 'swedish',

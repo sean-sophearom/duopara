@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { LanguageOptionsResponse } from './languageMeta';
 
 const VITE_BASE_PATH = import.meta.env.VITE_BASE_PATH || '/';
 const apiBaseURL = VITE_BASE_PATH !== '/' ? `${VITE_BASE_PATH}/api` : '/api';
@@ -140,7 +141,7 @@ export const settingsApi = {
   get: () => api.get('/settings'),
   update: (data: { targetLanguage?: string; nativeLanguage?: string; knownWordsRatio?: number; defaultDifficulty?: string }) =>
     api.patch('/settings', data),
-  getLanguages: () => api.get('/settings/languages'),
+  getLanguages: () => api.get<LanguageOptionsResponse>('/settings/languages'),
 };
 
 export const practiceApi = {

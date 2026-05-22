@@ -4,6 +4,11 @@ export interface LanguageOption {
   nativeName?: string;
 }
 
+export interface LanguageOptionsResponse {
+  languages: LanguageOption[];
+  nativeLanguages?: LanguageOption[];
+}
+
 const languageFlags: Record<string, string> = {
   spanish: 'ES',
   vietnamese: 'VN',
@@ -20,6 +25,14 @@ const languageFlags: Record<string, string> = {
   turkish: 'TR',
   dutch: 'NL',
   hindi: 'IN',
+  polish: 'PL',
+  swedish: 'SE',
+  norwegian: 'NO',
+  danish: 'DK',
+  finnish: 'FI',
+  greek: 'GR',
+  hebrew: 'IL',
+  khmer: 'KH',
 };
 
 const languageShortCodes: Record<string, string> = {
@@ -38,6 +51,14 @@ const languageShortCodes: Record<string, string> = {
   turkish: 'TR',
   dutch: 'NL',
   hindi: 'HI',
+  polish: 'PL',
+  swedish: 'SV',
+  norwegian: 'NO',
+  danish: 'DA',
+  finnish: 'FI',
+  greek: 'EL',
+  hebrew: 'HE',
+  khmer: 'KM',
 };
 
 function toRegionalIndicatorPair(countryCode: string) {
@@ -56,8 +77,11 @@ export function getLanguageShortCode(languageCode: string) {
   return languageShortCodes[languageCode.toLowerCase()] || languageCode.slice(0, 2).toUpperCase();
 }
 
-export function getNativeLanguageOptions(languages: LanguageOption[]) {
-  const english = languages.find((lang) => lang.code.toLowerCase() === 'english');
-  if (english) return [english];
+export function getNativeLanguageOptions(
+  languages: LanguageOption[],
+  nativeLanguages?: LanguageOption[]
+) {
+  if (nativeLanguages && nativeLanguages.length > 0) return nativeLanguages;
+  if (languages.length > 0) return languages;
   return [{ code: 'English', name: 'English', nativeName: 'English' }];
 }

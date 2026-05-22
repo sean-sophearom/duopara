@@ -13,7 +13,7 @@ import {
   GAME_INFO,
 } from '../games/types';
 import {
-  BookOpen, GraduationCap, Trophy, Play, ChevronRight, AlertCircle,
+  Play, ChevronRight, AlertCircle,
 } from 'lucide-vue-next';
 
 import DefinitionGame from '../games/DefinitionGame.vue';

@@ -9,7 +9,7 @@ import {
   getLanguageFlag,
   getLanguageShortCode,
   getNativeLanguageOptions,
-  type LanguageOption,
+  type LanguageOptionsResponse,
 } from '../lib/languageMeta';
 
 const router = useRouter();
@@ -26,13 +26,16 @@ const selectedLevel = computed(() => {
     : 'beginner';
 });
 
-const { data: languages } = useQuery({
+const { data: languageConfig } = useQuery({
   queryKey: ['languages'],
-  queryFn: () => settingsApi.getLanguages().then((r) => r.data.languages as LanguageOption[]),
+  queryFn: () => settingsApi.getLanguages().then((r) => r.data as LanguageOptionsResponse),
 });
 
 const nativeLanguageOptions = computed(() => {
-  return getNativeLanguageOptions(languages.value || []);
+  return getNativeLanguageOptions(
+    languageConfig.value?.languages || [],
+    languageConfig.value?.nativeLanguages
+  ).filter((lang) => !sameLanguage(lang.code, targetLanguage.value));
 });
 
 const selectedNativeLanguage = ref(
@@ -40,6 +43,10 @@ const selectedNativeLanguage = ref(
 );
 
 function continueToCreateAccount() {
+  if (sameLanguage(selectedNativeLanguage.value, targetLanguage.value)) {
+    selectedNativeLanguage.value = nativeLanguageOptions.value[0]?.code || 'English';
+  }
+
   router.push({
     path: '/register',
     query: {
@@ -48,6 +55,10 @@ function continueToCreateAccount() {
       nativeLanguage: selectedNativeLanguage.value,
     },
   });
+}
+
+function sameLanguage(a: string | undefined, b: string | undefined) {
+  return a?.trim().toLowerCase() === b?.trim().toLowerCase();
 }
 </script>
 
