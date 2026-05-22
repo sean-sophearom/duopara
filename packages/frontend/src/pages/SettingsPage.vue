@@ -49,7 +49,7 @@ const highlightToggles = [
 ];
 
 const { data: languageConfig } = useQuery({
-  queryKey: ['languages'],
+  queryKey: ['language-config'],
   queryFn: () => settingsApi.getLanguages().then(r => r.data as LanguageOptionsResponse),
 });
 
