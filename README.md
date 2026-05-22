@@ -85,6 +85,41 @@ The app will be available at:
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3009
 
+### Docker-Isolated Development
+
+Use this when you want `npm install` and other package experiments to stay away from the host machine. The project is copied into a Docker volume named `duopara_workspace`, so changes made inside the container do not modify this checkout.
+
+Build the isolated image:
+```bash
+docker compose build
+```
+
+Open an isolated shell:
+```bash
+docker compose run --rm shell
+```
+
+Inside that shell, commands like `npm install`, `npm run build`, and `npm run db:push` run against the Docker volume, not the host project directory.
+
+Run the Vue frontend and backend:
+```bash
+docker compose up backend frontend
+```
+
+The app will be available at:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:3009
+
+To run the React frontend instead:
+```bash
+docker compose --profile react up backend frontend-react
+```
+
+If you want to reset the isolated workspace and database:
+```bash
+docker compose down -v
+```
+
 ## Project Structure
 
 ```

@@ -1,0 +1,17 @@
+.git
+.codex
+.agents
+node_modules
+packages/*/node_modules
+app/node_modules
+dist
+packages/*/dist
+.nx
+coverage
+.env
+packages/*/.env
+packages/backend/prisma/*.db
+packages/backend/prisma/*.db-journal
+npm-debug.log*
+Dockerfile
+docker-compose.yml
