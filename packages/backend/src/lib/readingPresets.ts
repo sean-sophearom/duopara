@@ -40,6 +40,36 @@ export const readingPresets: ReadingPreset[] = [
       'En la escuela, Pedro conoce a una chica nueva. Ella se llama Marta y viene de otra ciudad. Pedro dice: Hola, soy Pedro. Marta responde: Mucho gusto. A Marta le gusta leer, cocinar y caminar en el parque. Pedro también quiere practicar inglés y español. Los dos hablan durante la clase y después van a comer con otros amigos.',
   },
   {
+    id: 'french-first-morning',
+    language: 'French',
+    title: 'Mon premier matin',
+    topic: 'Daily routine',
+    difficulty: 'beginner',
+    description: 'A calm daily routine text with common beginner phrases.',
+    content:
+      'Je m appelle Claire. J habite dans une petite maison avec ma famille. Le matin, je me leve tot et je bois de l eau. Ensuite, je mange du pain avec un fruit. Mon frere va a l ecole et ma mere va au travail. Je marche dans la ville et je vois mes amis. Aujourd hui est une journee tranquille. Je veux etudier le francais, lire un peu et ecouter de la musique le soir.',
+  },
+  {
+    id: 'french-cafe-dialogue',
+    language: 'French',
+    title: 'Au cafe',
+    topic: 'Ordering food',
+    difficulty: 'beginner',
+    description: 'A simple cafe dialogue for ordering food and drinks politely.',
+    content:
+      'Thomas entre dans un petit cafe. La serveuse sourit et dit: Bonjour, vous desirez? Thomas repond: Je voudrais un cafe au lait et un croissant, s il vous plait. La serveuse demande: Autre chose? Thomas regarde la table et dit: Oui, je voudrais aussi de l eau. Ensuite, Thomas s assoit pres de la fenetre. Il boit son cafe, mange son croissant et lit un petit livre.',
+  },
+  {
+    id: 'french-new-friend',
+    language: 'French',
+    title: 'Une nouvelle amie',
+    topic: 'Meeting people',
+    difficulty: 'beginner',
+    description: 'A friendly starter story about introductions and interests.',
+    content:
+      'A l ecole, Julien rencontre une nouvelle fille. Elle s appelle Sophie et elle vient d une autre ville. Julien dit: Bonjour, je m appelle Julien. Sophie repond: Enchantee. Sophie aime lire, cuisiner et marcher dans le parc. Julien veut aussi pratiquer l anglais et le francais. Les deux parlent pendant le cours, puis ils vont manger avec d autres amis.',
+  },
+  {
     id: 'vietnamese-first-morning',
     language: 'Vietnamese',
     title: 'Buổi sáng đầu tiên',
