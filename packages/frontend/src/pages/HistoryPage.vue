@@ -47,8 +47,8 @@ function resetPage() {
 <template>
   <div class="max-w-5xl mx-auto">
     <div class="mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">History Vault</h1>
-      <p class="text-gray-600 mt-1">Your library of generated texts</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Reading History</h1>
+      <p class="text-gray-600 mt-1">Your reading library</p>
     </div>
 
     <!-- Filters -->
