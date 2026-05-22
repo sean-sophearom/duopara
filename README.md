@@ -35,7 +35,7 @@ A dynamic reading platform that generates highly customized, topic-based texts c
 
 ## Tech Stack
 
-- **Frontend**: React 18, TypeScript, Vite, TailwindCSS, TanStack Query, Zustand
+- **Frontend**: Vue 3, TypeScript, Vite, TailwindCSS, TanStack Query, Pinia
 - **Backend**: Node.js, Express, TypeScript
 - **Database**: SQLite with Prisma ORM
 - **AI**: OpenAI GPT-4 for text generation and translation
@@ -124,11 +124,6 @@ The app will be available at:
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3009
 
-To run the React frontend instead:
-```bash
-docker compose --profile react up backend frontend-react
-```
-
 If you want to reset the isolated workspace and database:
 ```bash
 docker compose down -v
@@ -145,7 +140,7 @@ duopara/
 │   │       ├── routes/    # API endpoints
 │   │       ├── middleware/ # Auth middleware
 │   │       └── lib/       # Utilities
-│   └── frontend/          # React application
+│   └── frontend/          # Vue application
 │       └── src/
 │           ├── components/ # Reusable components
 │           ├── pages/      # Page components
