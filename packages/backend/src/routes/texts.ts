@@ -12,10 +12,68 @@ import {
 } from '../lib/llm/index.js';
 import { parallelTranslationPrompt, enhancedTranslationPrompt } from '../lib/llm/prompts.js';
 import { MAX_QUERY_LIMIT } from '../lib/constants.js';
-import { splitSentences } from '../lib/textUtils.js';
+import { extractWords, splitSentences } from '../lib/textUtils.js';
+import { getReadingPreset, getReadingPresets } from '../lib/readingPresets.js';
 
 export const textsRouter = Router();
 textsRouter.use(authenticate);
+
+textsRouter.get('/presets', asyncHandler(async (req: AuthRequest, res) => {
+  const language = typeof req.query.language === 'string' ? req.query.language : undefined;
+  const presets = getReadingPresets(language).map((preset) => ({
+    ...preset,
+    wordCount: extractWords(preset.content, preset.language).length,
+  }));
+
+  res.json({ presets });
+}, 'Failed to get reading presets'));
+
+textsRouter.post('/presets/:presetId/add', asyncHandler(async (req: AuthRequest, res) => {
+  const { presetId } = req.params;
+  const preset = getReadingPreset(presetId);
+
+  if (!preset) return res.status(404).json({ error: 'Reading preset not found' });
+
+  const wordsInText = extractWords(preset.content, preset.language);
+  const knownWords = await prisma.vocabularyWord.findMany({
+    where: {
+      userId: req.userId!,
+      language: preset.language,
+      status: { in: ['learning', 'learned', 'mastered'] },
+    },
+    select: { word: true, baseForm: true },
+  });
+  const knownWordsSet = new Set([
+    ...knownWords.map((word) => word.word.toLowerCase()),
+    ...knownWords.filter((word) => word.baseForm).map((word) => word.baseForm!.toLowerCase()),
+  ]);
+
+  const knownWordsUsed = [...new Set(wordsInText.filter((word) => knownWordsSet.has(word.toLowerCase())))];
+  const newWordsIntroduced = [...new Set(wordsInText.filter((word) => !knownWordsSet.has(word.toLowerCase())))];
+
+  const text = await prisma.generatedText.create({
+    data: {
+      userId: req.userId!,
+      topic: preset.topic,
+      language: preset.language,
+      difficulty: preset.difficulty,
+      knownWordsRatio: 80,
+      title: preset.title,
+      content: preset.content,
+      wordCount: wordsInText.length,
+      knownWordsUsed: JSON.stringify(knownWordsUsed),
+      newWordsIntroduced: JSON.stringify(newWordsIntroduced),
+    },
+  });
+  const session = await prisma.readingSession.create({
+    data: { userId: req.userId!, textId: text.id },
+  });
+
+  res.status(201).json({
+    text: { ...text, knownWordsUsed, newWordsIntroduced },
+    sessionId: session.id,
+  });
+}, 'Failed to add reading preset'));
 
 // Get all texts (History Vault)
 textsRouter.get('/', asyncHandler(async (req: AuthRequest, res) => {

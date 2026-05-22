@@ -214,187 +214,194 @@ const activeGameInfo = computed(() => GAME_INFO[selectedGame.value || 'definitio
 
 <template>
   <!-- SELECT VIEW -->
-  <div v-if="viewState === 'select'" class="max-w-4xl mx-auto">
-    <div class="mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Practice Vocabulary</h1>
-      <p class="text-gray-600">Choose a game to practice your words</p>
-    </div>
-
-    <!-- Stats overview -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-      <div class="bg-blue-50 rounded-lg p-4 text-center">
-        <BookOpen class="w-6 h-6 mx-auto mb-2 text-blue-600" />
-        <div class="text-2xl font-bold text-blue-900">{{ vocabStats?.learning || 0 }}</div>
-        <div class="text-sm text-blue-600">Learning</div>
+  <div v-if="viewState === 'select'" class="max-w-5xl mx-auto">
+    <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Practice</h1>
+        <p class="text-gray-500 mt-0.5 text-sm">{{ sourceLanguage }} · {{ availableWordCount }} words in pool</p>
       </div>
-      <div class="bg-green-50 rounded-lg p-4 text-center">
-        <GraduationCap class="w-6 h-6 mx-auto mb-2 text-green-600" />
-        <div class="text-2xl font-bold text-green-900">{{ vocabStats?.learned || 0 }}</div>
-        <div class="text-sm text-green-600">Learned</div>
-      </div>
-      <div class="bg-purple-50 rounded-lg p-4 text-center">
-        <Trophy class="w-6 h-6 mx-auto mb-2 text-purple-600" />
-        <div class="text-2xl font-bold text-purple-900">{{ vocabStats?.mastered || 0 }}</div>
-        <div class="text-sm text-purple-600">Mastered</div>
-      </div>
-      <div class="bg-orange-50 rounded-lg p-4 text-center">
-        <AlertCircle class="w-6 h-6 mx-auto mb-2 text-orange-600" />
-        <div class="text-2xl font-bold text-orange-900">{{ dueData?.dueCount || 0 }}</div>
-        <div class="text-sm text-orange-600">Due for Review</div>
+      <div v-if="dueData?.dueCount" class="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-100 rounded-lg">
+        <AlertCircle class="w-4 h-4 text-orange-500 shrink-0" />
+        <span class="text-sm text-orange-700 font-medium">{{ dueData.dueCount }} due for review</span>
       </div>
     </div>
 
-    <!-- Filter by status -->
-    <div class="bg-white rounded-lg border p-4 mb-6">
-      <h3 class="font-medium text-gray-900 mb-3">Practice words that are:</h3>
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="status in (['learning', 'learned', 'mastered'] as VocabularyStatus[])" :key="status"
-          @click="toggleStatus(status)"
-          :class="[
-            'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-            selectedStatuses.includes(status)
-              ? status === 'learning' ? 'bg-blue-600 text-white'
-                : status === 'learned' ? 'bg-green-600 text-white'
-                : 'bg-purple-600 text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          ]"
-        >
-          {{ status.charAt(0).toUpperCase() + status.slice(1) }}
-        </button>
+    <div class="grid lg:grid-cols-3 gap-6">
+      <!-- Game grid — primary action -->
+      <div class="lg:col-span-2">
+        <div class="grid sm:grid-cols-2 gap-3">
+          <button
+            v-for="game in gameInfoList" :key="game.type"
+            @click="handleSelectGame(game.type)"
+            :disabled="availableWordCount < game.minWords"
+            :class="[
+              'bg-white p-5 rounded-xl border text-left transition-all',
+              availableWordCount < game.minWords
+                ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
+                : 'border-gray-200 hover:border-primary-300 hover:shadow-sm'
+            ]"
+          >
+            <div class="flex items-start gap-4">
+              <span class="text-2xl leading-none mt-0.5 shrink-0">{{ game.icon }}</span>
+              <div class="min-w-0">
+                <h4 class="font-semibold text-gray-900 mb-0.5">{{ game.name }}</h4>
+                <p class="text-sm text-gray-500 leading-snug">{{ game.description }}</p>
+                <p v-if="availableWordCount < game.minWords" class="text-xs text-red-500 mt-1.5">
+                  Needs {{ game.minWords }}+ words
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
       </div>
-      <p class="text-sm text-gray-500 mt-2">{{ availableWordCount }} words available</p>
-    </div>
 
-    <!-- Word count selector -->
-    <div class="bg-white rounded-lg border p-4 mb-6">
-      <h3 class="font-medium text-gray-900 mb-3">Number of words:</h3>
-      <div class="grid grid-cols-2 sm:flex gap-2">
-        <button
-          v-for="count in [5, 10, 15, 20, 30]" :key="count"
-          @click="wordCount = count"
-          :disabled="count > availableWordCount || count >= 15"
-          :class="[
-            'px-4 py-2 rounded-lg transition-colors',
-            wordCount === count ? 'bg-blue-600 text-white'
-              : count > availableWordCount || count >= 15 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          ]"
-        >
-          {{ count }}
-        </button>
+      <!-- Settings sidebar -->
+      <div class="space-y-4">
+        <!-- Compact vocab summary -->
+        <div class="card p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Vocabulary</p>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p class="text-lg font-bold text-gray-900">{{ vocabStats?.learning || 0 }}</p>
+              <p class="text-xs text-gray-500">Learning</p>
+            </div>
+            <div>
+              <p class="text-lg font-bold text-gray-900">{{ vocabStats?.learned || 0 }}</p>
+              <p class="text-xs text-gray-500">Learned</p>
+            </div>
+            <div>
+              <p class="text-lg font-bold text-gray-900">{{ vocabStats?.mastered || 0 }}</p>
+              <p class="text-xs text-gray-500">Mastered</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Word pool filter -->
+        <div class="card p-4">
+          <p class="text-sm font-medium text-gray-700 mb-3">Practice from</p>
+          <div class="space-y-2.5">
+            <label
+              v-for="status in (['learning', 'learned', 'mastered'] as VocabularyStatus[])" :key="status"
+              class="flex items-center gap-3 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                :checked="selectedStatuses.includes(status)"
+                @change="toggleStatus(status)"
+                class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span class="text-sm text-gray-700 capitalize flex-1">{{ status }}</span>
+              <span class="text-xs text-gray-400">{{ vocabStats?.[status] || 0 }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Words per session -->
+        <div class="card p-4">
+          <p class="text-sm font-medium text-gray-700 mb-3">Words per session</p>
+          <div class="flex gap-2 flex-wrap">
+            <button
+              v-for="count in [5, 10, 15, 20, 30]" :key="count"
+              @click="wordCount = count"
+              :disabled="count > availableWordCount"
+              :class="[
+                'px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors',
+                wordCount === count
+                  ? 'bg-primary-600 border-primary-600 text-white'
+                  : count > availableWordCount
+                  ? 'border-gray-100 text-gray-300 bg-gray-50 cursor-not-allowed'
+                  : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+              ]"
+            >
+              {{ count }}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- Game cards -->
-    <h3 class="font-medium text-gray-900 mb-4">Choose a game:</h3>
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <button
-        v-for="game in gameInfoList" :key="game.type"
-        @click="handleSelectGame(game.type)"
-        :disabled="availableWordCount < game.minWords"
-        :class="[
-          'p-6 rounded-xl border-2 text-left transition-all',
-          availableWordCount < game.minWords
-            ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
-            : 'border-gray-200 bg-white hover:border-blue-400 hover:shadow-lg'
-        ]"
-      >
-        <div class="text-3xl mb-3">{{ game.icon }}</div>
-        <h4 class="font-semibold text-gray-900 mb-1">{{ game.name }}</h4>
-        <p class="text-sm text-gray-600">{{ game.description }}</p>
-        <p v-if="availableWordCount < game.minWords" class="text-xs text-red-500 mt-2">
-          Requires at least {{ game.minWords }} words
-        </p>
-      </button>
     </div>
   </div>
 
   <!-- CONFIG VIEW -->
-  <div v-else-if="viewState === 'config' && activeGameInfo" class="max-w-md mx-auto p-6 flex-1 flex flex-col">
-    <button @click="viewState = 'select'" class="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6">
-      <ChevronRight class="w-5 h-5 rotate-180" /> Back
+  <div v-else-if="viewState === 'config' && activeGameInfo" class="max-w-sm mx-auto">
+    <button @click="viewState = 'select'" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-5 transition-colors">
+      <ChevronRight class="w-4 h-4 rotate-180" /> Back to games
     </button>
-    <div class="bg-white rounded-xl border p-6 my-auto">
-      <div class="text-center mb-6">
-        <div class="text-5xl mb-3">{{ activeGameInfo.icon }}</div>
-        <h2 class="text-2xl font-bold text-gray-900">{{ activeGameInfo.name }}</h2>
-        <p class="text-gray-600 mt-1">{{ activeGameInfo.description }}</p>
+    <div class="card p-6">
+      <div class="flex items-center gap-4 mb-6 pb-5 border-b border-gray-100">
+        <span class="text-3xl leading-none">{{ activeGameInfo.icon }}</span>
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">{{ activeGameInfo.name }}</h2>
+          <p class="text-sm text-gray-500 mt-0.5">{{ activeGameInfo.description }}</p>
+        </div>
       </div>
 
       <!-- Game-specific option: optionCount -->
-      <div v-if="activeGameInfo.configOptions?.optionCount" class="space-y-4 mb-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {{ activeGameInfo.configOptions!.optionCount!.label }}
-          </label>
-          <div class="grid grid-cols-2 gap-2 sm:flex">
-            <button
-              v-for="n in Array.from(
-                { length: activeGameInfo.configOptions!.optionCount!.max - activeGameInfo.configOptions!.optionCount!.min + 1 },
-                (_, i) => activeGameInfo.configOptions!.optionCount!.min + i
-              )"
-              :key="n"
-              @click="gameConfig = { ...gameConfig, optionCount: n }"
-              :class="[
-                'flex-1 py-2 rounded-lg transition-colors',
-                (gameConfig.optionCount || activeGameInfo.configOptions!.optionCount!.default) === n
-                  ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              ]"
-            >
-              {{ n }}
-            </button>
-          </div>
+      <div v-if="activeGameInfo.configOptions?.optionCount" class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          {{ activeGameInfo.configOptions!.optionCount!.label }}
+        </label>
+        <div class="flex gap-2">
+          <button
+            v-for="n in Array.from(
+              { length: activeGameInfo.configOptions!.optionCount!.max - activeGameInfo.configOptions!.optionCount!.min + 1 },
+              (_, i) => activeGameInfo.configOptions!.optionCount!.min + i
+            )"
+            :key="n"
+            @click="gameConfig = { ...gameConfig, optionCount: n }"
+            :class="[
+              'flex-1 py-2 rounded-lg border text-sm font-medium transition-colors',
+              (gameConfig.optionCount || activeGameInfo.configOptions!.optionCount!.default) === n
+                ? 'bg-primary-600 border-primary-600 text-white'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+            ]"
+          >
+            {{ n }}
+          </button>
         </div>
       </div>
 
       <!-- Game-specific option: pairCount -->
-      <div v-if="activeGameInfo.configOptions?.pairCount" class="space-y-4 mb-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {{ activeGameInfo.configOptions!.pairCount!.label }}
-          </label>
-          <div class="flex gap-2">
-            <button
-              v-for="n in Array.from(
-                { length: activeGameInfo.configOptions!.pairCount!.max - activeGameInfo.configOptions!.pairCount!.min + 1 },
-                (_, i) => activeGameInfo.configOptions!.pairCount!.min + i
-              )"
-              :key="n"
-              @click="gameConfig = { ...gameConfig, pairCount: n }"
-              :disabled="n > availableWordCount"
-              :class="[
-                'flex-1 py-2 rounded-lg transition-colors',
-                (gameConfig.pairCount || activeGameInfo.configOptions!.pairCount!.default) === n
-                  ? 'bg-blue-600 text-white'
-                  : n > availableWordCount ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              ]"
-            >
-              {{ n }}
-            </button>
-          </div>
+      <div v-if="activeGameInfo.configOptions?.pairCount" class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          {{ activeGameInfo.configOptions!.pairCount!.label }}
+        </label>
+        <div class="flex gap-2">
+          <button
+            v-for="n in Array.from(
+              { length: activeGameInfo.configOptions!.pairCount!.max - activeGameInfo.configOptions!.pairCount!.min + 1 },
+              (_, i) => activeGameInfo.configOptions!.pairCount!.min + i
+            )"
+            :key="n"
+            @click="gameConfig = { ...gameConfig, pairCount: n }"
+            :disabled="n > availableWordCount"
+            :class="[
+              'flex-1 py-2 rounded-lg border text-sm font-medium transition-colors',
+              (gameConfig.pairCount || activeGameInfo.configOptions!.pairCount!.default) === n
+                ? 'bg-primary-600 border-primary-600 text-white'
+                : n > availableWordCount
+                ? 'border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+            ]"
+          >
+            {{ n }}
+          </button>
         </div>
       </div>
 
-      <!-- Summary -->
-      <div class="bg-gray-50 rounded-lg p-4 mb-6">
-        <div class="flex justify-between text-sm mb-2">
-          <span class="text-gray-600">Words</span>
-          <span class="font-medium">{{ wordCount }}</span>
-        </div>
-        <div class="flex justify-between text-sm mb-2">
-          <span class="text-gray-600">Source</span>
-          <span class="font-medium">{{ sourceLanguage }}</span>
+      <!-- Session summary -->
+      <div class="rounded-lg bg-gray-50 border border-gray-100 px-4 py-3 mb-5 space-y-1.5">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">Words</span>
+          <span class="font-medium text-gray-900">{{ wordCount }}</span>
         </div>
         <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Target</span>
-          <span class="font-medium">{{ targetLanguage }}</span>
+          <span class="text-gray-500">Language</span>
+          <span class="font-medium text-gray-900">{{ sourceLanguage }}</span>
         </div>
       </div>
 
-      <button @click="handleStartGame" class="w-full py-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-        <Play class="w-5 h-5" /> Start Game
+      <button @click="handleStartGame" class="btn btn-primary w-full py-3">
+        <Play class="w-5 h-5 mr-2" /> Start
       </button>
     </div>
   </div>

@@ -139,22 +139,42 @@ const statusColors: Record<string, string> = {
     </div>
 
     <!-- Stats -->
-    <div v-if="stats" class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-      <div class="card p-4 text-center">
-        <p class="text-3xl font-bold text-gray-900">{{ stats.total }}</p>
-        <p class="text-sm text-gray-500">Total</p>
+    <div v-if="stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+          <BookMarked class="w-5 h-5 text-gray-500" />
+        </div>
+        <div>
+          <p class="text-xl font-bold text-gray-900">{{ stats.total }}</p>
+          <p class="text-xs text-gray-500">Total</p>
+        </div>
       </div>
-      <div class="card p-4 text-center">
-        <p class="text-3xl font-bold text-yellow-600">{{ stats.learning }}</p>
-        <p class="text-sm text-gray-500">Learning</p>
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center shrink-0">
+          <BookMarked class="w-5 h-5 text-yellow-600" />
+        </div>
+        <div>
+          <p class="text-xl font-bold text-yellow-600">{{ stats.learning }}</p>
+          <p class="text-xs text-gray-500">Learning</p>
+        </div>
       </div>
-      <div class="card p-4 text-center">
-        <p class="text-3xl font-bold text-blue-600">{{ stats.learned }}</p>
-        <p class="text-sm text-gray-500">Learned</p>
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+          <BookMarked class="w-5 h-5 text-blue-600" />
+        </div>
+        <div>
+          <p class="text-xl font-bold text-blue-600">{{ stats.learned }}</p>
+          <p class="text-xs text-gray-500">Learned</p>
+        </div>
       </div>
-      <div class="card p-4 text-center">
-        <p class="text-3xl font-bold text-green-600">{{ stats.mastered }}</p>
-        <p class="text-sm text-gray-500">Mastered</p>
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+          <BookMarked class="w-5 h-5 text-green-600" />
+        </div>
+        <div>
+          <p class="text-xl font-bold text-green-600">{{ stats.mastered }}</p>
+          <p class="text-xs text-gray-500">Mastered</p>
+        </div>
       </div>
     </div>
 

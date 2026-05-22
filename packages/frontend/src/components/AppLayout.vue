@@ -8,7 +8,6 @@ import { getLanguageFlag, getNativeLanguageOptions, type LanguageOption } from '
 import {
   LayoutDashboard,
   BookOpen,
-  PenTool,
   History,
   BookMarked,
   Settings,
@@ -21,8 +20,7 @@ import {
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/generate', icon: PenTool, label: 'Generate' },
-  { to: '/history', icon: History, label: 'History' },
+  { to: '/generate', icon: BookOpen, label: 'Reads' },
   {
     to: '/vocabulary',
     icon: BookMarked,
@@ -30,6 +28,7 @@ const navItems = [
     children: [{ to: '/vocabulary/packs', icon: PackagePlus, label: 'Preset Packs' }],
   },
   { to: '/practice', icon: Gamepad2, label: 'Practice' },
+  { to: '/history', icon: History, label: 'History' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 

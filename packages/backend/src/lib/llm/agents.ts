@@ -9,6 +9,7 @@ import { Agent } from '@mastra/core/agent';
 import { getModelForTask, type TaskType } from './config.js';
 import {
   textGenerationInstructions,
+  textAdaptationInstructions,
   wordTranslationInstructions,
   sentenceTranslationInstructions,
   grammarAnalysisInstructions,
@@ -25,6 +26,16 @@ export function createTextGenerationAgent(language: string, difficulty: string):
     name: 'Text Generation Agent',
     model: config.model,
     instructions: textGenerationInstructions(language, difficulty),
+  });
+}
+
+export function createTextAdaptationAgent(language: string): Agent {
+  const config = getModelForTask('text-generation');
+  return new Agent({
+    id: 'text-adapter',
+    name: 'Text Adaptation Agent',
+    model: config.model,
+    instructions: textAdaptationInstructions(language),
   });
 }
 

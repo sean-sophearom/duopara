@@ -2,13 +2,13 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMutation, useQuery } from '@tanstack/vue-query';
-import { generateApi, settingsApi, vocabularyApi } from '../lib/api';
+import { generateApi, settingsApi, textsApi, vocabularyApi } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import {
   Sparkles, Loader2, BookOpen, Lightbulb,
   Coffee, Plane, ShoppingBag, Utensils,
   Heart, Briefcase, GraduationCap, Newspaper,
-  ClipboardPaste, Wand2, 
+  ClipboardPaste, Upload, FileText, X, Wand2, ShieldAlert,
   // Shuffle,
 } from 'lucide-vue-next';
 
@@ -43,8 +43,19 @@ const defaultLanguage = authStore.user?.settings?.targetLanguage || 'Spanish';
 const defaultRatio = authStore.user?.settings?.knownWordsRatio || 80;
 const defaultDifficulty = authStore.user?.settings?.defaultDifficulty || 'intermediate';
 
-// Mode: 'generate' | 'import'
-const mode = ref<'generate' | 'import'>('generate');
+interface ReadingPreset {
+  id: string;
+  language: string;
+  title: string;
+  topic: string;
+  difficulty: 'beginner' | 'intermediate';
+  description: string;
+  content: string;
+  wordCount: number;
+}
+
+// Mode: 'presets' | 'generate' | 'import' | 'upload'
+const mode = ref<'presets' | 'generate' | 'import' | 'upload'>('presets');
 
 // Generate mode fields
 const topic = ref('');
@@ -55,6 +66,29 @@ const wordCount = ref(200);
 const customText = ref('');
 const customTitle = ref('');
 const customTopic = ref('');
+
+// Upload mode fields
+const uploadFile = ref<File | null>(null);
+const uploadTitle = ref('');
+const aiAdapt = ref(false);
+const uploadDragOver = ref(false);
+
+function handleFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (input.files?.[0]) uploadFile.value = input.files[0];
+}
+
+function handleDrop(event: DragEvent) {
+  uploadDragOver.value = false;
+  const file = event.dataTransfer?.files[0];
+  if (file) uploadFile.value = file;
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 // Shared fields
 const language = ref(defaultLanguage);
@@ -73,8 +107,27 @@ const { data: vocabStats } = useQuery({
   queryFn: () => vocabularyApi.getStats(language.value).then(r => r.data),
 });
 
+const { data: readingPresets, isLoading: isLoadingPresets } = useQuery({
+  queryKey: computed(() => ['texts', 'presets', language.value]),
+  queryFn: () => textsApi.getPresets(language.value).then(r => r.data.presets as ReadingPreset[]),
+});
+
 const generateMutation = useMutation({
   mutationFn: generateApi.create,
+  onSuccess: (response) => {
+    router.push(`/read/${response.data.text.id}`);
+  },
+});
+
+const uploadMutation = useMutation({
+  mutationFn: generateApi.upload,
+  onSuccess: (response) => {
+    router.push(`/read/${response.data.text.id}`);
+  },
+});
+
+const addPresetMutation = useMutation({
+  mutationFn: textsApi.addPreset,
   onSuccess: (response) => {
     router.push(`/read/${response.data.text.id}`);
   },
@@ -88,7 +141,19 @@ const generateMutation = useMutation({
 // });
 
 function handleGenerate() {
-  if (mode.value === 'import') {
+  if (mode.value === 'upload') {
+    if (!uploadFile.value) return;
+    uploadMutation.mutate({
+      file: uploadFile.value,
+      language: language.value,
+      difficulty: difficulty.value,
+      knownWordsRatio: knownWordsRatio.value,
+      aiAdapt: aiAdapt.value,
+      includeLearningWords: includeLearningWords.value,
+      includeLearnedWords: includeLearnedWords.value,
+      title: uploadTitle.value.trim() || undefined,
+    });
+  } else if (mode.value === 'import') {
     if (!customText.value.trim()) return;
     generateMutation.mutate({
       customText: customText.value.trim(),
@@ -116,8 +181,9 @@ function handleGenerate() {
 }
 
 const isSubmitDisabled = computed(() => {
-  if (generateMutation.isPending.value) return true;
+  if (generateMutation.isPending.value || uploadMutation.isPending.value) return true;
   if (!includeLearnedWords.value && !includeLearningWords.value) return true;
+  if (mode.value === 'upload') return !uploadFile.value;
   if (mode.value === 'import') return !customText.value.trim();
   return !topic.value.trim();
 });
@@ -131,17 +197,34 @@ const importWordCount = computed(() => {
   if (!customText.value) return 0;
   return customText.value.trim().split(/\s+/).filter(Boolean).length;
 });
+
+function previewText(content: string) {
+  return content.length > 170 ? `${content.slice(0, 170).trim()}...` : content;
+}
 </script>
 
 <template>
   <div class="max-w-4xl mx-auto">
     <div class="mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Generate Reading Material</h1>
-      <p class="text-gray-600 mt-1">Create personalized content based on your vocabulary level</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Reads</h1>
+      <p class="text-gray-600 mt-1">Start with a curated text, paste your own, or generate a personalized read.</p>
     </div>
 
     <!-- Mode toggle -->
     <div class="flex gap-2 mb-8 p-1 bg-gray-100 rounded-xl w-fit">
+      <button
+        type="button"
+        @click="mode = 'presets'"
+        :class="[
+          'flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all',
+          mode === 'presets'
+            ? 'bg-white text-primary-700 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900'
+        ]"
+      >
+        <BookOpen class="w-4 h-4" />
+        Starter Reads
+      </button>
       <button
         type="button"
         @click="mode = 'generate'"
@@ -152,7 +235,7 @@ const importWordCount = computed(() => {
             : 'text-gray-600 hover:text-gray-900'
         ]"
       >
-        <Wand2 class="w-4 h-4" />
+        <Sparkles class="w-4 h-4" />
         AI Generate
       </button>
       <button
@@ -168,9 +251,42 @@ const importWordCount = computed(() => {
         <ClipboardPaste class="w-4 h-4" />
         Paste Your Text
       </button>
+      <button
+        type="button"
+        @click="mode = 'upload'"
+        :class="[
+          'flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all',
+          mode === 'upload'
+            ? 'bg-white text-primary-700 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900'
+        ]"
+      >
+        <Upload class="w-4 h-4" />
+        Upload File
+      </button>
     </div>
 
-    <form @submit.prevent="handleGenerate" class="space-y-8">
+    <form @submit.prevent="handleGenerate" class="space-y-6">
+      <div class="card p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <label class="block text-lg font-semibold text-gray-900">Target Language</label>
+            <p class="text-sm text-gray-500 mt-1">Choose the language for your reading session.</p>
+          </div>
+          <select v-model="language" class="input sm:w-64">
+            <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+              {{ lang.name }} ({{ lang.nativeName }})
+            </option>
+            <option v-if="!languages" value="Spanish">Spanish</option>
+          </select>
+        </div>
+        <div class="mt-4 p-3 bg-primary-50 rounded-lg">
+          <p class="text-sm text-primary-700">
+            <BookOpen class="w-4 h-4 inline mr-1" />
+            You have <strong>{{ knownWords }}</strong> known words in {{ language }}
+          </p>
+        </div>
+      </div>
 
       <!-- AI Generate mode: topic input -->
       <template v-if="mode === 'generate'">
@@ -217,7 +333,7 @@ const importWordCount = computed(() => {
       </template>
 
       <!-- Paste mode: custom text + optional metadata -->
-      <template v-else>
+      <template v-else-if="mode === 'import'">
         <div class="card p-6 space-y-5">
           <div>
             <label class="block text-lg font-semibold text-gray-900 mb-1">Paste your text</label>
@@ -259,24 +375,144 @@ const importWordCount = computed(() => {
         </div>
       </template>
 
-      <!-- Language and difficulty (shared) -->
-      <div class="grid md:grid-cols-2 gap-6">
-        <div class="card p-6">
-          <label class="block text-lg font-semibold text-gray-900 mb-3">Target Language</label>
-          <select v-model="language" class="input text-lg">
-            <option v-for="lang in languages" :key="lang.code" :value="lang.code">
-              {{ lang.name }} ({{ lang.nativeName }})
-            </option>
-            <option v-if="!languages" value="Spanish">Spanish (EspaÃ±ol)</option>
-          </select>
-          <div class="mt-4 p-3 bg-primary-50 rounded-lg">
-            <p class="text-sm text-primary-700">
-              <BookOpen class="w-4 h-4 inline mr-1" />
-              You have <strong>{{ knownWords }}</strong> known words in {{ language }}
-            </p>
+      <!-- Upload mode: file picker + options -->
+      <template v-else-if="mode === 'upload'">
+        <div class="card p-6 space-y-5">
+          <div>
+            <label class="block text-lg font-semibold text-gray-900 mb-1">Upload a document</label>
+            <p class="text-sm text-gray-500 mb-3">Upload a PDF or TXT file — an article, book excerpt, song lyrics, or any text you want to study.</p>
+            <div class="flex gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3 mb-4">
+              <ShieldAlert class="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <p class="text-xs text-amber-800 leading-relaxed">
+                <strong>Avoid uploading sensitive files.</strong>
+                Do not upload documents containing passwords, API keys, personal IDs, or confidential information — file contents are sent to an AI provider for processing.
+              </p>
+            </div>
+
+            <!-- Drop zone -->
+            <div
+              @dragover.prevent="uploadDragOver = true"
+              @dragleave="uploadDragOver = false"
+              @drop.prevent="handleDrop"
+              :class="[
+                'relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-center transition-colors cursor-pointer',
+                uploadDragOver ? 'border-primary-400 bg-primary-50' : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50',
+                uploadFile ? 'bg-green-50 border-green-400' : ''
+              ]"
+              @click="($refs.fileInput as HTMLInputElement).click()"
+            >
+              <input
+                ref="fileInput"
+                type="file"
+                accept=".pdf,.txt,application/pdf,text/plain"
+                class="sr-only"
+                @change="handleFileSelect"
+              />
+
+              <template v-if="!uploadFile">
+                <Upload class="w-10 h-10 text-gray-400" />
+                <div>
+                  <p class="font-medium text-gray-700">Drop your file here or <span class="text-primary-600">browse</span></p>
+                  <p class="text-sm text-gray-500 mt-1">PDF or TXT · Max 15 MB</p>
+                </div>
+              </template>
+              <template v-else>
+                <FileText class="w-10 h-10 text-green-600" />
+                <div>
+                  <p class="font-semibold text-gray-900">{{ uploadFile.name }}</p>
+                  <p class="text-sm text-gray-500">{{ formatFileSize(uploadFile.size) }}</p>
+                </div>
+                <button
+                  type="button"
+                  @click.stop="uploadFile = null"
+                  class="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- AI Adapt toggle -->
+          <label class="flex items-start gap-3 p-4 rounded-xl border border-gray-200 cursor-pointer hover:border-primary-400 transition-colors" :class="aiAdapt ? 'border-primary-400 bg-primary-50' : ''">
+            <input type="checkbox" v-model="aiAdapt" class="mt-0.5 w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            <div>
+              <div class="flex items-center gap-2">
+                <Wand2 class="w-4 h-4 text-primary-600" />
+                <span class="font-medium text-gray-900">AI Cleanup</span>
+              </div>
+              <p class="text-sm text-gray-500 mt-0.5">Let AI remove PDF artifacts and broken lines to produce clean, readable text.</p>
+            </div>
+          </label>
+
+          <!-- Optional title override -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Title <span class="text-gray-400 font-normal">(optional — auto-detected from filename)</span>
+            </label>
+            <input
+              type="text"
+              v-model="uploadTitle"
+              placeholder="Override the title..."
+              class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+            />
           </div>
         </div>
+      </template>
 
+      <template v-else>
+        <div class="card p-6">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-5">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Choose a starter read</h2>
+              <p class="text-sm text-gray-500 mt-1">Short beginner texts you can open immediately and use to learn how Kontexi works.</p>
+            </div>
+            <span class="text-sm text-gray-500">{{ language }}</span>
+          </div>
+
+          <div v-if="isLoadingPresets" class="flex items-center justify-center py-10">
+            <Loader2 class="w-7 h-7 animate-spin text-primary-600" />
+          </div>
+          <div v-else-if="!readingPresets?.length" class="p-8 bg-gray-50 rounded-xl text-center text-gray-500">
+            No starter reads yet for {{ language }}.
+          </div>
+          <div v-else class="grid gap-4">
+            <article
+              v-for="preset in readingPresets"
+              :key="preset.id"
+              class="rounded-xl border border-gray-200 bg-white p-4"
+            >
+              <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2 mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ preset.title }}</h3>
+                    <span class="px-2 py-1 rounded-full bg-green-100 text-xs font-medium text-green-700 capitalize">
+                      {{ preset.difficulty }}
+                    </span>
+                    <span class="px-2 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                      {{ preset.wordCount }} words
+                    </span>
+                  </div>
+                  <p class="text-sm text-gray-500 mb-3">{{ preset.description }}</p>
+                  <p class="text-sm leading-6 text-gray-700">{{ previewText(preset.content) }}</p>
+                </div>
+                <button
+                  type="button"
+                  @click="addPresetMutation.mutate(preset.id)"
+                  :disabled="addPresetMutation.isPending.value"
+                  class="btn btn-primary whitespace-nowrap"
+                >
+                  <Loader2 v-if="addPresetMutation.isPending.value" class="w-4 h-4 animate-spin mr-2" />
+                  <BookOpen v-else class="w-4 h-4 mr-2" />
+                  Start Reading
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
+      </template>
+
+      <template v-if="mode !== 'presets'">
         <div class="card p-6">
           <label class="block text-lg font-semibold text-gray-900 mb-3">Difficulty Level</label>
           <div class="space-y-2">
@@ -304,87 +540,92 @@ const importWordCount = computed(() => {
             </label>
           </div>
         </div>
-      </div>
 
-      <!-- Advanced options -->
-      <div class="card p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Fine-tune your text</h3>
-        <div class="grid md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Vocabulary Mix</label>
-            <div class="flex items-center gap-4">
-              <input type="range" min="50" max="95" step="5" v-model.number="knownWordsRatio" class="flex-1" />
-              <span class="text-sm font-medium text-gray-900 w-24 text-right">{{ knownWordsRatio }}% known</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">{{ 100 - knownWordsRatio }}% new words to challenge you</p>
-
-            <div class="mt-4 space-y-2">
-              <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Include in "Known":</p>
-              <div class="flex flex-wrap gap-3">
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" v-model="includeLearnedWords" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
-                    Learned ({{ vocabStats?.learned || 0 }})
-                  </span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" v-model="includeLearningWords" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
-                    Learning ({{ vocabStats?.learning || 0 }})
-                  </span>
-                </label>
+        <!-- Advanced options -->
+        <div class="card p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Fine-tune your text</h3>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Vocabulary Mix</label>
+              <div class="flex items-center gap-4">
+                <input type="range" min="50" max="95" step="5" v-model.number="knownWordsRatio" class="flex-1" />
+                <span class="text-sm font-medium text-gray-900 w-24 text-right">{{ knownWordsRatio }}% known</span>
               </div>
-              <p v-if="!includeLearnedWords && !includeLearningWords" class="text-xs text-red-500 animate-pulse">
-                Select at least one category
-              </p>
+              <p class="text-xs text-gray-500 mt-1">{{ 100 - knownWordsRatio }}% new words to challenge you</p>
+
+              <div class="mt-4 space-y-2">
+                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Include in "Known":</p>
+                <div class="flex flex-wrap gap-3">
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" v-model="includeLearnedWords" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                    <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
+                      Learned ({{ vocabStats?.learned || 0 }})
+                    </span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" v-model="includeLearningWords" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                    <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
+                      Learning ({{ vocabStats?.learning || 0 }})
+                    </span>
+                  </label>
+                </div>
+                <p v-if="!includeLearnedWords && !includeLearningWords" class="text-xs text-red-500 animate-pulse">
+                  Select at least one category
+                </p>
+              </div>
+            </div>
+
+            <div v-if="mode === 'generate'">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Approximate Length</label>
+              <select v-model.number="wordCount" class="input">
+                <option :value="100">Short (~100 words)</option>
+                <option :value="200">Medium (~200 words)</option>
+                <option :value="350">Long (~350 words)</option>
+                <option :value="500">Very long (~500 words)</option>
+              </select>
             </div>
           </div>
 
-          <div v-if="mode === 'generate'">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Approximate Length</label>
-            <select v-model.number="wordCount" class="input">
-              <option :value="100">Short (~100 words)</option>
-              <option :value="200">Medium (~200 words)</option>
-              <option :value="350">Long (~350 words)</option>
-              <option :value="500">Very long (~500 words)</option>
-            </select>
+          <div v-if="mode === 'generate'" class="mt-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Writing Style</label>
+            <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-2">
+              <label
+                v-for="opt in styleOptions"
+                :key="opt.value"
+                :class="[
+                  'flex flex-col items-center gap-1 p-3 rounded-lg border cursor-pointer transition-all text-center',
+                  style === opt.value
+                    ? 'border-primary-500 bg-primary-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                ]"
+              >
+                <input type="radio" name="style" :value="opt.value" v-model="style" class="sr-only" />
+                <span class="font-medium text-gray-900">{{ opt.label }}</span>
+                <span class="text-xs text-gray-500">{{ opt.description }}</span>
+              </label>
+            </div>
           </div>
         </div>
-
-        <div v-if="mode === 'generate'" class="mt-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Writing Style</label>
-          <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-2">
-            <label
-              v-for="opt in styleOptions"
-              :key="opt.value"
-              :class="[
-                'flex flex-col items-center gap-1 p-3 rounded-lg border cursor-pointer transition-all text-center',
-                style === opt.value
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              ]"
-            >
-              <input type="radio" name="style" :value="opt.value" v-model="style" class="sr-only" />
-              <span class="font-medium text-gray-900">{{ opt.label }}</span>
-              <span class="text-xs text-gray-500">{{ opt.description }}</span>
-            </label>
-          </div>
-        </div>
-      </div>
+      </template>
 
       <!-- Submit button -->
       <button
+        v-if="mode !== 'presets'"
         type="submit"
         :disabled="isSubmitDisabled"
         class="btn btn-primary w-full py-4 text-lg"
       >
-        <template v-if="generateMutation.isPending.value">
+        <template v-if="generateMutation.isPending.value || uploadMutation.isPending.value">
           <Loader2 class="w-6 h-6 animate-spin mr-2" />
-          {{ mode === 'import' ? 'Processing your text...' : 'Generating your text...' }}
+          {{ mode === 'import' ? 'Processing your text...' : mode === 'upload' ? (aiAdapt ? 'Uploading & cleaning...' : 'Uploading...') : 'Generating your text...' }}
         </template>
         <template v-else-if="mode === 'import'">
           <ClipboardPaste class="w-6 h-6 mr-2" />
           Import Text
+        </template>
+        <template v-else-if="mode === 'upload'">
+          <Upload class="w-6 h-6 mr-2" />
+          Upload & Start Reading
         </template>
         <template v-else>
           <Sparkles class="w-6 h-6 mr-2" />
@@ -392,8 +633,8 @@ const importWordCount = computed(() => {
         </template>
       </button>
 
-      <div v-if="generateMutation.isError.value" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        {{ mode === 'import' ? 'Failed to import text. Please try again.' : 'Failed to generate text. Please try again.' }}
+      <div v-if="generateMutation.isError.value || uploadMutation.isError.value" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        {{ mode === 'import' ? 'Failed to import text. Please try again.' : mode === 'upload' ? 'Failed to process file. Please check the file and try again.' : 'Failed to generate text. Please try again.' }}
       </div>
     </form>
   </div>

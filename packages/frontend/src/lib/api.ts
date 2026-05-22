@@ -78,9 +78,34 @@ export const generateApi = {
   }) => api.post('/generate', data),
   regenerate: (textId: string, action: 'simplify' | 'harder') =>
     api.post('/generate/regenerate', { textId, action }),
+  upload: (data: {
+    file: File;
+    language: string;
+    difficulty?: string;
+    knownWordsRatio?: number;
+    aiAdapt?: boolean;
+    includeLearningWords?: boolean;
+    includeLearnedWords?: boolean;
+    title?: string;
+  }) => {
+    const formData = new FormData();
+    formData.append('file', data.file);
+    formData.append('language', data.language);
+    if (data.difficulty) formData.append('difficulty', data.difficulty);
+    if (data.knownWordsRatio !== undefined) formData.append('knownWordsRatio', String(data.knownWordsRatio));
+    if (data.aiAdapt !== undefined) formData.append('aiAdapt', String(data.aiAdapt));
+    if (data.includeLearningWords !== undefined) formData.append('includeLearningWords', String(data.includeLearningWords));
+    if (data.includeLearnedWords !== undefined) formData.append('includeLearnedWords', String(data.includeLearnedWords));
+    if (data.title) formData.append('title', data.title);
+    return api.post('/generate/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
 };
 
 export const textsApi = {
+  getPresets: (language?: string) =>
+    api.get('/texts/presets', { params: { language } }),
+  addPreset: (presetId: string) =>
+    api.post(`/texts/presets/${presetId}/add`),
   getAll: (params?: { language?: string; limit?: number; offset?: number; search?: string }) =>
     api.get('/texts', { params }),
   getOne: (id: string) => api.get(`/texts/${id}`),
