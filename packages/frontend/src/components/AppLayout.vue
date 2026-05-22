@@ -16,10 +16,12 @@ import {
   X,
   Gamepad2,
   PackagePlus,
+  Target,
 } from 'lucide-vue-next';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/goals', icon: Target, label: 'Goals' },
   { to: '/generate', icon: BookOpen, label: 'Reads' },
   {
     to: '/vocabulary',

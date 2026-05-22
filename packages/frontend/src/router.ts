@@ -46,6 +46,7 @@ const router = createRouter({
       children: [
         { path: '', redirect: '/dashboard' },
         { path: 'dashboard', component: () => import('./pages/DashboardPage.vue') },
+        { path: 'goals', component: () => import('./pages/GoalsPage.vue') },
         { path: 'generate', component: () => import('./pages/GeneratePage.vue') },
         { path: 'read/:textId', component: () => import('./pages/ReadPage/ReadPage.vue') },
         { path: 'history', component: () => import('./pages/HistoryPage.vue') },

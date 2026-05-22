@@ -72,6 +72,29 @@ You will receive a numbered list of sentences. For each sentence return:
 Always respond with valid JSON. Return one entry per sentence in the same order.`;
 }
 
+export function goalSuggestionInstructions(): string {
+  return `You are a language learning coach for a reading-first language app. Generate concrete, actionable reading goal suggestions that help the learner start immediately.
+
+Always return valid JSON with exactly 3 diverse goal suggestions. Each targets ONE reading session.
+
+Action types:
+- "generate": New custom text. Include "topic" (specific, engaging) and "difficulty" (beginner/intermediate/advanced).
+- "existing": A text already in the learner's library. Include "textId" (exact UUID from library) and "textTitle".
+- "article": External article. Include "source" (e.g. "BBC Learning Languages") and "searchQuery".
+
+Rules:
+- Suggestion 1: usually "generate" with a vivid, specific topic tied to the learner intent
+- Suggestion 2: use "existing" only if the library context contains a relevant exact textId; otherwise use another "generate"
+- Suggestion 3: "article" only when the learner intent benefits from real-world reading; otherwise use "generate"
+- targetWords: realistic count — 8-15 for beginners, 12-20 for intermediate, 15-28 for advanced
+- Choose one clear session objective, not a long-term plan
+- Prefer the learner's weak or learning words when the context includes them
+- Avoid repeating recent goal titles or recently read topics
+- For "existing", never invent a textId. Use an exact ID from the library context
+- Be specific: "Ordering tapas at a Madrid bar" beats "Spanish food"
+- Keep title short, description practical, and why learner-specific`;
+}
+
 export function enhancedTranslationInstructions(sourceLanguage: string, targetLanguage: string): string {
   return `You are a linguistic alignment specialist for ${sourceLanguage} to ${targetLanguage} translation.
 Your task is to break each sentence into word/phrase alignment pairs so language learners can see exactly which source words/phrases correspond to which target words/phrases.

@@ -75,6 +75,7 @@ export const generateApi = {
     style?: string;
     includeLearningWords?: boolean;
     includeLearnedWords?: boolean;
+    reuseExisting?: boolean;
   }) => api.post('/generate', data),
   regenerate: (textId: string, action: 'simplify' | 'harder') =>
     api.post('/generate/regenerate', { textId, action }),
@@ -194,3 +195,64 @@ export const practiceApi = {
   getDueCount: (language?: string) =>
     api.get('/practice/due', { params: { language } }),
 };
+
+export const goalsApi = {
+  suggest: (intent: string) =>
+    api.post<{ suggestions: GoalSuggestion[] }>('/goals/suggest', { intent }),
+  getActive: () =>
+    api.get<{ goals: SavedGoal[] }>('/goals'),
+  getAll: () =>
+    api.get<{ goals: SavedGoal[] }>('/goals', { params: { status: 'all' } }),
+  save: (data: Omit<SavedGoal, 'id' | 'status' | 'createdAt' | 'completedAt' | 'userId' | 'actionData'> & { actionData: Record<string, unknown> }) =>
+    api.post<{ goal: SavedGoal }>('/goals', data),
+  updateStatus: (id: string, status: 'active' | 'completed' | 'dismissed') =>
+    api.patch<{ goal: SavedGoal }>(`/goals/${id}`, { status }),
+  delete: (id: string) =>
+    api.delete(`/goals/${id}`),
+};
+
+export interface GoalSuggestion {
+  title: string;
+  description: string;
+  why: string;
+  targetWords: number;
+  estimatedMinutes: number;
+  actionType: 'generate' | 'existing' | 'article';
+  topic?: string;
+  difficulty?: string;
+  textId?: string;
+  textTitle?: string;
+  source?: string;
+  searchQuery?: string;
+  contentOptions?: GoalContentOption[];
+}
+
+export interface GoalContentOption {
+  id: string;
+  title: string;
+  description: string;
+  targetWords: number;
+  estimatedMinutes: number;
+  actionType: 'generate' | 'existing' | 'article';
+  topic?: string;
+  difficulty?: string;
+  textId?: string;
+  textTitle?: string;
+  source?: string;
+  searchQuery?: string;
+}
+
+export interface SavedGoal {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  why: string;
+  targetWords: number;
+  estimatedMinutes: number;
+  actionType: 'generate' | 'existing' | 'article';
+  actionData: string; // JSON
+  status: 'active' | 'completed' | 'dismissed';
+  completedAt: string | null;
+  createdAt: string;
+}

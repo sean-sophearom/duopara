@@ -20,6 +20,7 @@ model User {
   generatedTexts GeneratedText[]
   readingSessions ReadingSession[]
   settings      UserSettings?
+  goals         ReadingGoal[]
 }
 
 model UserSettings {
@@ -204,4 +205,35 @@ model PracticeAttempt {
   
   @@index([sessionId])
   @@index([vocabularyWordId])
+}
+
+// ============================================
+// Reading Goals
+// ============================================
+
+model ReadingGoal {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title            String
+  description      String
+  why              String
+  targetWords      Int
+  estimatedMinutes Int
+
+  // actionType: "generate" | "existing" | "article"
+  // actionData JSON:
+  //   generate  -> { topic, difficulty }
+  //   existing  -> { textId, textTitle }
+  //   article   -> { source, searchQuery }
+  actionType       String
+  actionData       String    // JSON
+
+  status           String    @default("active")  // "active" | "completed" | "dismissed"
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
 }
