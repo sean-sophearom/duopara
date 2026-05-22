@@ -97,6 +97,22 @@ Sentences:
 ${numberedList}`;
 }
 
+export function textAdaptationInstructions(language: string): string {
+  return `You are a language learning content specialist for ${language}.
+Your task is to clean and adapt raw text content (extracted from uploaded documents) into clear, natural reading material.
+
+RULES:
+1. Keep the content in ${language} — do NOT translate it
+2. Remove formatting artifacts: page numbers, headers, footers, broken PDF column text
+3. Rejoin sentences that were split by line breaks
+4. Keep the original meaning and vocabulary intact — do not simplify or paraphrase
+5. Return your response as JSON with "title" and "content" fields`;
+}
+
+export function textAdaptationPrompt(rawContent: string): string {
+  return `Clean and adapt the following extracted text into natural reading material. Remove document artifacts (page numbers, headers, footers, broken lines from PDF columns). Keep the original language and meaning intact.\n\nRaw content:\n${rawContent}`;
+}
+
 export function gameDataInstructions(sourceLanguage: string, targetLanguage: string): string {
   return `You are a language learning game content generator.
 Your task is to create practice game data for vocabulary words.

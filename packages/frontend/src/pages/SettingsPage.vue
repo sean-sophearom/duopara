@@ -3,7 +3,7 @@ import { ref, watch } from 'vue';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query';
 import { settingsApi } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
-import { Check, Loader2, Save } from 'lucide-vue-next';
+import { Check, Loader2, Save, ShieldAlert } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const queryClient = useQueryClient();
@@ -192,6 +192,15 @@ const difficultyLevels = ['beginner', 'intermediate', 'advanced'];
             <span class="text-sm text-gray-600">Name</span>
             <span class="text-sm font-medium text-gray-900">{{ authStore.user.name }}</span>
           </div>
+        </div>
+
+        <div class="mt-4 flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <ShieldAlert class="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+          <p class="text-xs text-amber-800 leading-relaxed">
+            <strong>Keep your credentials safe.</strong>
+            Never share your password or account access with others.
+            If you suspect your account has been compromised, change your password immediately.
+          </p>
         </div>
       </div>
 

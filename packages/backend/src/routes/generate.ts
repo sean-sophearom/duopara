@@ -1,13 +1,16 @@
+import path from 'node:path';
 import { Router } from 'express';
+import multer from 'multer';
+import { PDFParse } from 'pdf-parse';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../lib/routeUtils.js';
-import { createTextGenerationAgent, getModelForTask, generatedTextSchema } from '../lib/llm/index.js';
-import { textGenerationPrompt, textRegenerationPrompt } from '../lib/llm/prompts.js';
+import { createTextGenerationAgent, createTextAdaptationAgent, getModelForTask, generatedTextSchema } from '../lib/llm/index.js';
+import { textGenerationPrompt, textRegenerationPrompt, textAdaptationPrompt } from '../lib/llm/prompts.js';
 import { extractWords, shuffle } from '../lib/textUtils.js';
 import { DIFFICULTIES, CONTENT_STYLES } from '../lib/constants.js';
-import { ALLOWED_LANGUAGES, MAX_TOPIC_LENGTH } from '../lib/constants.js';
+import { ALLOWED_LANGUAGES, MAX_TOPIC_LENGTH, MAX_UPLOAD_DOC_SIZE, MAX_UPLOAD_TEXT_CHARS } from '../lib/constants.js';
 
 function validLanguage() {
   return z.string().min(1).max(50).refine(
@@ -213,5 +216,102 @@ generateRouter.post('/regenerate', asyncHandler(async (req: AuthRequest, res) =>
     sessionId: session.id
   });
 }, 'Failed to regenerate text'));
+
+// ============================================
+// Upload & extract document
+// ============================================
+
+const docUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_DOC_SIZE },
+  fileFilter: (_req, file, cb) => {
+    const isPdf = file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf');
+    const isTxt = file.mimetype === 'text/plain' || file.originalname.toLowerCase().endsWith('.txt');
+    if (isPdf || isTxt) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF and TXT files are supported'));
+    }
+  },
+});
+
+const coerceBool = (def: boolean) => z.preprocess(v => {
+  if (v === undefined || v === null) return def;
+  if (typeof v === 'boolean') return v;
+  return v === 'true' || v === '1';
+}, z.boolean());
+
+const uploadSchema = z.object({
+  language: validLanguage(),
+  difficulty: z.enum(DIFFICULTIES).default('intermediate'),
+  knownWordsRatio: z.preprocess(v => v !== undefined ? Number(v) : 80, z.number().min(0).max(100)).default(80),
+  includeLearningWords: coerceBool(true),
+  includeLearnedWords: coerceBool(true),
+  aiAdapt: coerceBool(false),
+  title: z.string().max(200).optional(),
+});
+
+generateRouter.post('/upload', docUpload.single('file'), asyncHandler(async (req: AuthRequest, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  const params = uploadSchema.parse(req.body);
+
+  // Extract text from file
+  let rawText: string;
+  const filename = req.file.originalname;
+  const isPdf = req.file.mimetype === 'application/pdf' || filename.toLowerCase().endsWith('.pdf');
+
+  if (isPdf) {
+    const parser = new PDFParse({ data: req.file.buffer });
+    const parsed = await parser.getText();
+    rawText = parsed.text;
+  } else {
+    rawText = req.file.buffer.toString('utf-8');
+  }
+
+  rawText = rawText.trim();
+  if (!rawText) return res.status(400).json({ error: 'Could not extract text from file' });
+
+  // Cap length
+  const truncated = rawText.slice(0, MAX_UPLOAD_TEXT_CHARS);
+
+  // Optionally clean/adapt with AI
+  let content: string;
+  let title: string;
+
+  if (params.aiAdapt) {
+    const agent = createTextAdaptationAgent(params.language);
+    const config = getModelForTask('text-generation');
+    const result = await agent.generate(textAdaptationPrompt(truncated), {
+      modelSettings: { temperature: 0.3, maxOutputTokens: 4096 },
+      structuredOutput: { schema: generatedTextSchema },
+    });
+    title = params.title || result.object?.title || path.basename(filename, path.extname(filename));
+    content = result.object?.content || truncated;
+  } else {
+    content = truncated;
+    title = params.title || path.basename(filename, path.extname(filename));
+  }
+
+  // Build vocabulary filter
+  const statusIn: string[] = [];
+  if (params.includeLearnedWords) statusIn.push('learned', 'mastered');
+  if (params.includeLearningWords) statusIn.push('learning');
+  if (statusIn.length === 0) statusIn.push('learned', 'mastered');
+
+  const knownWordsList = await fetchKnownWords(req.userId!, params.language, statusIn);
+  const analysis = analyzeWords(content, params.language, knownWordsList);
+
+  const { text, session } = await saveTextAndSession(
+    req.userId!,
+    { topic: title, language: params.language, difficulty: params.difficulty, knownWordsRatio: params.knownWordsRatio, title, content },
+    analysis
+  );
+
+  res.json({
+    text: { ...text, knownWordsUsed: analysis.knownWordsUsed, newWordsIntroduced: analysis.newWordsIntroduced },
+    sessionId: session.id,
+  });
+}, 'Failed to process uploaded file'));
 
 

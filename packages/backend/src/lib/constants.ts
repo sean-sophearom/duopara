@@ -23,6 +23,8 @@ export const DEFAULT_HISTORY_LIMIT = 20;
 // Upload limits
 export const MAX_IMPORT_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 export const MAX_IMPORT_WORDS = 10_000;
+export const MAX_UPLOAD_DOC_SIZE = 15 * 1024 * 1024; // 15 MB for uploaded documents
+export const MAX_UPLOAD_TEXT_CHARS = 50_000;
 
 // Query limits
 export const MAX_QUERY_LIMIT = 500;

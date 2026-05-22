@@ -8,7 +8,7 @@ import {
   Sparkles, Loader2, BookOpen, Lightbulb,
   Coffee, Plane, ShoppingBag, Utensils,
   Heart, Briefcase, GraduationCap, Newspaper,
-  ClipboardPaste,
+  ClipboardPaste, Upload, FileText, X, Wand2, ShieldAlert,
   // Shuffle,
 } from 'lucide-vue-next';
 
@@ -54,8 +54,8 @@ interface ReadingPreset {
   wordCount: number;
 }
 
-// Mode: 'presets' | 'generate' | 'import'
-const mode = ref<'presets' | 'generate' | 'import'>('presets');
+// Mode: 'presets' | 'generate' | 'import' | 'upload'
+const mode = ref<'presets' | 'generate' | 'import' | 'upload'>('presets');
 
 // Generate mode fields
 const topic = ref('');
@@ -66,6 +66,29 @@ const wordCount = ref(200);
 const customText = ref('');
 const customTitle = ref('');
 const customTopic = ref('');
+
+// Upload mode fields
+const uploadFile = ref<File | null>(null);
+const uploadTitle = ref('');
+const aiAdapt = ref(false);
+const uploadDragOver = ref(false);
+
+function handleFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (input.files?.[0]) uploadFile.value = input.files[0];
+}
+
+function handleDrop(event: DragEvent) {
+  uploadDragOver.value = false;
+  const file = event.dataTransfer?.files[0];
+  if (file) uploadFile.value = file;
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 // Shared fields
 const language = ref(defaultLanguage);
@@ -96,6 +119,13 @@ const generateMutation = useMutation({
   },
 });
 
+const uploadMutation = useMutation({
+  mutationFn: generateApi.upload,
+  onSuccess: (response) => {
+    router.push(`/read/${response.data.text.id}`);
+  },
+});
+
 const addPresetMutation = useMutation({
   mutationFn: textsApi.addPreset,
   onSuccess: (response) => {
@@ -111,7 +141,19 @@ const addPresetMutation = useMutation({
 // });
 
 function handleGenerate() {
-  if (mode.value === 'import') {
+  if (mode.value === 'upload') {
+    if (!uploadFile.value) return;
+    uploadMutation.mutate({
+      file: uploadFile.value,
+      language: language.value,
+      difficulty: difficulty.value,
+      knownWordsRatio: knownWordsRatio.value,
+      aiAdapt: aiAdapt.value,
+      includeLearningWords: includeLearningWords.value,
+      includeLearnedWords: includeLearnedWords.value,
+      title: uploadTitle.value.trim() || undefined,
+    });
+  } else if (mode.value === 'import') {
     if (!customText.value.trim()) return;
     generateMutation.mutate({
       customText: customText.value.trim(),
@@ -139,8 +181,9 @@ function handleGenerate() {
 }
 
 const isSubmitDisabled = computed(() => {
-  if (generateMutation.isPending.value) return true;
+  if (generateMutation.isPending.value || uploadMutation.isPending.value) return true;
   if (!includeLearnedWords.value && !includeLearningWords.value) return true;
+  if (mode.value === 'upload') return !uploadFile.value;
   if (mode.value === 'import') return !customText.value.trim();
   return !topic.value.trim();
 });
@@ -207,6 +250,19 @@ function previewText(content: string) {
       >
         <ClipboardPaste class="w-4 h-4" />
         Paste Your Text
+      </button>
+      <button
+        type="button"
+        @click="mode = 'upload'"
+        :class="[
+          'flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all',
+          mode === 'upload'
+            ? 'bg-white text-primary-700 shadow-sm'
+            : 'text-gray-600 hover:text-gray-900'
+        ]"
+      >
+        <Upload class="w-4 h-4" />
+        Upload File
       </button>
     </div>
 
@@ -315,6 +371,91 @@ function previewText(content: string) {
                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
               />
             </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Upload mode: file picker + options -->
+      <template v-else-if="mode === 'upload'">
+        <div class="card p-6 space-y-5">
+          <div>
+            <label class="block text-lg font-semibold text-gray-900 mb-1">Upload a document</label>
+            <p class="text-sm text-gray-500 mb-3">Upload a PDF or TXT file — an article, book excerpt, song lyrics, or any text you want to study.</p>
+            <div class="flex gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3 mb-4">
+              <ShieldAlert class="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <p class="text-xs text-amber-800 leading-relaxed">
+                <strong>Avoid uploading sensitive files.</strong>
+                Do not upload documents containing passwords, API keys, personal IDs, or confidential information — file contents are sent to an AI provider for processing.
+              </p>
+            </div>
+
+            <!-- Drop zone -->
+            <div
+              @dragover.prevent="uploadDragOver = true"
+              @dragleave="uploadDragOver = false"
+              @drop.prevent="handleDrop"
+              :class="[
+                'relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-center transition-colors cursor-pointer',
+                uploadDragOver ? 'border-primary-400 bg-primary-50' : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50',
+                uploadFile ? 'bg-green-50 border-green-400' : ''
+              ]"
+              @click="($refs.fileInput as HTMLInputElement).click()"
+            >
+              <input
+                ref="fileInput"
+                type="file"
+                accept=".pdf,.txt,application/pdf,text/plain"
+                class="sr-only"
+                @change="handleFileSelect"
+              />
+
+              <template v-if="!uploadFile">
+                <Upload class="w-10 h-10 text-gray-400" />
+                <div>
+                  <p class="font-medium text-gray-700">Drop your file here or <span class="text-primary-600">browse</span></p>
+                  <p class="text-sm text-gray-500 mt-1">PDF or TXT · Max 15 MB</p>
+                </div>
+              </template>
+              <template v-else>
+                <FileText class="w-10 h-10 text-green-600" />
+                <div>
+                  <p class="font-semibold text-gray-900">{{ uploadFile.name }}</p>
+                  <p class="text-sm text-gray-500">{{ formatFileSize(uploadFile.size) }}</p>
+                </div>
+                <button
+                  type="button"
+                  @click.stop="uploadFile = null"
+                  class="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- AI Adapt toggle -->
+          <label class="flex items-start gap-3 p-4 rounded-xl border border-gray-200 cursor-pointer hover:border-primary-400 transition-colors" :class="aiAdapt ? 'border-primary-400 bg-primary-50' : ''">
+            <input type="checkbox" v-model="aiAdapt" class="mt-0.5 w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            <div>
+              <div class="flex items-center gap-2">
+                <Wand2 class="w-4 h-4 text-primary-600" />
+                <span class="font-medium text-gray-900">AI Cleanup</span>
+              </div>
+              <p class="text-sm text-gray-500 mt-0.5">Let AI remove PDF artifacts and broken lines to produce clean, readable text.</p>
+            </div>
+          </label>
+
+          <!-- Optional title override -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Title <span class="text-gray-400 font-normal">(optional — auto-detected from filename)</span>
+            </label>
+            <input
+              type="text"
+              v-model="uploadTitle"
+              placeholder="Override the title..."
+              class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+            />
           </div>
         </div>
       </template>
@@ -474,13 +615,17 @@ function previewText(content: string) {
         :disabled="isSubmitDisabled"
         class="btn btn-primary w-full py-4 text-lg"
       >
-        <template v-if="generateMutation.isPending.value">
+        <template v-if="generateMutation.isPending.value || uploadMutation.isPending.value">
           <Loader2 class="w-6 h-6 animate-spin mr-2" />
-          {{ mode === 'import' ? 'Processing your text...' : 'Generating your text...' }}
+          {{ mode === 'import' ? 'Processing your text...' : mode === 'upload' ? (aiAdapt ? 'Uploading & cleaning...' : 'Uploading...') : 'Generating your text...' }}
         </template>
         <template v-else-if="mode === 'import'">
           <ClipboardPaste class="w-6 h-6 mr-2" />
           Import Text
+        </template>
+        <template v-else-if="mode === 'upload'">
+          <Upload class="w-6 h-6 mr-2" />
+          Upload & Start Reading
         </template>
         <template v-else>
           <Sparkles class="w-6 h-6 mr-2" />
@@ -488,8 +633,8 @@ function previewText(content: string) {
         </template>
       </button>
 
-      <div v-if="generateMutation.isError.value" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        {{ mode === 'import' ? 'Failed to import text. Please try again.' : 'Failed to generate text. Please try again.' }}
+      <div v-if="generateMutation.isError.value || uploadMutation.isError.value" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        {{ mode === 'import' ? 'Failed to import text. Please try again.' : mode === 'upload' ? 'Failed to process file. Please check the file and try again.' : 'Failed to generate text. Please try again.' }}
       </div>
     </form>
   </div>
