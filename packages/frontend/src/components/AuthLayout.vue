@@ -13,7 +13,7 @@ defineProps<{
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-600 text-white mb-4">
           <BookOpen class="w-8 h-8" />
         </div>
-        <h1 class="text-3xl font-bold text-gray-900">Duopara</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Kontexi</h1>
         <p class="text-gray-600 mt-2">{{ subtitle }}</p>
       </div>
       <slot />

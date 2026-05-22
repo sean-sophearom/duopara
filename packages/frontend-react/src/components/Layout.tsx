@@ -45,7 +45,7 @@ export default function Layout() {
         </button>
         <div className="flex items-center gap-2 ml-4">
           <BookOpen className="w-6 h-6 text-primary-600" />
-          <span className="font-bold text-lg">Duopara</span>
+          <span className="font-bold text-lg">Kontexi</span>
         </div>
       </header>
 
@@ -71,7 +71,7 @@ export default function Layout() {
           <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
             <div className="flex items-center gap-2">
               <BookOpen className="w-7 h-7 text-primary-600" />
-              <span className="font-bold text-xl">Duopara</span>
+              <span className="font-bold text-xl">Kontexi</span>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}

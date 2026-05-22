@@ -50,7 +50,7 @@ export default function LoginScreen() {
             <View className="w-20 h-20 rounded-2xl bg-primary-500 items-center justify-center mb-4">
               <Text className="text-4xl">🦉</Text>
             </View>
-            <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-4xl text-owl-900">Duopara</Text>
+            <Text style={{ fontFamily: "Nunito_800ExtraBold" }} className="text-4xl text-owl-900">Kontexi</Text>
             <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-owl-500 mt-1 text-lg">Learn through reading</Text>
           </View>
 

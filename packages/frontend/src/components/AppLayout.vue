@@ -43,7 +43,7 @@ function handleLogout() {
       </button>
       <div class="flex items-center gap-2 ml-4">
         <BookOpen class="w-6 h-6 text-primary-600" />
-        <span class="font-bold text-lg">Duopara</span>
+        <span class="font-bold text-lg">Kontexi</span>
       </div>
     </header>
 
@@ -64,7 +64,7 @@ function handleLogout() {
         <div class="h-16 flex items-center justify-between px-4 border-b border-gray-200">
           <div class="flex items-center gap-2">
             <BookOpen class="w-7 h-7 text-primary-600" />
-            <span class="font-bold text-xl">Duopara</span>
+            <span class="font-bold text-xl">Kontexi</span>
           </div>
           <button @click="sidebarOpen = false" class="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
             <X class="w-5 h-5" />

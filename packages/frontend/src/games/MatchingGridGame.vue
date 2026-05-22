@@ -184,13 +184,12 @@ const gridCols = computed(() =>
 </template>
 
 <style scoped>
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-.animate-shake {
-  animation: shake 0.3s ease-in-out 2;
-}
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .animate-shake {
+    animation: shake 0.3s ease-in-out 2;
+  }
 </style>
