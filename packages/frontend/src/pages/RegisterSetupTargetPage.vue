@@ -33,15 +33,23 @@ const languageOptions = computed(() =>
 );
 
 function continueStep() {
+  const nativeLanguage =
+    typeof route.query.nativeLanguage === 'string' && !sameLanguage(route.query.nativeLanguage, selectedTargetLanguage.value)
+      ? route.query.nativeLanguage
+      : undefined;
+
   router.push({
     path: '/register/setup/level',
     query: {
       targetLanguage: selectedTargetLanguage.value,
-      nativeLanguage:
-        typeof route.query.nativeLanguage === 'string' ? route.query.nativeLanguage : undefined,
+      nativeLanguage,
       level: typeof route.query.level === 'string' ? route.query.level : undefined,
     },
   });
+}
+
+function sameLanguage(a: string | undefined, b: string | undefined) {
+  return a?.trim().toLowerCase() === b?.trim().toLowerCase();
 }
 </script>
 

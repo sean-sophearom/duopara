@@ -75,10 +75,18 @@ export default function SettingsScreen() {
     await AsyncStorage.setItem(key, String(value));
   };
 
-  const { data: languages } = useQuery({
+  const { data: languageConfig } = useQuery({
     queryKey: ["languages"],
-    queryFn: () => settingsApi.getLanguages().then((r) => r.data.languages),
+    queryFn: () => settingsApi.getLanguages().then((r) => r.data),
   });
+
+  const sameLanguage = (a?: string, b?: string) =>
+    a?.trim().toLowerCase() === b?.trim().toLowerCase();
+
+  const languages = languageConfig?.languages || [];
+  const nativeLanguages = languageConfig?.nativeLanguages || languages;
+  const targetLanguages = languages.filter((lang: any) => !sameLanguage(lang.code, nativeLanguage));
+  const selectableNativeLanguages = nativeLanguages.filter((lang: any) => !sameLanguage(lang.code, targetLanguage));
 
   const updateMutation = useMutation({
     mutationFn: settingsApi.update,
@@ -103,6 +111,16 @@ export default function SettingsScreen() {
   });
 
   const handleSave = () => {
+    if (sameLanguage(targetLanguage, nativeLanguage)) {
+      Toast.show({
+        type: "error",
+        text1: "Choose different languages",
+        text2: "Target and native language cannot be the same.",
+        visibilityTime: 3000,
+      });
+      return;
+    }
+
     updateMutation.mutate({
       targetLanguage,
       nativeLanguage,
@@ -192,7 +210,7 @@ export default function SettingsScreen() {
             <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-base text-owl-500 mb-4">The language you're learning</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-2">
-                {(languages || []).map((lang: any) => {
+                {targetLanguages.map((lang: any) => {
                   const isSelected = targetLanguage === lang.code;
                   return (
                     <TouchableOpacity
@@ -221,7 +239,7 @@ export default function SettingsScreen() {
             <Text style={{ fontFamily: "Nunito_400Regular" }} className="text-base text-owl-500 mb-4">Your native language for translations</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-2">
-                {(languages || []).map((lang: any) => {
+                {selectableNativeLanguages.map((lang: any) => {
                   const isSelected = nativeLanguage === lang.code;
                   return (
                     <TouchableOpacity

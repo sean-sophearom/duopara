@@ -4,7 +4,11 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { useMutation, useQuery } from '@tanstack/vue-query';
 import { useAuthStore } from '../store/authStore';
 import { settingsApi } from '../lib/api';
-import { getLanguageFlag, getNativeLanguageOptions, type LanguageOption } from '../lib/languageMeta';
+import {
+  getLanguageFlag,
+  getNativeLanguageOptions,
+  type LanguageOptionsResponse,
+} from '../lib/languageMeta';
 import {
   LayoutDashboard,
   BookOpen,
@@ -41,13 +45,20 @@ const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 
-const { data: languages } = useQuery({
-  queryKey: ['languages'],
-  queryFn: () => settingsApi.getLanguages().then((r) => r.data.languages as LanguageOption[]),
+const { data: languageConfig } = useQuery({
+  queryKey: ['language-config'],
+  queryFn: () => settingsApi.getLanguages().then((r) => r.data as LanguageOptionsResponse),
 });
 
-const languageOptions = computed(() => languages.value || []);
-const nativeLanguageOptions = computed(() => getNativeLanguageOptions(languageOptions.value));
+const targetLanguage = computed(() => authStore.user?.settings?.targetLanguage || 'Spanish');
+const nativeLanguage = computed(() => authStore.user?.settings?.nativeLanguage || 'English');
+const languageOptions = computed(() =>
+  (languageConfig.value?.languages || []).filter((lang) => !sameLanguage(lang.code, nativeLanguage.value))
+);
+const nativeLanguageOptions = computed(() =>
+  getNativeLanguageOptions(languageConfig.value?.languages || [], languageConfig.value?.nativeLanguages)
+    .filter((lang) => !sameLanguage(lang.code, targetLanguage.value))
+);
 
 const updateSettings = useMutation({
   mutationFn: settingsApi.update,
@@ -56,11 +67,8 @@ const updateSettings = useMutation({
   },
 });
 
-const targetLanguage = computed(() => authStore.user?.settings?.targetLanguage || 'Spanish');
-const nativeLanguage = computed(() => authStore.user?.settings?.nativeLanguage || 'English');
-
 const targetLanguageName = computed(() => {
-  const found = languageOptions.value.find((lang) => lang.code === targetLanguage.value);
+  const found = languageConfig.value?.languages.find((lang) => lang.code === targetLanguage.value);
   return found?.name || targetLanguage.value;
 });
 
@@ -70,13 +78,19 @@ const nativeLanguageName = computed(() => {
 });
 
 function setTargetLanguage(code: string) {
+  if (sameLanguage(code, nativeLanguage.value)) return;
   updateSettings.mutate({ targetLanguage: code });
   showTargetPicker.value = false;
 }
 
 function setNativeLanguage(code: string) {
+  if (sameLanguage(code, targetLanguage.value)) return;
   updateSettings.mutate({ nativeLanguage: code });
   showNativePicker.value = false;
+}
+
+function sameLanguage(a: string | undefined, b: string | undefined) {
+  return a?.trim().toLowerCase() === b?.trim().toLowerCase();
 }
 
 function closeLanguagePickers() {

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query';
 import { settingsApi } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
+import { getNativeLanguageOptions, type LanguageOptionsResponse } from '../lib/languageMeta';
 import { Check, Loader2, Save, ShieldAlert } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
@@ -47,10 +48,19 @@ const highlightToggles = [
   },
 ];
 
-const { data: languages } = useQuery({
-  queryKey: ['languages'],
-  queryFn: () => settingsApi.getLanguages().then(r => r.data.languages),
+const { data: languageConfig } = useQuery({
+  queryKey: ['language-config'],
+  queryFn: () => settingsApi.getLanguages().then(r => r.data as LanguageOptionsResponse),
 });
+
+const languages = computed(() => languageConfig.value?.languages || []);
+const nativeLanguages = computed(() =>
+  getNativeLanguageOptions(languages.value, languageConfig.value?.nativeLanguages)
+    .filter((lang) => !sameLanguage(lang.code, targetLanguage.value))
+);
+const targetLanguages = computed(() =>
+  languages.value.filter((lang) => !sameLanguage(lang.code, nativeLanguage.value))
+);
 
 const { data: settings } = useQuery({
   queryKey: ['settings'],
@@ -77,6 +87,8 @@ const updateMutation = useMutation({
 });
 
 function handleSave() {
+  if (sameLanguage(targetLanguage.value, nativeLanguage.value)) return;
+
   updateMutation.mutate({
     targetLanguage: targetLanguage.value,
     nativeLanguage: nativeLanguage.value,
@@ -85,7 +97,10 @@ function handleSave() {
   });
 }
 
-const nativeLangOptions = [{ code: 'English', name: 'English' }];
+function sameLanguage(a: string | undefined, b: string | undefined) {
+  return a?.trim().toLowerCase() === b?.trim().toLowerCase();
+}
+
 const difficultyLevels = ['beginner', 'intermediate', 'advanced'];
 </script>
 
@@ -105,7 +120,7 @@ const difficultyLevels = ['beginner', 'intermediate', 'advanced'];
             <label class="block text-sm font-medium text-gray-700 mb-2">Target Language</label>
             <p class="text-xs text-gray-500 mb-2">The language you're learning</p>
             <select v-model="targetLanguage" class="input">
-              <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+              <option v-for="lang in targetLanguages" :key="lang.code" :value="lang.code">
                 {{ lang.name }} ({{ lang.nativeName }})
               </option>
             </select>
@@ -114,7 +129,9 @@ const difficultyLevels = ['beginner', 'intermediate', 'advanced'];
             <label class="block text-sm font-medium text-gray-700 mb-2">Native Language</label>
             <p class="text-xs text-gray-500 mb-2">Your native language for translations</p>
             <select v-model="nativeLanguage" class="input">
-              <option v-for="lang in nativeLangOptions" :key="lang.code" :value="lang.code">{{ lang.name }}</option>
+              <option v-for="lang in nativeLanguages" :key="lang.code" :value="lang.code">
+                {{ lang.name }} ({{ lang.nativeName }})
+              </option>
             </select>
           </div>
         </div>
