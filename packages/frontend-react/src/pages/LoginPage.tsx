@@ -21,7 +21,7 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthLayout subtitle="Learn languages through personalized reading">
+    <AuthLayout subtitle="Learn languages through contextualized reading">
       <div className="card p-8">
         <h2 className="text-2xl font-semibold text-center mb-6">Welcome back</h2>
         

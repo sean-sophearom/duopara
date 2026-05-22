@@ -22,7 +22,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <AuthLayout subtitle="Learn languages through personalized reading">
+  <AuthLayout subtitle="Learn languages through contextualized reading">
     <div class="card p-8">
       <h2 class="text-2xl font-semibold text-center mb-6">Welcome back</h2>
 
