@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/vue-query';
 import { RouterLink } from 'vue-router';
 import { statsApi, textsApi, vocabularyApi } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
+import GoalsWidget from '../components/GoalsWidget.vue';
 import {
   BookOpen,
   PenTool,
@@ -199,6 +200,9 @@ const masteryPct = computed(() => {
 
       <!-- Right column -->
       <div class="space-y-6">
+        <!-- Learning goal -->
+        <GoalsWidget />
+
         <!-- Vocabulary progress -->
         <div class="card p-6">
           <div class="flex items-center justify-between mb-5">

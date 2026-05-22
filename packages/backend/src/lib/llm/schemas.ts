@@ -135,3 +135,32 @@ export const gameWordDataSchema = z.object({
 });
 
 export type GameWordData = z.infer<typeof gameWordDataSchema>;
+
+// ============================================
+// Goal Suggestion Schemas
+// ============================================
+
+export const goalSuggestionItemSchema = z.object({
+  title: z.string().describe('Short goal title (5-8 words)'),
+  description: z.string().describe('What the learner will read and do'),
+  why: z.string().describe('Why this helps their specific goal'),
+  targetWords: z.number().int().describe('Estimated new vocabulary words'),
+  estimatedMinutes: z.number().int().describe('Estimated reading time in minutes'),
+  actionType: z.enum(['generate', 'existing', 'article']).describe('How to source the content'),
+  // generate fields
+  topic: z.string().optional().describe('Topic to generate content about'),
+  difficulty: z.string().optional().describe('beginner | intermediate | advanced'),
+  // existing fields
+  textId: z.string().optional().describe('ID of existing text in library'),
+  textTitle: z.string().optional().describe('Title of existing text'),
+  // article fields
+  source: z.string().optional().describe('Suggested source website or resource'),
+  searchQuery: z.string().optional().describe('Search query to find the article'),
+});
+
+export const goalSuggestionsSchema = z.object({
+  suggestions: z.array(goalSuggestionItemSchema).min(1).max(3),
+});
+
+export type GoalSuggestionItem = z.infer<typeof goalSuggestionItemSchema>;
+export type GoalSuggestions = z.infer<typeof goalSuggestionsSchema>;

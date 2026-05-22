@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useMutation, useQuery } from '@tanstack/vue-query';
 import { generateApi, settingsApi, textsApi, vocabularyApi } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
@@ -38,10 +38,15 @@ const difficultyOptions = [
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const defaultLanguage = authStore.user?.settings?.targetLanguage || 'Spanish';
 const defaultRatio = authStore.user?.settings?.knownWordsRatio || 80;
 const defaultDifficulty = authStore.user?.settings?.defaultDifficulty || 'intermediate';
+const routeMode = typeof route.query.mode === 'string' ? route.query.mode : '';
+const routeDifficulty = typeof route.query.difficulty === 'string' ? route.query.difficulty : '';
+const allowedModes = ['presets', 'generate', 'import', 'upload'] as const;
+const allowedDifficulties = ['beginner', 'intermediate', 'advanced'];
 
 interface ReadingPreset {
   id: string;
@@ -55,10 +60,14 @@ interface ReadingPreset {
 }
 
 // Mode: 'presets' | 'generate' | 'import' | 'upload'
-const mode = ref<'presets' | 'generate' | 'import' | 'upload'>('presets');
+const mode = ref<'presets' | 'generate' | 'import' | 'upload'>(
+  allowedModes.includes(routeMode as typeof allowedModes[number])
+    ? routeMode as typeof allowedModes[number]
+    : 'presets',
+);
 
 // Generate mode fields
-const topic = ref('');
+const topic = ref(typeof route.query.topic === 'string' ? route.query.topic : '');
 const style = ref('story');
 const wordCount = ref(200);
 
@@ -92,7 +101,9 @@ function formatFileSize(bytes: number) {
 
 // Shared fields
 const language = ref(defaultLanguage);
-const difficulty = ref(defaultDifficulty);
+const difficulty = ref(
+  allowedDifficulties.includes(routeDifficulty) ? routeDifficulty : defaultDifficulty,
+);
 const knownWordsRatio = ref(defaultRatio);
 const includeLearningWords = ref(true);
 const includeLearnedWords = ref(true);
@@ -115,7 +126,12 @@ const { data: readingPresets, isLoading: isLoadingPresets } = useQuery({
 const generateMutation = useMutation({
   mutationFn: generateApi.create,
   onSuccess: (response) => {
-    router.push(`/read/${response.data.text.id}`);
+    router.push({
+      path: `/read/${response.data.text.id}`,
+      query: response.data.reused
+        ? { reused: '1', strategy: response.data.reuseStrategy || 'existing' }
+        : {},
+    });
   },
 });
 
@@ -207,7 +223,7 @@ function previewText(content: string) {
   <div class="max-w-4xl mx-auto">
     <div class="mb-8">
       <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Reads</h1>
-      <p class="text-gray-600 mt-1">Start with a curated text, paste your own, or generate a personalized read.</p>
+      <p class="text-gray-600 mt-1">Choose something to read. Kontexi will reuse a good match before creating anything new.</p>
     </div>
 
     <!-- Mode toggle -->
@@ -236,7 +252,7 @@ function previewText(content: string) {
         ]"
       >
         <Sparkles class="w-4 h-4" />
-        AI Generate
+        Find or Create
       </button>
       <button
         type="button"
@@ -292,7 +308,10 @@ function previewText(content: string) {
       <template v-if="mode === 'generate'">
         <div class="card p-6">
           <div class="flex items-center justify-between mb-3">
-            <label class="block text-lg font-semibold text-gray-900">What would you like to read about?</label>
+            <div>
+              <label class="block text-lg font-semibold text-gray-900">What would you like to read about?</label>
+              <p class="text-sm text-gray-500 mt-1">We will first look for a matching saved read, then create one only if needed.</p>
+            </div>
             <!-- <button
               type="button"
               @click="randomTopicMutation.mutate()"
@@ -617,7 +636,7 @@ function previewText(content: string) {
       >
         <template v-if="generateMutation.isPending.value || uploadMutation.isPending.value">
           <Loader2 class="w-6 h-6 animate-spin mr-2" />
-          {{ mode === 'import' ? 'Processing your text...' : mode === 'upload' ? (aiAdapt ? 'Uploading & cleaning...' : 'Uploading...') : 'Generating your text...' }}
+          {{ mode === 'import' ? 'Processing your text...' : mode === 'upload' ? (aiAdapt ? 'Uploading & cleaning...' : 'Uploading...') : 'Finding your read...' }}
         </template>
         <template v-else-if="mode === 'import'">
           <ClipboardPaste class="w-6 h-6 mr-2" />
@@ -629,7 +648,7 @@ function previewText(content: string) {
         </template>
         <template v-else>
           <Sparkles class="w-6 h-6 mr-2" />
-          Generate Text
+          Find or Create Read
         </template>
       </button>
 
