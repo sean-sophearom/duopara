@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { RouterLink, RouterView, useRouter } from 'vue-router';
+import { computed, ref, watch } from 'vue';
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
+import { useMutation, useQuery } from '@tanstack/vue-query';
 import { useAuthStore } from '../store/authStore';
+import { settingsApi } from '../lib/api';
+import { getLanguageFlag, getNativeLanguageOptions, type LanguageOption } from '../lib/languageMeta';
 import {
   LayoutDashboard,
   BookOpen,
@@ -31,8 +34,61 @@ const navItems = [
 ];
 
 const sidebarOpen = ref(false);
+const showTargetPicker = ref(false);
+const showNativePicker = ref(false);
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
+
+const { data: languages } = useQuery({
+  queryKey: ['languages'],
+  queryFn: () => settingsApi.getLanguages().then((r) => r.data.languages as LanguageOption[]),
+});
+
+const languageOptions = computed(() => languages.value || []);
+const nativeLanguageOptions = computed(() => getNativeLanguageOptions(languageOptions.value));
+
+const updateSettings = useMutation({
+  mutationFn: settingsApi.update,
+  onSuccess: (response) => {
+    authStore.updateUser({ settings: response.data.settings });
+  },
+});
+
+const targetLanguage = computed(() => authStore.user?.settings?.targetLanguage || 'Spanish');
+const nativeLanguage = computed(() => authStore.user?.settings?.nativeLanguage || 'English');
+
+const targetLanguageName = computed(() => {
+  const found = languageOptions.value.find((lang) => lang.code === targetLanguage.value);
+  return found?.name || targetLanguage.value;
+});
+
+const nativeLanguageName = computed(() => {
+  const found = nativeLanguageOptions.value.find((lang) => lang.code === nativeLanguage.value);
+  return found?.name || nativeLanguage.value;
+});
+
+function setTargetLanguage(code: string) {
+  updateSettings.mutate({ targetLanguage: code });
+  showTargetPicker.value = false;
+}
+
+function setNativeLanguage(code: string) {
+  updateSettings.mutate({ nativeLanguage: code });
+  showNativePicker.value = false;
+}
+
+function closeLanguagePickers() {
+  showTargetPicker.value = false;
+  showNativePicker.value = false;
+}
+
+watch(
+  () => route.fullPath,
+  () => {
+    closeLanguagePickers();
+  }
+);
 
 function handleLogout() {
   authStore.logout();
@@ -57,7 +113,7 @@ function handleLogout() {
     <div
       v-if="sidebarOpen"
       class="lg:hidden fixed inset-0 bg-black/50 z-40"
-      @click="sidebarOpen = false"
+      @click="sidebarOpen = false; closeLanguagePickers()"
     />
 
     <!-- Sidebar -->
@@ -82,10 +138,10 @@ function handleLogout() {
           <div v-for="item in navItems" :key="item.to">
             <RouterLink
               :to="item.to"
-              @click="sidebarOpen = false"
+              @click="sidebarOpen = false; closeLanguagePickers()"
               :class="[
                 'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                $route.path === item.to || $route.path.startsWith(item.to + '/')
+                route.path === item.to || route.path.startsWith(item.to + '/')
                   ? 'bg-primary-50 text-primary-700 font-medium'
                   : 'text-gray-600 hover:bg-gray-100'
               ]"
@@ -93,15 +149,15 @@ function handleLogout() {
               <component :is="item.icon" class="w-5 h-5" />
               {{ item.label }}
             </RouterLink>
-            <div v-if="item.children && $route.path.startsWith(item.to)" class="mt-1 ml-8 space-y-1">
+            <div v-if="item.children && route.path.startsWith(item.to)" class="mt-1 ml-8 space-y-1">
               <RouterLink
                 v-for="child in item.children"
                 :key="child.to"
                 :to="child.to"
-                @click="sidebarOpen = false"
+                @click="sidebarOpen = false; closeLanguagePickers()"
                 :class="[
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors',
-                  $route.path === child.to
+                  route.path === child.to
                     ? 'bg-primary-50 text-primary-700 font-medium'
                     : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 ]"
@@ -115,6 +171,72 @@ function handleLogout() {
 
         <!-- User section -->
         <div class="p-4 border-t border-gray-200">
+          <div class="mb-3 space-y-2">
+            <div class="relative">
+              <button
+                type="button"
+                @click="showTargetPicker = !showTargetPicker; showNativePicker = false"
+                class="w-full flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-left transition hover:border-gray-300 hover:bg-white"
+              >
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Target</p>
+                  <p class="truncate text-sm font-medium text-gray-900">
+                    {{ getLanguageFlag(targetLanguage) }} {{ targetLanguageName }}
+                  </p>
+                </div>
+                <span class="text-gray-400">▾</span>
+              </button>
+
+              <div
+                v-if="showTargetPicker"
+                class="absolute inset-x-0 bottom-full mb-2 max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
+              >
+                <button
+                  v-for="lang in languageOptions"
+                  :key="lang.code"
+                  type="button"
+                  @click="setTargetLanguage(lang.code)"
+                  class="w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-primary-50"
+                  :class="targetLanguage === lang.code ? 'bg-primary-50 text-primary-800' : 'text-gray-700'"
+                >
+                  {{ getLanguageFlag(lang.code) }} {{ lang.name }}
+                </button>
+              </div>
+            </div>
+
+            <div class="relative">
+              <button
+                type="button"
+                @click="showNativePicker = !showNativePicker; showTargetPicker = false"
+                class="w-full flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-left transition hover:border-gray-300 hover:bg-white"
+              >
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Native</p>
+                  <p class="truncate text-sm font-medium text-gray-900">
+                    {{ getLanguageFlag(nativeLanguage) }} {{ nativeLanguageName }}
+                  </p>
+                </div>
+                <span class="text-gray-400">▾</span>
+              </button>
+
+              <div
+                v-if="showNativePicker"
+                class="absolute inset-x-0 bottom-full mb-2 max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
+              >
+                <button
+                  v-for="lang in nativeLanguageOptions"
+                  :key="lang.code"
+                  type="button"
+                  @click="setNativeLanguage(lang.code)"
+                  class="w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-primary-50"
+                  :class="nativeLanguage === lang.code ? 'bg-primary-50 text-primary-800' : 'text-gray-700'"
+                >
+                  {{ getLanguageFlag(lang.code) }} {{ lang.name }}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="flex items-center gap-3 px-4 py-2 mb-2">
             <div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
               <span class="text-primary-700 font-medium">

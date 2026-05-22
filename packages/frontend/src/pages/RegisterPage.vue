@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../store/authStore';
 import { Loader2 } from 'lucide-vue-next';
 import AuthLayout from '../components/AuthLayout.vue';
 import ErrorAlert from '../components/ErrorAlert.vue';
+import { settingsApi } from '../lib/api';
+import { getLanguageFlag } from '../lib/languageMeta';
 
 const name = ref('');
 const email = ref('');
@@ -13,6 +15,20 @@ const confirmPassword = ref('');
 const validationError = ref('');
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
+
+const selectedTargetLanguage = computed(() =>
+  typeof route.query.targetLanguage === 'string' ? route.query.targetLanguage : 'Spanish'
+);
+const selectedNativeLanguage = computed(() =>
+  typeof route.query.nativeLanguage === 'string' ? route.query.nativeLanguage : 'English'
+);
+const selectedLevel = computed(() => {
+  const value = route.query.level;
+  return value === 'beginner' || value === 'intermediate' || value === 'advanced'
+    ? value
+    : 'beginner';
+});
 
 async function handleSubmit() {
   validationError.value = '';
@@ -29,6 +45,18 @@ async function handleSubmit() {
 
   try {
     await authStore.register(email.value, password.value, name.value || undefined);
+
+    try {
+      const response = await settingsApi.update({
+        targetLanguage: selectedTargetLanguage.value,
+        nativeLanguage: selectedNativeLanguage.value,
+        defaultDifficulty: selectedLevel.value,
+      });
+      authStore.updateUser({ settings: response.data.settings });
+    } catch {
+      // Keep registration successful even if preference save fails.
+    }
+
     router.push('/dashboard');
   } catch {
     // Error is handled by the store
@@ -47,6 +75,37 @@ function dismissError() {
   <AuthLayout subtitle="Start your language learning journey">
     <div class="card p-8">
       <h2 class="text-2xl font-semibold text-center mb-6">Create an account</h2>
+
+      <div class="mb-6 rounded-xl border border-primary-200 bg-primary-50 p-3">
+        <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">Your setup</p>
+        <div class="mt-2 grid gap-2 sm:grid-cols-3">
+          <div class="rounded-lg bg-white px-3 py-2 text-sm">
+            <p class="text-gray-500">Target</p>
+            <p class="font-semibold text-gray-900">{{ getLanguageFlag(selectedTargetLanguage) }} {{ selectedTargetLanguage }}</p>
+          </div>
+          <div class="rounded-lg bg-white px-3 py-2 text-sm">
+            <p class="text-gray-500">Level</p>
+            <p class="font-semibold capitalize text-gray-900">{{ selectedLevel }}</p>
+          </div>
+          <div class="rounded-lg bg-white px-3 py-2 text-sm">
+            <p class="text-gray-500">Native</p>
+            <p class="font-semibold text-gray-900">{{ getLanguageFlag(selectedNativeLanguage) }} {{ selectedNativeLanguage }}</p>
+          </div>
+        </div>
+        <RouterLink
+          :to="{
+            path: '/register/setup/target',
+            query: {
+              targetLanguage: selectedTargetLanguage,
+              nativeLanguage: selectedNativeLanguage,
+              level: selectedLevel,
+            },
+          }"
+          class="mt-2 inline-block text-xs font-medium text-primary-700 hover:text-primary-800"
+        >
+          Change preferences
+        </RouterLink>
+      </div>
 
       <ErrorAlert v-if="displayError" :error="displayError!" @dismiss="dismissError" />
 
@@ -82,7 +141,7 @@ function dismissError() {
 
       <p class="text-center text-gray-600 mt-6">
         Already have an account?
-        <RouterLink to="/login" class="text-primary-600 hover:text-primary-700 font-medium">
+        <RouterLink to="/login/form" class="text-primary-600 hover:text-primary-700 font-medium">
           Sign in
         </RouterLink>
       </p>

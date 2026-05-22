@@ -6,7 +6,32 @@ const router = createRouter({
   routes: [
     {
       path: '/login',
+      component: () => import('./pages/AuthChoicePage.vue'),
+      meta: { requiresGuest: true },
+    },
+    {
+      path: '/login/form',
       component: () => import('./pages/LoginPage.vue'),
+      meta: { requiresGuest: true },
+    },
+    {
+      path: '/register/setup',
+      redirect: '/register/setup/target',
+      meta: { requiresGuest: true },
+    },
+    {
+      path: '/register/setup/target',
+      component: () => import('./pages/RegisterSetupTargetPage.vue'),
+      meta: { requiresGuest: true },
+    },
+    {
+      path: '/register/setup/level',
+      component: () => import('./pages/RegisterSetupLevelPage.vue'),
+      meta: { requiresGuest: true },
+    },
+    {
+      path: '/register/setup/native',
+      component: () => import('./pages/RegisterSetupNativePage.vue'),
       meta: { requiresGuest: true },
     },
     {
