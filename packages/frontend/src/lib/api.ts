@@ -81,6 +81,10 @@ export const generateApi = {
 };
 
 export const textsApi = {
+  getPresets: (language?: string) =>
+    api.get('/texts/presets', { params: { language } }),
+  addPreset: (presetId: string) =>
+    api.post(`/texts/presets/${presetId}/add`),
   getAll: (params?: { language?: string; limit?: number; offset?: number; search?: string }) =>
     api.get('/texts', { params }),
   getOne: (id: string) => api.get(`/texts/${id}`),
