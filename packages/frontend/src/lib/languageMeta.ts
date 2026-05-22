@@ -22,6 +22,24 @@ const languageFlags: Record<string, string> = {
   hindi: 'IN',
 };
 
+const languageShortCodes: Record<string, string> = {
+  spanish: 'SP',
+  vietnamese: 'VN',
+  english: 'EN',
+  french: 'FR',
+  german: 'DE',
+  italian: 'IT',
+  portuguese: 'PT',
+  russian: 'RU',
+  japanese: 'JP',
+  korean: 'KR',
+  chinese: 'CN',
+  arabic: 'AR',
+  turkish: 'TR',
+  dutch: 'NL',
+  hindi: 'HI',
+};
+
 function toRegionalIndicatorPair(countryCode: string) {
   return countryCode
     .toUpperCase()
@@ -32,6 +50,10 @@ export function getLanguageFlag(languageCode: string) {
   const countryCode = languageFlags[languageCode.toLowerCase()];
   if (!countryCode) return '🌐';
   return toRegionalIndicatorPair(countryCode);
+}
+
+export function getLanguageShortCode(languageCode: string) {
+  return languageShortCodes[languageCode.toLowerCase()] || languageCode.slice(0, 2).toUpperCase();
 }
 
 export function getNativeLanguageOptions(languages: LanguageOption[]) {

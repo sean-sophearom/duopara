@@ -21,22 +21,19 @@ const levelCards = [
   {
     value: 'beginner' as const,
     title: 'Beginner',
-    subtitle: 'I am just getting started',
-    detail: 'Simple words, slower pace, and clear examples.',
+    detail: 'Easy words, chill pace.',
     accent: 'from-emerald-500 to-teal-500',
   },
   {
     value: 'intermediate' as const,
     title: 'Intermediate',
-    subtitle: 'I know the basics',
-    detail: 'Richer vocabulary and practical sentence patterns.',
+    detail: 'Real talk, smoother flow.',
     accent: 'from-sky-500 to-cyan-500',
   },
   {
     value: 'advanced' as const,
     title: 'Advanced',
-    subtitle: 'I want challenge and nuance',
-    detail: 'Complex grammar, style, and deeper expressions.',
+    detail: 'Nuance, style, depth.',
     accent: 'from-indigo-500 to-fuchsia-500',
   },
 ];
@@ -58,8 +55,8 @@ function continueStep() {
   <AuthLayout subtitle="Step 2 of 3">
     <div class="card p-8 sm:p-10">
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">Step 2 of 3</p>
-      <h2 class="mt-2 text-2xl font-bold text-gray-900">Choose your level</h2>
-      <p class="mt-1 text-sm text-gray-500">How comfortable are you with {{ targetLanguage }}?</p>
+      <h2 class="mt-2 text-2xl font-bold text-gray-900">Pick your speed</h2>
+      <p class="mt-1 text-sm text-gray-500">How does {{ targetLanguage }} feel?</p>
 
       <div class="my-8 h-1.5 rounded-full bg-gray-100">
         <div class="h-full w-2/3 rounded-full bg-primary-500" />
@@ -81,7 +78,6 @@ function continueStep() {
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="text-base font-semibold text-gray-900">{{ item.title }}</p>
-              <p class="text-sm text-gray-600">{{ item.subtitle }}</p>
               <p class="mt-1 text-xs text-gray-500">{{ item.detail }}</p>
             </div>
             <div class="rounded-md bg-gradient-to-r p-2 text-white" :class="item.accent">

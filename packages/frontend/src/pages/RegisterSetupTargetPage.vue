@@ -5,7 +5,11 @@ import { useQuery } from '@tanstack/vue-query';
 import { ArrowLeft, ArrowRight, Compass } from 'lucide-vue-next';
 import AuthLayout from '../components/AuthLayout.vue';
 import { settingsApi } from '../lib/api';
-import { getLanguageFlag, type LanguageOption } from '../lib/languageMeta';
+import {
+  getLanguageFlag,
+  getLanguageShortCode,
+  type LanguageOption,
+} from '../lib/languageMeta';
 
 const router = useRouter();
 const route = useRoute();
@@ -45,8 +49,8 @@ function continueStep() {
   <AuthLayout subtitle="Step 1 of 3">
     <div class="card p-8 sm:p-10">
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">Step 1 of 3</p>
-      <h2 class="mt-2 text-2xl font-bold text-gray-900">Choose your target language</h2>
-      <p class="mt-1 text-sm text-gray-500">This is the language you want to learn.</p>
+      <h2 class="mt-2 text-2xl font-bold text-gray-900">Pick your language</h2>
+      <p class="mt-1 text-sm text-gray-500">Quick pick. Big fun.</p>
 
       <div class="my-8 h-1.5 rounded-full bg-gray-100">
         <div class="h-full w-1/3 rounded-full bg-primary-500" />
@@ -59,14 +63,18 @@ function continueStep() {
           type="button"
           @click="selectedTargetLanguage = lang.code"
           :class="[
-            'rounded-xl border px-4 py-4 text-left transition',
+            'rounded-2xl border px-4 py-5 text-center transition',
             selectedTargetLanguage === lang.code
-              ? 'border-primary-500 bg-primary-50'
-              : 'border-gray-200 bg-white hover:border-gray-300'
+              ? 'border-primary-500 bg-primary-50 shadow-sm'
+              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
           ]"
         >
-          <p class="text-sm font-semibold text-gray-900">{{ getLanguageFlag(lang.code) }} {{ lang.name }}</p>
-          <p class="truncate text-xs text-gray-500">{{ lang.nativeName || lang.name }}</p>
+          <div class="flex items-center justify-center gap-4">
+            <span class="inline-flex h-10 w-12 items-center justify-center text-4xl">
+              {{ getLanguageFlag(lang.code) }}
+            </span>
+            <p class="text-base font-extrabold tracking-wide text-gray-900">{{ getLanguageShortCode(lang.code) }}</p>
+          </div>
         </button>
       </div>
 
